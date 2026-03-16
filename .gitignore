@@ -1,2 +1,40 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Kotlin
+.kotlin/
+
+# Fabric Loom
+**/run/
+**/loom-cache/
+
+# NeoForge ModDev
+**/runs/
+
+# Claude / Narrafork
 .narrafork/
 .worktrees/
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 反编译参考代码
+net/
+
+# plugin 子项目 Gradle wrapper（跟随根项目即可）
+plugin/.gradle/
+plugin/gradle/
+plugin/gradlew
+plugin/gradlew.bat

@@ -1,5 +1,5 @@
 plugins {
-    id("net.neoforged.gradle.userdev") version "${property("neogradle_version")}"
+    id("net.neoforged.moddev") version "2.0.140"
     id("org.jetbrains.kotlin.jvm") version "2.2.0"
 }
 
@@ -9,12 +9,15 @@ base {
 
 repositories {
     mavenCentral()
-    maven("https://thedarkcolour.github.io/KotlinForForge/")
+    maven { setUrl("https://thedarkcolour.github.io/KotlinForForge/") }
+}
+
+neoForge {
+    version = providers.gradleProperty("neoforge_version").get()
 }
 
 dependencies {
-    implementation("net.neoforged:neoforge:${property("neoforge_version")}")
-    implementation("thedarkcolour:kotlinforforge-neoforge:${property("kotlin_for_forge_version")}")
+    implementation("thedarkcolour:kotlinforforge-neoforge:${providers.gradleProperty("kotlin_for_forge_version").get()}")
 }
 
 tasks.processResources {
