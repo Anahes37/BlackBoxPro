@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 
 data class ResponsePayload(val json: String) : CustomPacketPayload {
 
@@ -12,7 +12,7 @@ data class ResponsePayload(val json: String) : CustomPacketPayload {
 
     companion object {
         val TYPE = CustomPacketPayload.Type<ResponsePayload>(
-            ResourceLocation.fromNamespaceAndPath("blackbox", "response")
+            Identifier.fromNamespaceAndPath("blackbox", "response")
         )
 
         val STREAM_CODEC: StreamCodec<ByteBuf, ResponsePayload> =

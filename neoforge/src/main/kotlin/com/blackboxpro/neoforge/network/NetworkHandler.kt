@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.network.PacketDistributor
+import net.neoforged.neoforge.client.network.ClientPacketDistributor
 import org.slf4j.LoggerFactory
 
 object NetworkHandler {
@@ -71,7 +71,7 @@ object NetworkHandler {
     fun sendResponse(json: String) {
         val client = Minecraft.getInstance()
         if (client.connection != null) {
-            PacketDistributor.sendToServer(ResponsePayload(json))
+            ClientPacketDistributor.sendToServer(ResponsePayload(json))
             logger.debug("Sent response: {}", json)
         } else {
             logger.warn("Cannot send response, network handler is null.")

@@ -20,7 +20,7 @@ class PlayerMoveLookAction : ActionExecutor {
         val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.send(ServerboundMovePlayerPacket.PosRot(x, y, z, yaw, pitch, onGround))
+        networkHandler.send(ServerboundMovePlayerPacket.PosRot(x, y, z, yaw, pitch, onGround, false))
         return ActionResult.ok()
     }
 }

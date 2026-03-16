@@ -7,7 +7,7 @@ import com.blackboxpro.neoforge.util.getIntOrDefault
 import com.blackboxpro.neoforge.util.getStringOrNull
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.network.protocol.common.ClientInformation
+import net.minecraft.server.level.ClientInformation
 import net.minecraft.network.protocol.common.ServerboundClientInformationPacket
 
 class ClientInformationAction : ActionExecutor {
@@ -32,16 +32,23 @@ class ClientInformationAction : ActionExecutor {
             else -> return ActionResult.fail("Invalid mainHand: $mainHand (expected 0=left, 1=right)")
         }
 
+        val chatVisibility = when (chatMode) {
+            0 -> net.minecraft.world.entity.player.ChatVisiblity.FULL
+            1 -> net.minecraft.world.entity.player.ChatVisiblity.SYSTEM
+            2 -> net.minecraft.world.entity.player.ChatVisiblity.HIDDEN
+            else -> return ActionResult.fail("Invalid chatMode: $chatMode (expected 0-2)")
+        }
+
         val syncedOptions = ClientInformation(
             locale,
             viewDistance,
-            net.minecraft.world.entity.player.ChatVisiblity.byId(chatMode),
+            chatVisibility,
             chatColors,
             skinParts,
             arm,
             textFiltering,
             allowServerListings,
-            net.minecraft.client.ParticleStatus.ALL
+            net.minecraft.server.level.ParticleStatus.ALL
         )
         networkHandler.send(ServerboundClientInformationPacket(syncedOptions))
 

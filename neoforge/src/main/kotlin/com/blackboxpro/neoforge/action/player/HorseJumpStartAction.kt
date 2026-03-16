@@ -1,8 +1,8 @@
 package com.blackboxpro.neoforge.action.player
 
-import net.minecraft.network.protocol.game.ServerboundClientCommandPacket
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket
 
 class HorseJumpStartAction : PlayerCommandAction(
-    ServerboundClientCommandPacket.Mode.START_HORSE_JUMP,
+    ServerboundPlayerCommandPacket.Action.START_RIDING_JUMP,
     "Started horse jump"
 )

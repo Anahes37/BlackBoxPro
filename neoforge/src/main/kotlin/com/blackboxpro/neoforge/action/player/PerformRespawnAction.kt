@@ -1,20 +1,17 @@
-package com.blackboxpro.neoforge.action.debug
+package com.blackboxpro.neoforge.action.player
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.util.requireLong
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.network.protocol.common.ServerboundKeepAlivePacket
+import net.minecraft.network.protocol.game.ServerboundClientCommandPacket
 
-class KeepAliveAction : ActionExecutor {
+class PerformRespawnAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
-        val id = params.requireLong("id")
-
         val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.send(ServerboundKeepAlivePacket(id))
-        return ActionResult.ok()
+        networkHandler.send(ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN))
+        return ActionResult.ok("Performed respawn")
     }
 }

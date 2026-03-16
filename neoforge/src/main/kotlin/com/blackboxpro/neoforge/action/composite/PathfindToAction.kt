@@ -68,9 +68,9 @@ class PathfindToAction : ActionExecutor {
         val newY = player.y + dy * ratio
         val newZ = player.z + dz * ratio
 
-        player.setPosition(newX, newY, newZ)
+        player.setPos(newX, newY, newZ)
         networkHandler.send(
-            ServerboundMovePlayerPacket.Pos(newX, newY, newZ, player.onGround())
+            ServerboundMovePlayerPacket.Pos(newX, newY, newZ, player.onGround(), false)
         )
 
         TickScheduler.schedule(1) {

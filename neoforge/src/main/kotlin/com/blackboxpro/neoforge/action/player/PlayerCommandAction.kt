@@ -5,10 +5,10 @@ import com.blackboxpro.neoforge.action.ActionResult
 import com.blackboxpro.neoforge.util.getIntOrDefault
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.network.protocol.game.ServerboundClientCommandPacket
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket
 
 open class PlayerCommandAction(
-    private val mode: ServerboundClientCommandPacket.Mode,
+    private val mode: ServerboundPlayerCommandPacket.Action,
     private val description: String
 ) : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -27,14 +27,14 @@ open class PlayerCommandAction(
             player
         }
 
-        // jumpBoost 只对 START_HORSE_JUMP 有意义，其他 mode 传 0
-        val jumpBoost = if (mode == ServerboundClientCommandPacket.Mode.START_HORSE_JUMP) {
+        // jumpBoost 只对 START_RIDING_JUMP 有意义，其他 mode 传 0
+        val jumpBoost = if (mode == ServerboundPlayerCommandPacket.Action.START_RIDING_JUMP) {
             params.getIntOrDefault("jumpBoost", 100)
         } else {
             0
         }
 
-        networkHandler.send(ServerboundClientCommandPacket(entity, mode, jumpBoost))
+        networkHandler.send(ServerboundPlayerCommandPacket(entity, mode, jumpBoost))
         return ActionResult.ok(description)
     }
 }

@@ -1,8 +1,8 @@
 package com.blackboxpro.neoforge.action.player
 
-import net.minecraft.network.protocol.game.ServerboundClientCommandPacket
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket
 
 class SprintStartAction : PlayerCommandAction(
-    ServerboundClientCommandPacket.Mode.START_SPRINTING,
+    ServerboundPlayerCommandPacket.Action.START_SPRINTING,
     "Started sprinting"
 )

@@ -5,7 +5,7 @@ import com.blackboxpro.neoforge.action.ActionResult
 import com.blackboxpro.neoforge.util.requireInt
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.network.protocol.game.ServerboundPongPacket
+import net.minecraft.network.protocol.common.ServerboundPongPacket
 
 class PongAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {

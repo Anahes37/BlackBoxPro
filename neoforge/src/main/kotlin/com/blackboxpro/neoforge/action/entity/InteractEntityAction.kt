@@ -21,7 +21,7 @@ class InteractEntityAction : ActionExecutor {
         val entity = world.getEntity(entityId)
             ?: return ActionResult.fail("Entity not found: $entityId")
 
-        val packet = ServerboundInteractPacket.interact(entity, sneaking, hand)
+        val packet = ServerboundInteractPacket.createInteractionPacket(entity, sneaking, hand)
         Minecraft.getInstance().connection?.send(packet)
             ?: return ActionResult.fail("Network handler is not available")
 

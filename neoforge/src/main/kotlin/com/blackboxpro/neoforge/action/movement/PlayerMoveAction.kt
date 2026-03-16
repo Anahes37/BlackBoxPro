@@ -18,7 +18,7 @@ class PlayerMoveAction : ActionExecutor {
         val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.send(ServerboundMovePlayerPacket.Pos(x, y, z, onGround))
+        networkHandler.send(ServerboundMovePlayerPacket.Pos(x, y, z, onGround, false))
         return ActionResult.ok()
     }
 }

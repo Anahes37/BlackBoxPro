@@ -18,7 +18,7 @@ class AttackEntityAction : ActionExecutor {
         val entity = world.getEntity(entityId)
             ?: return ActionResult.fail("Entity not found: $entityId")
 
-        val packet = ServerboundInteractPacket.attack(entity, sneaking)
+        val packet = ServerboundInteractPacket.createAttackPacket(entity, sneaking)
         Minecraft.getInstance().connection?.send(packet)
             ?: return ActionResult.fail("Network handler is not available")
 

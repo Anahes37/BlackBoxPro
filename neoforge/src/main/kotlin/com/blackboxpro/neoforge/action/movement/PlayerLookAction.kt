@@ -17,7 +17,7 @@ class PlayerLookAction : ActionExecutor {
         val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.send(ServerboundMovePlayerPacket.Rot(yaw, pitch, onGround))
+        networkHandler.send(ServerboundMovePlayerPacket.Rot(yaw, pitch, onGround, false))
         return ActionResult.ok()
     }
 }

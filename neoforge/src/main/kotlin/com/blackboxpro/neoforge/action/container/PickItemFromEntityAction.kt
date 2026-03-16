@@ -6,21 +6,23 @@ import com.blackboxpro.neoforge.util.getBooleanOrDefault
 import com.blackboxpro.neoforge.util.requireInt
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.network.protocol.game.ServerboundPickItemFromBlockPacket
-import net.minecraft.core.BlockPos
+import net.minecraft.network.protocol.game.ServerboundPickItemFromEntityPacket
 
-class PickItemAction : ActionExecutor {
+class PickItemFromEntityAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
-        val x = params.requireInt("x")
-        val y = params.requireInt("y")
-        val z = params.requireInt("z")
+        val entityId = params.requireInt("entityId")
         val includeData = params.getBooleanOrDefault("includeData", false)
 
         val client = Minecraft.getInstance()
         val handler = client.connection
             ?: return ActionResult.fail("Not connected to server")
 
-        handler.send(ServerboundPickItemFromBlockPacket(BlockPos(x, y, z), includeData))
-        return ActionResult.ok("Pick item at ($x, $y, $z)")
+        val world = client.level
+            ?: return ActionResult.fail("World not available")
+        world.getEntity(entityId)
+            ?: return ActionResult.fail("Entity not found: $entityId")
+
+        handler.send(ServerboundPickItemFromEntityPacket(entityId, includeData))
+        return ActionResult.ok("Picked item from entity $entityId")
     }
 }

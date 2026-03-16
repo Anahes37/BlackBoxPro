@@ -17,7 +17,7 @@ class PlayerAbilitiesAction : ActionExecutor {
         val networkHandler = client.connection
             ?: return ActionResult.fail("Not connected to server")
 
-        if (flying && !player.abilities.allowFlying) {
+        if (flying && !player.abilities.mayfly) {
             return ActionResult.fail("Player is not allowed to fly")
         }
 

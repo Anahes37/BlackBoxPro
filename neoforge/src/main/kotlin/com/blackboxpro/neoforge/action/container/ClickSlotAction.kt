@@ -6,7 +6,7 @@ import com.blackboxpro.neoforge.util.requireInt
 import com.google.gson.JsonObject
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.client.Minecraft
-import net.minecraft.world.item.ItemStack
+import net.minecraft.network.HashedStack
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket
 import net.minecraft.world.inventory.ClickType
 
@@ -33,7 +33,15 @@ class ClickSlotAction : ActionExecutor {
             ?: return ActionResult.fail("Not connected to server")
 
         handler.send(
-            ServerboundContainerClickPacket(windowId, stateId, slot, button, actionType, ItemStack.EMPTY, Int2ObjectOpenHashMap())
+            ServerboundContainerClickPacket(
+                windowId,
+                stateId,
+                slot.toShort(),
+                button.toByte(),
+                actionType,
+                Int2ObjectOpenHashMap(),
+                HashedStack.EMPTY
+            )
         )
         return ActionResult.ok("Clicked slot $slot in window $windowId (mode=$actionType)")
     }

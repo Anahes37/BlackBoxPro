@@ -5,14 +5,33 @@ import com.blackboxpro.neoforge.action.ActionResult
 import com.blackboxpro.neoforge.util.requireBoolean
 import com.blackboxpro.neoforge.util.requireString
 import com.google.gson.JsonObject
+import net.minecraft.client.Minecraft
+import net.minecraft.network.protocol.game.ServerboundRecipeBookChangeSettingsPacket
+import net.minecraft.world.inventory.RecipeBookType
 
 class RecipeBookToggleAction : ActionExecutor {
+
+    companion object {
+        private val CATEGORY_MAP = mapOf(
+            "crafting" to RecipeBookType.CRAFTING,
+            "furnace" to RecipeBookType.FURNACE,
+            "blast_furnace" to RecipeBookType.BLAST_FURNACE,
+            "smoker" to RecipeBookType.SMOKER
+        )
+    }
+
     override fun execute(params: JsonObject): ActionResult {
-        val category = params.requireString("category")
+        val categoryStr = params.requireString("category")
         val open = params.requireBoolean("open")
         val filtering = params.requireBoolean("filtering")
 
-        // Stub: RecipeCategoryOptionsC2SPacket 构造在 1.21.x 中需要 enum 映射
-        return ActionResult.fail("Not implemented: recipe book toggle (stub)")
+        val category = CATEGORY_MAP[categoryStr.lowercase()]
+            ?: return ActionResult.fail("Unknown recipe category: $categoryStr (valid: ${CATEGORY_MAP.keys})")
+
+        val handler = Minecraft.getInstance().connection
+            ?: return ActionResult.fail("Not connected to server")
+
+        handler.send(ServerboundRecipeBookChangeSettingsPacket(category, open, filtering))
+        return ActionResult.ok("Toggled recipe book: category=$categoryStr, open=$open, filtering=$filtering")
     }
 }

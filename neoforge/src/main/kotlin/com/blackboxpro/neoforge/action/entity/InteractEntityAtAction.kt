@@ -27,7 +27,7 @@ class InteractEntityAtAction : ActionExecutor {
             ?: return ActionResult.fail("Entity not found: $entityId")
 
         val target = Vec3(targetX, targetY, targetZ)
-        val packet = ServerboundInteractPacket.interactAt(entity, sneaking, hand, target)
+        val packet = ServerboundInteractPacket.createInteractionPacket(entity, sneaking, hand, target)
         Minecraft.getInstance().connection?.send(packet)
             ?: return ActionResult.fail("Not connected to server")
 

@@ -67,6 +67,10 @@ object ActionRegistry {
         register("creative_set_slot", CreativeSetSlotAction())
         register("pick_item", PickItemAction())
         register("pick_entity", PickEntityAction())
+        register("pick_item_from_block", PickItemFromBlockAction())
+        register("pick_item_from_entity", PickItemFromEntityAction())
+        register("bundle_selected_slot", BundleSelectedSlotAction())
+        register("slot_state_change", SlotStateChangeAction())
 
         // === 玩家状态与动作 ===
         register("sneak_start", SneakStartAction())
@@ -82,6 +86,8 @@ object ActionRegistry {
         register("drop_item_stack", DropItemStackAction())
         register("finish_using", FinishUsingAction())
         register("swap_hands", SwapHandsAction())
+        register("perform_respawn", PerformRespawnAction())
+        register("spectator_teleport", SpectatorTeleportAction())
 
         // === 聊天与命令 ===
         register("chat_message", ChatMessageAction())
@@ -108,6 +114,8 @@ object ActionRegistry {
         register("rename_item", RenameItemAction())
         register("lock_difficulty", LockDifficultyAction())
         register("select_trade", SelectTradeAction())
+        register("advancement_tab", AdvancementTabAction())
+        register("recipe_book_seen", RecipeBookSeenAction())
 
         // === 调试与特殊操作 ===
         register("custom_payload", CustomPayloadAction())
@@ -115,6 +123,7 @@ object ActionRegistry {
         register("keep_alive", KeepAliveAction())
         register("pong", PongAction())
         register("debug_sample_subscription", DebugSampleAction())
+        register("chunk_batch_received", ChunkBatchReceivedAction())
 
         // === 复合行为 ===
         register("look_at", LookAtAction())
@@ -129,6 +138,8 @@ object ActionRegistry {
         register("pathfind_to", PathfindToAction())
         register("batch", BatchAction())
         register("wait", WaitAction())
+        register("respawn", RespawnAction())
+        register("craft_recipe", CraftRecipeAction())
 
         // 冻结注册表：快照为不可变 Map，释放 mutable 引用
         executors = mutableExecutors.toMap()

@@ -31,7 +31,7 @@ class LookAtAction : ActionExecutor {
         player.xRot = pitch
 
         networkHandler.send(
-            ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround())
+            ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround(), player.horizontalCollision)
         )
 
         return ActionResult.ok("Looking at ($targetX, $targetY, $targetZ) yaw=$yaw pitch=$pitch")

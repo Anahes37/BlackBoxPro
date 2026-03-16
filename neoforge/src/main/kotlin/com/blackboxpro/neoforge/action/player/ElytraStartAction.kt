@@ -1,8 +1,8 @@
 package com.blackboxpro.neoforge.action.player
 
-import net.minecraft.network.protocol.game.ServerboundClientCommandPacket
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket
 
 class ElytraStartAction : PlayerCommandAction(
-    ServerboundClientCommandPacket.Mode.START_FLYING_WITH_ELYTRA,
+    ServerboundPlayerCommandPacket.Action.START_FALL_FLYING,
     "Started elytra flight"
 )
