@@ -5,7 +5,7 @@ import com.blackboxpro.fabric.action.ActionResult
 import com.blackboxpro.fabric.util.requireLong
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
-import net.minecraft.network.packet.c2s.play.KeepAliveC2SPacket
+import net.minecraft.network.packet.c2s.common.KeepAliveC2SPacket
 
 class KeepAliveAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {

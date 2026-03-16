@@ -18,7 +18,7 @@ class PlayerMoveAction : ActionExecutor {
         val networkHandler = MinecraftClient.getInstance().networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.sendPacket(PlayerMoveC2SPacket.PositionAndOnGround(x, y, z, onGround))
+        networkHandler.sendPacket(PlayerMoveC2SPacket.PositionAndOnGround(x, y, z, onGround, false))
         return ActionResult.ok()
     }
 }

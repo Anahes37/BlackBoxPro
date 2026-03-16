@@ -20,7 +20,7 @@ class PlayerMoveLookAction : ActionExecutor {
         val networkHandler = MinecraftClient.getInstance().networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.sendPacket(PlayerMoveC2SPacket.Full(x, y, z, yaw, pitch, onGround))
+        networkHandler.sendPacket(PlayerMoveC2SPacket.Full(x, y, z, yaw, pitch, onGround, false))
         return ActionResult.ok()
     }
 }

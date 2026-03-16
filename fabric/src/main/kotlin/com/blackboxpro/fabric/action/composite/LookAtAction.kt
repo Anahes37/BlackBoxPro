@@ -31,7 +31,7 @@ class LookAtAction : ActionExecutor {
         player.pitch = pitch
 
         networkHandler.sendPacket(
-            PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround)
+            PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround, player.horizontalCollision)
         )
 
         return ActionResult.ok("Looking at ($targetX, $targetY, $targetZ) yaw=$yaw pitch=$pitch")

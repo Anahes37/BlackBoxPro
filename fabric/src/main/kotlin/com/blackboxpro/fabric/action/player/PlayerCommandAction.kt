@@ -28,7 +28,7 @@ open class PlayerCommandAction(
         }
 
         // jumpBoost 只对 START_HORSE_JUMP 有意义，其他 mode 传 0
-        val jumpBoost = if (mode == ClientCommandC2SPacket.Mode.START_HORSE_JUMP) {
+        val jumpBoost = if (mode == ClientCommandC2SPacket.Mode.START_RIDING_JUMP) {
             params.getIntOrDefault("jumpBoost", 100)
         } else {
             0

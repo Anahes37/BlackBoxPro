@@ -1,8 +1,22 @@
 package com.blackboxpro.fabric.action.player
 
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket
+import com.blackboxpro.fabric.action.ActionExecutor
+import com.blackboxpro.fabric.action.ActionResult
+import com.google.gson.JsonObject
+import net.minecraft.client.MinecraftClient
+import net.minecraft.network.packet.c2s.play.PlayerInputC2SPacket
+import net.minecraft.util.PlayerInput
 
-class SneakStopAction : PlayerCommandAction(
-    ClientCommandC2SPacket.Mode.RELEASE_SHIFT_KEY,
-    "Stopped sneaking"
-)
+class SneakStopAction : ActionExecutor {
+    override fun execute(params: JsonObject): ActionResult {
+        val client = MinecraftClient.getInstance()
+        val networkHandler = client.networkHandler
+            ?: return ActionResult.fail("Not connected to server")
+
+        // 1.21.11: sneak 不再通过 ClientCommandC2SPacket 控制，改用 PlayerInput
+        networkHandler.sendPacket(
+            PlayerInputC2SPacket(PlayerInput.DEFAULT)
+        )
+        return ActionResult.ok("Stopped sneaking")
+    }
+}

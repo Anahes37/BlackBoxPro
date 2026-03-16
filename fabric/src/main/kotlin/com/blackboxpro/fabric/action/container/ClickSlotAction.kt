@@ -6,9 +6,9 @@ import com.blackboxpro.fabric.util.requireInt
 import com.google.gson.JsonObject
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.client.MinecraftClient
-import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket
 import net.minecraft.screen.slot.SlotActionType
+import net.minecraft.screen.sync.ItemStackHash
 
 class ClickSlotAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -33,7 +33,15 @@ class ClickSlotAction : ActionExecutor {
             ?: return ActionResult.fail("Not connected to server")
 
         handler.sendPacket(
-            ClickSlotC2SPacket(windowId, stateId, slot, button, actionType, ItemStack.EMPTY, Int2ObjectOpenHashMap())
+            ClickSlotC2SPacket(
+                windowId,
+                stateId,
+                slot.toShort(),
+                button.toByte(),
+                actionType,
+                Int2ObjectOpenHashMap(),
+                ItemStackHash.EMPTY
+            )
         )
         return ActionResult.ok("Clicked slot $slot in window $windowId (mode=$actionType)")
     }

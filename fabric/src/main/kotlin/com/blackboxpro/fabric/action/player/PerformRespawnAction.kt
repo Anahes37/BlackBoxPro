@@ -1,20 +1,17 @@
-package com.blackboxpro.fabric.action.debug
+package com.blackboxpro.fabric.action.player
 
 import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
-import com.blackboxpro.fabric.util.requireInt
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
-import net.minecraft.network.packet.c2s.common.CommonPongC2SPacket
+import net.minecraft.network.packet.c2s.play.ClientStatusC2SPacket
 
-class PongAction : ActionExecutor {
+class PerformRespawnAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
-        val parameter = params.requireInt("parameter")
-
         val networkHandler = MinecraftClient.getInstance().networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.sendPacket(CommonPongC2SPacket(parameter))
-        return ActionResult.ok()
+        networkHandler.sendPacket(ClientStatusC2SPacket(ClientStatusC2SPacket.Mode.PERFORM_RESPAWN))
+        return ActionResult.ok("Performed respawn")
     }
 }

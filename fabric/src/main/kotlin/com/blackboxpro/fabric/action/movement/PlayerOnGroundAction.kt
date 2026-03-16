@@ -14,7 +14,7 @@ class PlayerOnGroundAction : ActionExecutor {
         val networkHandler = MinecraftClient.getInstance().networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.sendPacket(PlayerMoveC2SPacket.OnGroundOnly(onGround))
+        networkHandler.sendPacket(PlayerMoveC2SPacket.OnGroundOnly(onGround, false))
         return ActionResult.ok()
     }
 }

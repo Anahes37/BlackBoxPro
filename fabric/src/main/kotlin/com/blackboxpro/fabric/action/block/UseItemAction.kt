@@ -14,10 +14,13 @@ class UseItemAction : ActionExecutor {
         val hand = HandUtil.fromString(params.getStringOrNull("hand") ?: "main_hand")
         val sequence = params.getIntOrDefault("sequence", 0)
 
-        val player = MinecraftClient.getInstance().networkHandler
+        val client = MinecraftClient.getInstance()
+        val handler = client.networkHandler
             ?: return ActionResult.fail("Not connected to server")
+        val player = client.player
+            ?: return ActionResult.fail("Player not available")
 
-        player.sendPacket(PlayerInteractItemC2SPacket(hand, sequence))
+        handler.sendPacket(PlayerInteractItemC2SPacket(hand, sequence, player.yaw, player.pitch))
         return ActionResult.ok("Used item")
     }
 }

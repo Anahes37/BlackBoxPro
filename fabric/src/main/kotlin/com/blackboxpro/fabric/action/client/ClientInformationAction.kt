@@ -7,8 +7,10 @@ import com.blackboxpro.fabric.util.getIntOrDefault
 import com.blackboxpro.fabric.util.getStringOrNull
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.option.GameOptions
+import net.minecraft.network.message.ChatVisibility
+import net.minecraft.network.packet.c2s.common.ClientOptionsC2SPacket
 import net.minecraft.network.packet.c2s.common.SyncedClientOptions
+import net.minecraft.particle.ParticlesMode
 
 class ClientInformationAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -25,25 +27,31 @@ class ClientInformationAction : ActionExecutor {
         val networkHandler = client.networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        // 显式映射 mainHand，不依赖 enum ordinal
         val arm = when (mainHand) {
             0 -> net.minecraft.util.Arm.LEFT
             1 -> net.minecraft.util.Arm.RIGHT
             else -> return ActionResult.fail("Invalid mainHand: $mainHand (expected 0=left, 1=right)")
         }
 
+        val chatVisibility = when (chatMode) {
+            0 -> ChatVisibility.FULL
+            1 -> ChatVisibility.SYSTEM
+            2 -> ChatVisibility.HIDDEN
+            else -> return ActionResult.fail("Invalid chatMode: $chatMode (expected 0-2)")
+        }
+
         val syncedOptions = SyncedClientOptions(
             locale,
             viewDistance,
-            GameOptions.ChatVisibility.byId(chatMode),
+            chatVisibility,
             chatColors,
             skinParts,
             arm,
             textFiltering,
             allowServerListings,
-            net.minecraft.client.option.ParticlesMode.ALL
+            ParticlesMode.ALL
         )
-        networkHandler.sendPacket(syncedOptions.toPacket())
+        networkHandler.sendPacket(ClientOptionsC2SPacket(syncedOptions))
 
         return ActionResult.ok("Client information sent")
     }

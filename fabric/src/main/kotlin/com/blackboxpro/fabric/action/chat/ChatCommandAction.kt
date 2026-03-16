@@ -10,8 +10,8 @@ class ChatCommandAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val command = params.requireString("command").removePrefix("/")
 
-        if (command.length > 256) {
-            return ActionResult.fail("Command too long: ${command.length} > 256")
+        if (command.length > 32767) {
+            return ActionResult.fail("Command too long: ${command.length} > 32767")
         }
 
         val networkHandler = MinecraftClient.getInstance().networkHandler
