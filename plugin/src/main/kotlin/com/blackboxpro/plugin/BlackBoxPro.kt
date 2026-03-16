@@ -11,7 +11,7 @@ import taboolib.common.platform.function.info
  */
 object BlackBoxPro : Plugin() {
 
-    const val VERSION = "1.0.0"
+    const val VERSION = "1.0.2"
 
     override fun onEnable() {
         info("[BlackBoxPro] Server plugin v$VERSION enabled.")

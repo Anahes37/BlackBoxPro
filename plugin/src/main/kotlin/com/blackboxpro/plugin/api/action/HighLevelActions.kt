@@ -1,0 +1,207 @@
+package com.blackboxpro.plugin.api.action
+
+import com.blackboxpro.plugin.channel.ResponseMessage
+import org.bukkit.entity.Player
+import java.util.concurrent.CompletableFuture
+import kotlin.math.*
+
+/**
+ * 面向场景的语义化高级 API。
+ *
+ * 内部组合底层 action，为开发者提供直观的操作方法。
+ * 所有方法均返回 CompletableFuture<ResponseMessage>，支持链式调用。
+ */
+object HighLevelActions {
+
+    // ======================== 移动类 ========================
+
+    /**
+     * 向玩家当前朝向前进指定格数。
+     * 通过玩家 yaw 计算目标坐标，发送 player_move_look。
+     */
+    fun moveForward(player: Player, blocks: Double): CompletableFuture<ResponseMessage> {
+        val loc = player.location
+        val rad = Math.toRadians(loc.yaw.toDouble())
+        val dx = -sin(rad) * blocks
+        val dz = cos(rad) * blocks
+        return MovementActions.playerMoveLook(
+            player,
+            loc.x + dx, loc.y, loc.z + dz,
+            loc.yaw, loc.pitch
+        )
+    }
+
+    /**
+     * 向指定方向移动指定格数。
+     * @param direction 方向: "north"(-Z), "south"(+Z), "east"(+X), "west"(-X), "up"(+Y), "down"(-Y)
+     */
+    fun moveDirection(player: Player, direction: String, blocks: Double): CompletableFuture<ResponseMessage> {
+        val loc = player.location
+        var dx = 0.0; var dy = 0.0; var dz = 0.0
+        when (direction.lowercase()) {
+            "north" -> dz = -blocks
+            "south" -> dz = blocks
+            "east" -> dx = blocks
+            "west" -> dx = -blocks
+            "up" -> dy = blocks
+            "down" -> dy = -blocks
+            else -> error("Unknown direction: $direction (expected: north/south/east/west/up/down)")
+        }
+        return MovementActions.playerMove(player, loc.x + dx, loc.y + dy, loc.z + dz)
+    }
+
+    /**
+     * 移动到指定坐标并自动转向目标位置。
+     */
+    fun teleportTo(player: Player, x: Double, y: Double, z: Double): CompletableFuture<ResponseMessage> {
+        val loc = player.location
+        val dx = x - loc.x
+        val dz = z - loc.z
+        val dy = y - (loc.y + 1.62) // 眼睛高度
+        val distXZ = sqrt(dx * dx + dz * dz)
+        val yaw = Math.toDegrees(atan2(-dx, dz)).toFloat()
+        val pitch = Math.toDegrees(-atan2(dy, distXZ)).toFloat()
+        return MovementActions.playerMoveLook(player, x, y, z, yaw, pitch)
+    }
+
+    // ======================== 视角类 ========================
+
+    /**
+     * 看向指定方块坐标（方块中心）。
+     */
+    fun lookAtBlock(player: Player, x: Int, y: Int, z: Int): CompletableFuture<ResponseMessage> =
+        CompositeActions.lookAt(player, x + 0.5, y + 0.5, z + 0.5)
+
+    /**
+     * 看向指定精确坐标。
+     */
+    fun lookAt(player: Player, x: Double, y: Double, z: Double): CompletableFuture<ResponseMessage> =
+        CompositeActions.lookAt(player, x, y, z)
+
+    /**
+     * 看向指定实体。
+     */
+    fun lookAtEntity(player: Player, entityId: Int): CompletableFuture<ResponseMessage> =
+        CompositeActions.lookAtEntity(player, entityId)
+
+    // ======================== 容器点击类 ========================
+
+    /**
+     * 左键点击槽位（普通拾取/放置）。
+     * mode=0, button=0
+     */
+    fun leftClick(player: Player, windowId: Int, stateId: Int, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = 0, mode = 0)
+
+    /**
+     * 右键点击槽位（拾取一半/放置一个）。
+     * mode=0, button=1
+     */
+    fun rightClick(player: Player, windowId: Int, stateId: Int, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = 1, mode = 0)
+
+    /**
+     * Shift+左键点击槽位（快速移动）。
+     * mode=1, button=0
+     */
+    fun shiftClick(player: Player, windowId: Int, stateId: Int, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = 0, mode = 1)
+
+    /**
+     * Shift+右键点击槽位。
+     * mode=1, button=1
+     */
+    fun shiftRightClick(player: Player, windowId: Int, stateId: Int, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = 1, mode = 1)
+
+    /**
+     * 数字键交换槽位到快捷栏。
+     * mode=2, button=hotbar(0-8)
+     */
+    fun swapToHotbar(player: Player, windowId: Int, stateId: Int, slot: Int, hotbar: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = hotbar, mode = 2)
+
+    /**
+     * 中键复制（创造模式）。
+     * mode=3, button=2
+     */
+    fun middleClick(player: Player, windowId: Int, stateId: Int, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = 2, mode = 3)
+
+    /**
+     * Q 丢弃槽位物品（单个）。
+     * mode=4, button=0
+     */
+    fun dropSlot(player: Player, windowId: Int, stateId: Int, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = 0, mode = 4)
+
+    /**
+     * Ctrl+Q 丢弃槽位全部物品。
+     * mode=4, button=1
+     */
+    fun dropSlotAll(player: Player, windowId: Int, stateId: Int, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = 1, mode = 4)
+
+    /**
+     * 双击收集同类物品到光标。
+     * mode=6, button=0
+     */
+    fun doubleClick(player: Player, windowId: Int, stateId: Int, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.clickSlot(player, windowId, stateId, slot, button = 0, mode = 6)
+
+    // ======================== 快捷栏 ========================
+
+    /**
+     * 切换快捷栏选中槽位（0-8）。
+     */
+    fun switchHotbar(player: Player, slot: Int): CompletableFuture<ResponseMessage> =
+        ContainerActions.setCarriedItem(player, slot)
+
+    // ======================== 聊天与命令 ========================
+
+    /**
+     * 发送聊天消息。
+     */
+    fun sendChat(player: Player, message: String): CompletableFuture<ResponseMessage> =
+        ChatActions.chatMessage(player, message)
+
+    /**
+     * 执行命令（自动去除开头的 /）。
+     */
+    fun executeCommand(player: Player, command: String): CompletableFuture<ResponseMessage> =
+        ChatActions.chatCommand(player, command.removePrefix("/"))
+
+    // ======================== 飞行控制 ========================
+
+    /**
+     * 开始飞行（创造/旁观模式）。
+     */
+    fun startFlying(player: Player): CompletableFuture<ResponseMessage> =
+        ClientActions.playerAbilities(player, flying = true)
+
+    /**
+     * 停止飞行。
+     */
+    fun stopFlying(player: Player): CompletableFuture<ResponseMessage> =
+        ClientActions.playerAbilities(player, flying = false)
+
+    // ======================== 物品操作 ========================
+
+    /**
+     * 丢弃手持物品（单个）。
+     */
+    fun dropItem(player: Player): CompletableFuture<ResponseMessage> =
+        PlayerActions.dropItem(player)
+
+    /**
+     * 丢弃手持物品（整组）。
+     */
+    fun dropItemStack(player: Player): CompletableFuture<ResponseMessage> =
+        PlayerActions.dropItemStack(player)
+
+    /**
+     * 交换主副手物品。
+     */
+    fun swapHands(player: Player): CompletableFuture<ResponseMessage> =
+        PlayerActions.swapHands(player)
+}

@@ -10,6 +10,7 @@ plugins {
     java
     id("io.izzel.taboolib") version "2.0.30"
     id("org.jetbrains.kotlin.jvm") version "2.2.0"
+    `maven-publish`
 }
 
 taboolib {
@@ -54,4 +55,35 @@ tasks.withType<KotlinCompile> {
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
+}
+
+// ======================== 发布配置 ========================
+
+val pluginJar = tasks.named("jar")
+
+publishing {
+    repositories {
+        mavenLocal()
+        maven {
+            name = "aeolianReleases"
+            url = uri("http://repo.aeoliancloud.com/repository/releases")
+            isAllowInsecureProtocol = true
+            credentials {
+                username = (project.findProperty("aeolianUsername") as String?) ?: ""
+                password = (project.findProperty("aeolianPassword") as String?) ?: ""
+            }
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+        }
+    }
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = project.group.toString()
+            artifactId = rootProject.name
+            version = project.version.toString()
+            artifact(pluginJar)
+            artifact(tasks.named("kotlinSourcesJar")) { classifier = "sources" }
+        }
+    }
 }
