@@ -52,8 +52,11 @@ jobs:
       - name: Fix gradlew permissions
         run: chmod +x gradlew forge-1.12.2/gradlew plugin/gradlew
 
+      - name: Stop Gradle daemons
+        run: ./gradlew --stop || true
+
       - name: Build Fabric & NeoForge
-        run: ./gradlew :fabric-1.21.11:build :neoforge-1.21.11:build --no-parallel
+        run: ./gradlew :fabric-1.21.11:build :neoforge-1.21.11:build --no-daemon
 
       - name: Build Forge 1.12.2
         run: cd forge-1.12.2 && ./gradlew build

@@ -9,6 +9,7 @@ import com.google.gson.JsonObject
 import org.bukkit.entity.Player
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -23,6 +24,10 @@ import java.util.function.Consumer
  * 3. Future 模式: [sendAsync] 返回 CompletableFuture（推荐）
  */
 object BlackBoxApi {
+
+    private val scheduler = Executors.newSingleThreadScheduledExecutor { r ->
+        Thread(r, "BlackBoxPro-Timeout").apply { isDaemon = true }
+    }
 
     /**
      * 向玩家发送指令（fire-and-forget，不等待响应）。
@@ -70,15 +75,15 @@ object BlackBoxApi {
             future.complete(response)
         }
 
-        // 超时处理
-        CompletableFuture.delayedExecutor(timeoutMs, TimeUnit.MILLISECONDS).execute {
+        // 超时处理（JDK 8 兼容）
+        scheduler.schedule({
             if (!future.isDone) {
                 ChannelHandler.cancelPending(id)
                 future.complete(
                     ResponseMessage(id = id, status = "failure", message = "Response timed out after ${timeoutMs}ms")
                 )
             }
-        }
+        }, timeoutMs, TimeUnit.MILLISECONDS)
 
         return future
     }
