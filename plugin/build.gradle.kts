@@ -5,6 +5,7 @@ import io.izzel.taboolib.gradle.Bukkit
 import io.izzel.taboolib.gradle.BukkitUtil
 import io.izzel.taboolib.gradle.CommandHelper
 import io.izzel.taboolib.gradle.MinecraftChat
+import java.util.Properties
 
 plugins {
     java
@@ -12,6 +13,12 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "2.2.0"
     `maven-publish`
 }
+
+// Read version from root project's gradle.properties
+val rootProps = Properties().apply {
+    load(file("${rootDir}/../gradle.properties").reader())
+}
+version = rootProps.getProperty("version", "0.0.0")
 
 taboolib {
     env {
@@ -23,9 +30,6 @@ taboolib {
     }
     description {
         name = "BlackBoxPro"
-        contributors {
-            name("BlackBoxPro Team")
-        }
     }
     version { taboolib = "6.2.4-99fb800" }
 }
