@@ -64,7 +64,4 @@ object QueryActions {
 
     fun queryActiveEffects(player: Player): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "query_active_effects")
-
-    fun jump(player: Player): CompletableFuture<ResponseMessage> =
-        BlackBoxApi.sendAsync(player, "jump")
 }

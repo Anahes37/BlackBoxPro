@@ -2,6 +2,8 @@ package com.blackboxpro.plugin
 
 import taboolib.common.platform.Plugin
 import taboolib.common.platform.function.info
+import taboolib.common.util.unsafeLazy
+import taboolib.platform.util.bukkitPlugin
 
 /**
  * BlackBoxPro 服务端插件主入口。
@@ -11,7 +13,7 @@ import taboolib.common.platform.function.info
  */
 object BlackBoxPro : Plugin() {
 
-    const val VERSION = "1.0.2"
+    val VERSION by unsafeLazy { bukkitPlugin.description.version }
 
     override fun onEnable() {
         info("[BlackBoxPro] Server plugin v$VERSION enabled.")

@@ -61,4 +61,7 @@ object PlayerActions {
 
     fun performRespawn(player: Player): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "perform_respawn")
+
+    fun jump(player: Player): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "jump")
 }

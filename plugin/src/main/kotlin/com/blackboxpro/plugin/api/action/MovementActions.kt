@@ -11,18 +11,29 @@ import java.util.concurrent.CompletableFuture
  */
 object MovementActions {
 
-    fun playerMove(player: Player, x: Double, y: Double, z: Double, onGround: Boolean = true): CompletableFuture<ResponseMessage> =
+    fun playerMove(
+        player: Player,
+        x: Double, y: Double, z: Double,
+        speed: Double = 1.0,
+        timeout: Int = 200
+    ): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "player_move", JsonObject().apply {
             addProperty("x", x); addProperty("y", y); addProperty("z", z)
-            addProperty("onGround", onGround)
-        })
+            addProperty("speed", speed); addProperty("timeout", timeout)
+        }, timeoutMs = (timeout * 50L + 5000L))
 
-    fun playerMoveLook(player: Player, x: Double, y: Double, z: Double, yaw: Float, pitch: Float, onGround: Boolean = true): CompletableFuture<ResponseMessage> =
+    fun playerMoveLook(
+        player: Player,
+        x: Double, y: Double, z: Double,
+        pitch: Float,
+        speed: Double = 1.0,
+        timeout: Int = 200
+    ): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "player_move_look", JsonObject().apply {
             addProperty("x", x); addProperty("y", y); addProperty("z", z)
-            addProperty("yaw", yaw); addProperty("pitch", pitch)
-            addProperty("onGround", onGround)
-        })
+            addProperty("pitch", pitch)
+            addProperty("speed", speed); addProperty("timeout", timeout)
+        }, timeoutMs = (timeout * 50L + 5000L))
 
     fun playerLook(player: Player, yaw: Float, pitch: Float, onGround: Boolean = true): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "player_look", JsonObject().apply {

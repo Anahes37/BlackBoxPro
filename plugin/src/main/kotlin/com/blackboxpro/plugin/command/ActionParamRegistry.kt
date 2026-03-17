@@ -11,8 +11,8 @@ object ActionParamRegistry {
 
     init {
         // === 移动与位置 ===
-        register("player_move", "x", "y", "z", "onGround")
-        register("player_move_look", "x", "y", "z", "yaw", "pitch", "onGround")
+        register("player_move", "x", "y", "z", "speed", "timeout")
+        register("player_move_look", "x", "y", "z", "pitch", "speed", "timeout")
         register("player_look", "yaw", "pitch", "onGround")
         register("player_on_ground", "onGround")
         register("confirm_teleportation", "teleportId")
@@ -62,6 +62,7 @@ object ActionParamRegistry {
         register("swap_hands")
         register("perform_respawn")
         register("spectator_teleport", "targetUuid")
+        register("jump")
 
         // === 聊天与命令 ===
         register("chat_message", "message")
@@ -125,7 +126,6 @@ object ActionParamRegistry {
         register("query_player_state")
         register("query_container_slots", "windowId", "slots")
         register("query_active_effects")
-        register("jump")
 
         // === 导航与瞄准 ===
         register("look_at_block", "x", "y", "z", "face")

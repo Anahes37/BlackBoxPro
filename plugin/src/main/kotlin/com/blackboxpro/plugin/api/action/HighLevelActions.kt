@@ -27,7 +27,7 @@ object HighLevelActions {
         return MovementActions.playerMoveLook(
             player,
             loc.x + dx, loc.y, loc.z + dz,
-            loc.yaw, loc.pitch
+            loc.pitch
         )
     }
 
@@ -59,9 +59,8 @@ object HighLevelActions {
         val dz = z - loc.z
         val dy = y - (loc.y + 1.62) // 眼睛高度
         val distXZ = sqrt(dx * dx + dz * dz)
-        val yaw = Math.toDegrees(atan2(-dx, dz)).toFloat()
         val pitch = Math.toDegrees(-atan2(dy, distXZ)).toFloat()
-        return MovementActions.playerMoveLook(player, x, y, z, yaw, pitch)
+        return MovementActions.playerMoveLook(player, x, y, z, pitch)
     }
 
     // ======================== 视角类 ========================
