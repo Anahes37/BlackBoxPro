@@ -13,6 +13,7 @@ import taboolib.common.platform.command.CommandBody
 import taboolib.common.platform.command.CommandHeader
 import taboolib.common.platform.command.mainCommand
 import taboolib.common.platform.command.subCommand
+import taboolib.common.platform.command.suggestUncheck
 
 @CommandHeader("blackbox", permission = "blackbox.admin")
 object BlackBoxCommand {
@@ -23,7 +24,8 @@ object BlackBoxCommand {
     val main = mainCommand {
         execute<CommandSender> { sender, _, _ ->
             sender.sendMessage("§6[BlackBoxPro] §fServer Plugin v${BlackBoxPro.VERSION}")
-            sender.sendMessage("§7/blackbox send <player> <action> [params_json] §f- 发送指令")
+            sender.sendMessage("§7/blackbox send <player> <action> [params_json] §f- 发送指令 (JSON)")
+            sender.sendMessage("§7/blackbox exec <player> <action> [key:value ...] §f- 发送指令 (扁平化)")
             sender.sendMessage("§7/blackbox test <player> §f- 执行集成测试")
             sender.sendMessage("§7/blackbox status §f- 查看状态")
             sender.sendMessage("§7/blackbox reload §f- 重载配置")
@@ -71,6 +73,55 @@ object BlackBoxCommand {
                     }
                 }
             }
+        }
+    }
+
+    @CommandBody
+    val exec = subCommand {
+        dynamic("player") {
+            suggestion<CommandSender> { _, _ ->
+                Bukkit.getOnlinePlayers().map { it.name }
+            }
+            dynamic("action") {
+                suggestUncheck { ActionParamRegistry.getActionIds() }
+                execute<CommandSender> { sender, context, _ ->
+                    executeFlat(sender, context["player"], context["action"], emptyList())
+                }
+                dynamic("params") {
+                    suggestUncheck {
+                        val action = ctx["action"]
+                        val allParams = ActionParamRegistry.getParams(action) ?: return@suggestUncheck emptyList()
+                        val currentInput = ctx.self()
+                        val enteredKeys = currentInput.split(" ")
+                            .filter { it.contains(':') }
+                            .map { it.substringBefore(':') }
+                            .toSet()
+                        allParams.filterNot { it in enteredKeys }.map { "$it:" }
+                    }
+                    execute<CommandSender> { sender, context, _ ->
+                        val rawParams = context["params"].split(" ").filter { it.isNotBlank() }
+                        executeFlat(sender, context["player"], context["action"], rawParams)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun executeFlat(sender: CommandSender, playerName: String, action: String, rawParams: List<String>) {
+        val player = Bukkit.getPlayerExact(playerName)
+        if (player == null) {
+            sender.sendMessage("§c[BlackBoxPro] 玩家 $playerName 不在线。")
+            return
+        }
+        val params = FlatParamParser.parse(rawParams)
+        if (params.size() == 0) {
+            BlackBoxApi.send(player, action)
+            sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}")
+        } else {
+            BlackBoxApi.sendAsync(player, action, params).thenAccept { response ->
+                sender.sendMessage("§6[BlackBoxPro] 响应: §f${response.status} §7${response.message ?: ""}")
+            }
+            sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}§a，参数: §7$params")
         }
     }
 
