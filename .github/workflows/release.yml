@@ -53,7 +53,7 @@ jobs:
         run: chmod +x gradlew forge-1.12.2/gradlew plugin/gradlew
 
       - name: Build Fabric & NeoForge
-        run: ./gradlew :fabric-1.21.11:build :neoforge-1.21.11:build
+        run: ./gradlew :fabric-1.21.11:build :neoforge-1.21.11:build --no-parallel
 
       - name: Build Forge 1.12.2
         run: cd forge-1.12.2 && ./gradlew build

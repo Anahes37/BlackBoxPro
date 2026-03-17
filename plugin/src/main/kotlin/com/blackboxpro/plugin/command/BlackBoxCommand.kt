@@ -118,7 +118,8 @@ object BlackBoxCommand {
             BlackBoxApi.send(player, action)
             sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}")
         } else {
-            BlackBoxApi.sendAsync(player, action, params).thenAccept { response ->
+            // 使用 callback 模式避免 sendAsync 中的 CompletableFuture.delayedExecutor（Java 9+）
+            BlackBoxApi.send(player, action, params) { response ->
                 sender.sendMessage("§6[BlackBoxPro] 响应: §f${response.status} §7${response.message ?: ""}")
             }
             sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}§a，参数: §7$params")
