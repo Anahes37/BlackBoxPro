@@ -1,5 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
 import io.izzel.taboolib.gradle.Basic
 import io.izzel.taboolib.gradle.Bukkit
 import io.izzel.taboolib.gradle.BukkitUtil
@@ -51,14 +51,14 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        jvmTarget.set(JVM_21)
+        jvmTarget.set(JVM_1_8)
         freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 // ======================== 发布配置 ========================
