@@ -258,7 +258,43 @@ object HighLevelActions {
      * 玩家跳跃。
      */
     fun jump(player: Player): CompletableFuture<ResponseMessage> =
-        QueryActions.jump(player)
+        PlayerActions.jump(player)
+
+    /**
+     * 查询指定坐标方块状态。
+     */
+    fun queryBlockState(player: Player, x: Int, y: Int, z: Int): CompletableFuture<ResponseMessage> =
+        QueryActions.queryBlockState(player, x, y, z)
+
+    /**
+     * 查询世界全局状态。
+     */
+    fun queryWorldState(player: Player): CompletableFuture<ResponseMessage> =
+        QueryActions.queryWorldState(player)
+
+    /**
+     * 查询 Tab 列表。
+     */
+    fun queryTabList(player: Player, limit: Int = 100): CompletableFuture<ResponseMessage> =
+        QueryActions.queryTabList(player, limit)
+
+    /**
+     * 查询记分板状态。
+     */
+    fun queryScoreboard(player: Player, objective: String? = null): CompletableFuture<ResponseMessage> =
+        QueryActions.queryScoreboard(player, objective)
+
+    /**
+     * 查询当前屏幕/GUI 状态。
+     */
+    fun queryScreenState(player: Player): CompletableFuture<ResponseMessage> =
+        QueryActions.queryScreenState(player)
+
+    /**
+     * 查询 Boss Bar 信息。
+     */
+    fun queryBossBar(player: Player): CompletableFuture<ResponseMessage> =
+        QueryActions.queryBossBar(player)
 
     // ======================== 导航与瞄准 ========================
 

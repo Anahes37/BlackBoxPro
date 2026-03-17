@@ -126,6 +126,12 @@ object ActionParamRegistry {
         register("query_player_state")
         register("query_container_slots", "windowId", "slots")
         register("query_active_effects")
+        register("query_block_state", "x", "y", "z")
+        register("query_world_state")
+        register("query_tab_list", "limit")
+        register("query_scoreboard", "objective")
+        register("query_screen_state")
+        register("query_boss_bar")
 
         // === 导航与瞄准 ===
         register("look_at_block", "x", "y", "z", "face")

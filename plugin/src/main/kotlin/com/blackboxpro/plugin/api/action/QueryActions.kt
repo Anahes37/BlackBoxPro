@@ -64,4 +64,30 @@ object QueryActions {
 
     fun queryActiveEffects(player: Player): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "query_active_effects")
+
+    // === v1.3.0 新增查询 ===
+
+    fun queryBlockState(player: Player, x: Int, y: Int, z: Int): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_block_state", JsonObject().apply {
+            addProperty("x", x); addProperty("y", y); addProperty("z", z)
+        })
+
+    fun queryWorldState(player: Player): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_world_state")
+
+    fun queryTabList(player: Player, limit: Int = 100): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_tab_list", JsonObject().apply {
+            addProperty("limit", limit)
+        })
+
+    fun queryScoreboard(player: Player, objective: String? = null): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_scoreboard", JsonObject().apply {
+            if (objective != null) addProperty("objective", objective)
+        })
+
+    fun queryScreenState(player: Player): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_screen_state")
+
+    fun queryBossBar(player: Player): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_boss_bar")
 }
