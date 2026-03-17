@@ -144,6 +144,12 @@ object ActionRegistry {
         register("query_player_state", QueryPlayerStateAction())
         register("query_container_slots", QueryContainerSlotsAction())
         register("query_active_effects", QueryActiveEffectsAction())
+        register("query_block_state", QueryBlockStateAction())
+        register("query_world_state", QueryWorldStateAction())
+        register("query_tab_list", QueryTabListAction())
+        register("query_scoreboard", QueryScoreboardAction())
+        register("query_screen_state", QueryScreenStateAction())
+        register("query_boss_bar", QueryBossBarAction())
 
         executors = mutableExecutors.toMap()
         frozen = true
