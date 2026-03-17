@@ -37,9 +37,9 @@ BlackBoxPro/                    # Gradle 根项目
 
 ### 版本号管理
 
-- `gradle.properties` (根) → `mod_version=1.0.0` → fabric/neoforge 共用
-- `forge-1.12.2/gradle.properties` → `mod_version=1.0.0` → forge 独立版本
-- `plugin/gradle.properties` → `version=1.0.2` → plugin 独立版本
+- `gradle.properties` (根) → `version=1.3.0` → fabric/neoforge 共用
+- `forge-1.12.2/gradle.properties` → `mod_version=x.x.x` → forge 独立版本
+- `plugin/gradle.properties` → `version=x.x.x` → plugin 独立版本
 - 各模块独立演进，CI 通过版本号变化检测触发对应构建
 
 ## 通讯架构
@@ -74,7 +74,7 @@ BlackBoxPro/                    # Gradle 根项目
 - Log4j 日志（Forge 内置）
 - 独立 Gradle 项目（Groovy DSL），不在根 settings.gradle.kts 中
 - 网络层使用 FMLEventChannel + CPacketCustomPayload
-- 功能为 1.21.11 版本的最大兼容子集（约 75 个 Action）
+- 功能为 1.21.11 版本的最大兼容子集（约 80+ 个 Action）
 
 ### 服务端插件 (plugin)
 
@@ -83,12 +83,12 @@ BlackBoxPro/                    # Gradle 根项目
 - NMS：`ink.ptms.core:v12105:12105` (mapped + universal)
 - Gson 2.11.0
 
-## 客户端 Mod 架构 (fabric / neoforge 对称)
+## 客户端 Mod 架构 (fabric / neoforge / forge 三端对称)
 
-两个 Mod 模块结构完全对称，代码几乎一致：
+三个 Mod 模块结构对称，逻辑一致（forge-1.12.2 为最大兼容子集）：
 
 ```
-com.blackboxpro.{fabric|neoforge}
+com.blackboxpro.{fabric|neoforge|forge}
 ├── action/              # 行为执行器（每个 Action 一个类）
 │   ├── movement/        # 移动类：PlayerMoveAction, PlayerLookAction...
 │   ├── block/           # 方块交互：DigStartAction, PlaceBlockAction...
@@ -96,14 +96,15 @@ com.blackboxpro.{fabric|neoforge}
 │   ├── container/       # 容器/GUI：ClickSlotAction, CloseContainerAction...
 │   ├── player/          # 玩家状态：SneakStartAction, DropItemAction...
 │   ├── chat/            # 聊天命令：ChatMessageAction, ChatCommandAction
-│   ├── client/          # 客户端设置：ClientInformationAction...
+│   ├── client/          # 客户端设置：ClientInformationAction, ScreenshotAction...
 │   ├── advanced/        # 进阶交互：EditBookAction, UpdateSignAction...
 │   ├── debug/           # 调试：KeepAliveAction, PongAction...
+│   ├── query/           # 查询行为：QueryPlayerStateAction, QueryBlockStateAction...
 │   └── composite/       # 复合行为：PathfindToAction, BreakBlockAction, BatchAction...
 ├── dispatcher/          # 调度层：ActionRegistry, CommandDispatcher, 消息模型
 ├── network/             # 网络层：Channel 注册、Payload 编解码
 ├── config/              # 配置：BlackBoxConfig
-└── util/                # 工具：DirectionUtil, HandUtil, JsonUtil, MathUtil
+└── util/                # 工具：DirectionUtil, HandUtil, JsonUtil, MathUtil, InjectedInput
 ```
 
 核心流程：
@@ -114,7 +115,7 @@ com.blackboxpro.{fabric|neoforge}
 
 ### ActionExecutor 接口
 
-所有行为实现 `ActionExecutor` 接口，通过 `ActionRegistry.registerAll()` 在启动时注册。当前已注册 ~70 个行为，覆盖 Minecraft 全部 Serverbound 协议包。
+所有行为实现 `ActionExecutor` 接口，通过 `ActionRegistry.registerAll()` 在启动时注册。当前已注册 ~86 个行为，覆盖 Minecraft 全部 Serverbound 协议包 + 查询行为。
 
 ## 服务端插件架构 (plugin)
 
@@ -123,14 +124,20 @@ com.blackboxpro.plugin
 ├── api/                 # 公开 API
 │   ├── BlackBoxApi      # 三种调用模式：fire-and-forget / callback / CompletableFuture
 │   └── action/          # 预封装的高级 Action 辅助方法
+│       ├── MovementActions, PlayerActions, EntityActions, ContainerActions
+│       ├── ChatActions, ClientActions, CompositeActions, NavigationActions
+│       ├── QueryActions, ScreenshotActions
+│       └── HighLevelActions  # 面向场景的语义化高级 API
 ├── channel/             # Plugin Message 通讯层
 │   ├── ChannelHandler   # 发送/接收/回调管理（@Awake 自动注册）
 │   ├── BlackBoxChannels # Channel ID 常量
 │   ├── CommandMessage    # 指令消息模型
 │   └── ResponseMessage   # 响应消息模型
 ├── command/             # 命令系统
-│   ├── BlackBoxCommand  # /blackbox send|test|status|reload（@CommandHeader）
-│   └── BlackBoxTestRunner # 集成测试执行器
+│   ├── BlackBoxCommand  # /blackbox send|exec|test|status|reload（@CommandHeader）
+│   ├── BlackBoxTestRunner # 集成测试执行器（截图 + 三阶段验证）
+│   ├── ActionParamRegistry # Action 参数元数据（Tab 补全）
+│   └── FlatParamParser  # key:value 扁平化参数解析器
 └── config/              # 配置
     └── BlackBoxSettings # @Config("config.yml")，debug/timeout/maxPayload
 ```
@@ -162,7 +169,8 @@ com.blackboxpro.plugin
 
 1. 在 `action/` 对应子包下创建 `XxxAction` 类，实现 `ActionExecutor`
 2. 在 `ActionRegistry.registerAll()` 中注册 `register("action_id", XxxAction())`
-3. fabric 和 neoforge 两个模块需同步添加
+3. fabric、neoforge、forge-1.12.2 三个模块需同步添加（forge 为兼容子集，API 不同时需适配）
+4. plugin 模块：在对应的 `XxxActions` object 中新增方法，`ActionParamRegistry` 注册参数
 
 ### 错误处理
 
@@ -203,258 +211,97 @@ cd plugin && ./gradlew jar
 | 方块交互 | `dig_start`, `place_block`, `use_item` | 5 |
 | 实体交互 | `attack_entity`, `interact_entity`, `swing_arm` | 4 |
 | 容器/GUI | `click_slot`, `close_container`, `set_carried_item` | 11 |
-| 玩家状态 | `sneak_start`, `drop_item`, `swap_hands` | 16 |
+| 玩家状态 | `sneak_start`, `drop_item`, `swap_hands`, `jump` | 17 |
 | 聊天命令 | `chat_message`, `chat_command` | 2 |
 | 客户端设置 | `client_information`, `player_abilities`, `screenshot` | 4 |
 | 进阶交互 | `edit_book`, `update_sign`, `select_trade` | 16 |
 | 调试 | `keep_alive`, `pong`, `custom_payload` | 6 |
 | 复合行为 | `pathfind_to`, `break_block`, `batch`, `craft_recipe` | 14 |
+| 查询行为 | `query_player_state`, `query_block_state`, `query_scoreboard` | 14 |
 
 ## v1.1.0 截图功能开发指引
 
-> 完整设计见 `开发文档-1.1.0.md`，本节提供面向实现的精确提示词。
+> 完整设计见 `开发文档-1.1.0.md`。已实现，三端（fabric/neoforge/forge）均已支持。
 
-### 总览：需要变更的文件
+## v1.2.x 移动系统重构
 
-```
-fabric-1.21.11/src/main/kotlin/com/blackboxpro/fabric/
-├── action/client/ScreenshotAction.kt     # 新增
-├── util/ScreenshotHelper.kt              # 新增
-├── config/BlackBoxConfig.kt              # 修改：新增 ScreenshotConfig
-└── dispatcher/ActionRegistry.kt          # 修改：注册 screenshot
+### InjectedInput 输入注入机制
 
-neoforge-1.21.11/src/main/kotlin/com/blackboxpro/neoforge/
-├── action/client/ScreenshotAction.kt     # 新增（对称）
-├── util/ScreenshotHelper.kt              # 新增（对称）
-├── config/BlackBoxConfig.kt              # 修改：新增 ScreenshotConfig
-└── dispatcher/ActionRegistry.kt          # 修改：注册 screenshot
+`PlayerMoveAction`、`PlayerMoveLookAction`、`NavigationController` 从直接 `setPosition + sendPacket` 改为通过 `InjectedInput` 注入键盘输入，让 MC 物理引擎处理碰撞/重力/速度。
 
-plugin/src/main/kotlin/com/blackboxpro/plugin/
-└── api/action/
-    ├── ScreenshotActions.kt              # 新增
-    └── HighLevelActions.kt               # 修改：新增 screenshot()
-```
+三端实现：
+- Fabric: `InjectedInput : Input()` — 替换 `KeyboardInput`
+- NeoForge: `InjectedInput : ClientInput()` — 替换 `KeyboardInput`
+- Forge 1.12.2: `InjectedMovementInput : MovementInput()` — 替换 `MovementInputFromOptions`
 
-### 模块 1：fabric — ScreenshotHelper 工具类
+关键设计：
+- `installedPlayer` 字段保存安装时的 player 引用，防止断线重连后 `uninstall` 恢复到错误实例
+- `uninstall()` 支持无参调用，校验 `target.input === this` 后才恢复
+- `player_move` 参数从 `x,y,z,onGround` 改为 `x,y,z,speed,timeout`
+- `player_move_look` 参数从 `x,y,z,yaw,pitch,onGround` 改为 `x,y,z,pitch,speed,timeout`（yaw 自动朝向目标）
 
-文件：`fabric-1.21.11/src/main/kotlin/com/blackboxpro/fabric/util/ScreenshotHelper.kt`
+### exec 扁平化命令
 
-要求：
-- `object ScreenshotHelper`，与现有 `DirectionUtil`/`HandUtil`/`JsonUtil`/`MathUtil` 同级
-- 包名 `com.blackboxpro.fabric.util`
-- 提供 `data class ScreenshotResult(filePath: Path, width: Int, height: Int, fileSize: Long)`
-- `fun capture(directory: Path, fileName: String): ScreenshotResult`
-  - 调用 `net.minecraft.client.util.ScreenshotRecorder.takeScreenshot(framebuffer)` 获取 `NativeImage`（Fabric Yarn 映射）
-  - `framebuffer` 从 `MinecraftClient.getInstance().framebuffer` 获取
-  - `Files.createDirectories(directory)` 确保目录存在
-  - `image.writeTo(directory.resolve("$fileName.png"))` 写入 PNG
-  - `finally { image.close() }` 释放 NativeImage 资源
-  - 返回 `ScreenshotResult`，`fileSize` 通过 `Files.size()` 获取
-- `fun nextIndex(directory: Path): Int`
-  - 目录不存在返回 1
-  - 扫描目录下 `^(\d{3}).*\.png$` 文件，取最大编号 + 1
-  - 使用 `Files.list(directory).use { stream -> ... }` 确保流关闭
-- `fun sanitize(name: String): String` — 替换 `[^a-zA-Z0-9_\-.]` 为 `_`
-- 日志：`LoggerFactory.getLogger("BlackBoxPro-Screenshot")`
+`/blackbox exec <player> <action> [key:value ...]` — 不使用 JSON 格式，通过 `FlatParamParser` 解析 `key:value` 参数，`ActionParamRegistry` 提供 Tab 补全。
 
-### 模块 2：neoforge — ScreenshotHelper 工具类
+## v1.3.0 查询系统
 
-文件：`neoforge-1.21.11/src/main/kotlin/com/blackboxpro/neoforge/util/ScreenshotHelper.kt`
+### 新增 6 个 Query Action（三端同步实现）
 
-与 fabric 版完全一致，仅以下差异：
-- 包名 `com.blackboxpro.neoforge.util`
-- 截图 API：`net.minecraft.client.Screenshot.takeScreenshot(framebuffer)`（Mojang 映射，非 Yarn 的 `ScreenshotRecorder`）
-- 客户端单例：`Minecraft.getInstance()`（非 `MinecraftClient`）
-- framebuffer 获取：`Minecraft.getInstance().mainRenderTarget`（非 `.framebuffer`）
+| Action ID | 功能 | 参数 |
+|-----------|------|------|
+| `query_block_state` | 查询指定坐标方块状态 | `x`, `y`, `z` |
+| `query_world_state` | 查询世界全局状态 | 无 |
+| `query_tab_list` | 查询 Tab 列表玩家 | `limit` |
+| `query_scoreboard` | 查询记分板状态 | `objective` |
+| `query_screen_state` | 查询当前屏幕/GUI | 无 |
+| `query_boss_bar` | 查询 Boss Bar | 无 |
 
-### 模块 3：fabric — ScreenshotAction 执行器
+### QueryPlayerState 扩展（v1.3.0 新增 12 字段）
 
-文件：`fabric-1.21.11/src/main/kotlin/com/blackboxpro/fabric/action/client/ScreenshotAction.kt`
+`absorption`, `armorValue`, `airSupply`, `maxAirSupply`, `isSwimming`, `isUsingItem`, `isFallFlying`, `fallDistance`, `vehicleId`, `dimension`, `biome`, `mainHandItem`
 
-要求：
-- 包名 `com.blackboxpro.fabric.action.client`，与 `ClientInformationAction` 同包
-- `class ScreenshotAction : ActionExecutor`
-- Action ID：`"screenshot"`
-- 参数解析（均使用 `util/JsonUtil.kt` 中的扩展函数）：
-  - `playerName`: `params.getStringOrNull("playerName") ?: player.gameProfile.name`
-  - `testId`: `params.getStringOrNull("testId") ?: "default"`
-  - `prefix`: `params.getStringOrNull("prefix")`（可选，可为 null）
-- 前置检查：`client.player ?: return ActionResult.fail("Player not available")`
-- 目录构建：`client.runDirectory.toPath().resolve("screenshots/blackboxpro").resolve(sanitize(playerName)).resolve(sanitize(testId))`
-- 编号：`ScreenshotHelper.nextIndex(directory)`，超过 999 返回 `ActionResult.fail`
-- 文件名：有 prefix → `"{indexStr}_{sanitize(prefix)}"`，无 prefix → `indexStr`，其中 `indexStr = index.toString().padStart(3, '0')`
-- 调用 `ScreenshotHelper.capture(directory, fileName)` 执行截图
-- 响应 data（JsonObject）：
-  - `filePath`：相对于 `client.runDirectory` 的路径，`replace('\\', '/')`
-  - `width`、`height`、`fileSize`、`index`
-- 返回 `ActionResult.ok("Screenshot saved: $fileName.png", data)`
+## 三端映射差异速查表
 
-### 模块 4：neoforge — ScreenshotAction 执行器
+### Fabric (Yarn) ↔ NeoForge (Mojang) ↔ Forge 1.12.2
 
-文件：`neoforge-1.21.11/src/main/kotlin/com/blackboxpro/neoforge/action/client/ScreenshotAction.kt`
-
-与 fabric 版完全一致，仅以下差异：
-- 包名 `com.blackboxpro.neoforge.action.client`
-- import 路径：`com.blackboxpro.neoforge.action.*`、`com.blackboxpro.neoforge.util.*`
-- 客户端单例：`Minecraft.getInstance()`
-- 玩家获取：`client.player ?: ...`（NeoForge 的 `Minecraft.player` 与 Fabric 的 `MinecraftClient.player` 属性名相同）
-- 玩家名：`player.gameProfile.name`（两端一致）
-- 运行目录：`client.gameDirectory.toPath()`（NeoForge Mojang 映射，非 Fabric 的 `runDirectory`）
-
-### 模块 5：fabric/neoforge — ActionRegistry 注册
-
-两个模块的 `dispatcher/ActionRegistry.kt` 均需修改：
-
-在 `// === 客户端设置与信息 ===` 分类末尾，`resource_pack_response` 之后新增一行：
-
-```kotlin
-// === 客户端设置与信息 ===
-register("client_information", ClientInformationAction())
-register("player_abilities", PlayerAbilitiesAction())
-register("resource_pack_response", ResourcePackResponseAction())
-register("screenshot", ScreenshotAction())  // ← 新增
-```
-
-import 已有 `import com.blackboxpro.{fabric|neoforge}.action.client.*`，无需新增 import。
-
-### 模块 6：fabric/neoforge — BlackBoxConfig 配置扩展
-
-两个模块的 `config/BlackBoxConfig.kt` 均需修改：
-
-在现有配置数据类之后（`SafetyConfig` 之后）新增：
-
-```kotlin
-data class ScreenshotConfig(
-    val rootDirectory: String = "screenshots/blackboxpro",
-    val maxPerTest: Int = 999
-)
-```
-
-在 `BlackBoxConfig` 主数据类中新增字段：
-
-```kotlin
-data class BlackBoxConfig(
-    val logging: LoggingConfig = LoggingConfig(),
-    val network: NetworkConfig = NetworkConfig(),
-    val execution: ExecutionConfig = ExecutionConfig(),
-    val pathfinding: PathfindingConfig = PathfindingConfig(),
-    val safety: SafetyConfig = SafetyConfig(),
-    val screenshot: ScreenshotConfig = ScreenshotConfig()  // ← 新增
-)
-```
-
-注意：两个模块的 `BlackBoxConfig.companion` 差异仅在配置文件路径：
-- Fabric：`FabricLoader.getInstance().configDir.resolve("blackboxpro-fabric.json")`
-- NeoForge：`FMLPaths.CONFIGDIR.get().resolve("blackboxpro-neoforge.json")`
-
-companion object 内部无需修改，Gson 会自动序列化/反序列化新增字段。
-
-### 模块 7：plugin — ScreenshotActions 服务端 API
-
-文件：`plugin/src/main/kotlin/com/blackboxpro/plugin/api/action/ScreenshotActions.kt`
-
-要求：
-- `object ScreenshotActions`，与现有 `ClientActions`/`CompositeActions` 等同级
-- 遵循现有 API 风格：返回 `CompletableFuture<ResponseMessage>`，内部调用 `BlackBoxApi.sendAsync()`
-- 方法签名：
-
-```kotlin
-fun screenshot(
-    player: Player,
-    testId: String = "default",
-    prefix: String? = null,
-    playerName: String? = null
-): CompletableFuture<ResponseMessage>
-```
-
-- 实现：`BlackBoxApi.sendAsync(player, "screenshot", JsonObject().apply { ... })`
-- `playerName` 和 `prefix` 仅在非 null 时 `addProperty`（与现有 API 中可选参数的处理方式一致）
-
-### 模块 8：plugin — HighLevelActions 扩展
-
-文件：`plugin/src/main/kotlin/com/blackboxpro/plugin/api/action/HighLevelActions.kt`
-
-在文件末尾 `}` 之前，新增截图分类：
-
-```kotlin
-// ======================== 截图 ========================
-
-/**
- * 触发客户端截图。
- */
-fun screenshot(
-    player: Player,
-    testId: String = "default",
-    prefix: String? = null
-): CompletableFuture<ResponseMessage> =
-    ScreenshotActions.screenshot(player, testId, prefix, player.name)
-```
-
-### Fabric / NeoForge 映射差异速查（截图相关）
-
-| 概念 | Fabric (Yarn) | NeoForge (Mojang) |
-|------|--------------|-------------------|
-| 客户端单例 | `MinecraftClient.getInstance()` | `Minecraft.getInstance()` |
-| 帧缓冲 | `client.framebuffer` | `client.mainRenderTarget` |
-| 截图 API | `ScreenshotRecorder.takeScreenshot(fb)` | `Screenshot.takeScreenshot(fb)` |
-| 截图 API 包 | `net.minecraft.client.util.ScreenshotRecorder` | `net.minecraft.client.Screenshot` |
-| 运行目录 | `client.runDirectory` | `client.gameDirectory` |
-| NativeImage | `net.minecraft.client.texture.NativeImage` | `com.mojang.blaze3d.platform.NativeImage` |
-| 网络连接 | `client.networkHandler` | `client.connection` |
-| 发包 | `networkHandler.sendPacket(...)` | `connection.send(...)` |
-
-### 通讯协议（截图 Action）
-
-指令 (Server → Client)：
-```json
-{
-    "id": "uuid",
-    "action": "screenshot",
-    "params": {
-        "playerName": "Steve",
-        "testId": "shop_gui_test",
-        "prefix": "after_warp"
-    }
-}
-```
-
-所有 params 字段均可选：
-- `playerName` 缺省取客户端当前玩家名
-- `testId` 缺省 `"default"`
-- `prefix` 缺省无前缀
-
-响应 (Client → Server)：
-```json
-{
-    "id": "uuid",
-    "status": "success",
-    "message": "Screenshot saved: 001_after_warp.png",
-    "data": {
-        "filePath": "screenshots/blackboxpro/Steve/shop_gui_test/001_after_warp.png",
-        "width": 1920,
-        "height": 1080,
-        "fileSize": 2048576,
-        "index": 1
-    }
-}
-```
-
-### 截图文件存储规则
-
-```
-<minecraft_run_dir>/screenshots/blackboxpro/<playerName>/<testId>/<index>_<prefix>.png
-
-编号规则：
-- 三位数字，001 起始，同目录下自动递增
-- 扫描已有文件取最大编号 + 1
-- 上限 999，溢出返回 failure
-
-文件名示例：
-- 001_before_open.png   (有 prefix)
-- 002.png               (无 prefix)
-
-玩家名/testId 中的非法字符替换为 _
-```
+| 概念 | Fabric (Yarn) | NeoForge (Mojang) | Forge 1.12.2 |
+|------|--------------|-------------------|--------------|
+| 客户端单例 | `MinecraftClient.getInstance()` | `Minecraft.getInstance()` | `Minecraft.getMinecraft()` |
+| 世界 | `client.world` | `client.level` | `mc.world` |
+| 当前屏幕 | `client.currentScreen` | `client.screen` | `mc.currentScreen` |
+| 网络连接 | `client.networkHandler` | `client.connection` | `mc.connection` |
+| 发包 | `networkHandler.sendPacket(...)` | `connection.send(...)` | `connection.sendPacket(...)` |
+| yaw/pitch | `player.yaw` / `player.pitch` | `player.yRot` / `player.xRot` | `player.rotationYaw` / `player.rotationPitch` |
+| 位置 | `player.x/y/z` | `player.x/y/z` | `player.posX/posY/posZ` |
+| 是否在地面 | `player.isOnGround` | `player.onGround()` | `player.onGround` |
+| 是否潜行 | `player.isSneaking` | `player.isShiftKeyDown` | `player.isSneaking` |
+| 是否死亡 | `player.isDead` | `player.isDeadOrDying` | `player.isDead` |
+| 饥饿管理 | `player.hungerManager` | `player.foodData` | `player.foodStats` |
+| 容器处理器 | `player.currentScreenHandler` | `player.containerMenu` | `player.openContainer` |
+| 玩家背包容器 | `player.playerScreenHandler` | `player.inventoryMenu` | `player.inventoryContainer` |
+| 窗口 ID | `handler.syncId` | `handler.containerId` | `container.windowId` |
+| 注册表 | `Registries.XXX.getId()` | `BuiltInRegistries.XXX.getKey()` | `xxx.registryName` |
+| ResourceKey 标识 | `.value.toString()` | `.identifier().toString()` | N/A (dimension int) |
+| AABB 扩展 | `boundingBox.expand(r)` | `boundingBox.inflate(r)` | `entityBoundingBox.grow(r)` |
+| 获取实体 | `world.getOtherEntities(...)` | `world.getEntities(...)` | `world.getEntitiesInAABBexcluding(...)` |
+| 距离平方 | `entity.squaredDistanceTo(...)` | `entity.distanceToSqr(...)` | `entity.getDistanceSq(...)` |
+| UUID 字符串 | `entity.uuidAsString` | `entity.stringUUID` | `entity.uniqueID.toString()` |
+| 帧缓冲 | `client.framebuffer` | `client.mainRenderTarget` | N/A |
+| 运行目录 | `client.runDirectory` | `client.gameDirectory` | N/A |
+| 滑翔判定 | `player.isGliding` | `player.isFallFlying` | `player.isElytraFlying` |
+| 护甲值 | `player.armor` | `player.armorValue` | `player.totalArmorValue` |
+| 主手物品 | `player.mainHandStack` | `player.mainHandItem` | `player.heldItemMainhand` |
+| Tab 列表 | `networkHandler.playerList` | `connection.onlinePlayers` | `connection.playerInfoMap` |
+| 延迟 | `entry.latency` | `entry.latency` | `entry.responseTime` |
+| 显示名 | `entry.displayName` | `entry.tabListDisplayName` | `entry.displayName` |
+| 队伍 | `entry.scoreboardTeam` | `entry.team` | `entry.playerTeam` |
+| 记分板显示槽 | `ScoreboardDisplaySlot.SIDEBAR` | `DisplaySlot.SIDEBAR` | `getObjectiveInDisplaySlot(1)` |
+| 记分板分数 | `scoreboard.getScoreboardEntries(obj)` | `scoreboard.listPlayerScores(obj)` | `scoreboard.getSortedScores(obj)` |
+| 玩家队伍 | `scoreboard.getScoreHolderTeam(player.nameForScoreboard)` | `scoreboard.getPlayersTeam(player.scoreboardName)` | `scoreboard.getPlayersTeam(player.name)` |
+| BossBar HUD | `client.inGameHud.bossBarHud` | `client.gui.bossOverlay` | `mc.ingameGUI.bossOverlay` |
+| BossBar 字段名 | `bossBars` | `events` | `mapBossInfos` |
+| BossBar 类型 | `BossBar` | `BossEvent` | `BossInfo` |
 
 ## TabooLib 文档查询指引
 
