@@ -1,0 +1,67 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    }
+    dependencies {
+        classpath 'com.anatawa12.forge:ForgeGradle:2.3-1.0.+'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'kotlin'
+
+group = 'com.blackboxpro'
+version = mod_version
+archivesBaseName = 'blackboxpro-forge'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+minecraft {
+    version = "${minecraft_version}-${forge_version}"
+    runDir = 'run'
+    mappings = mcp_mappings
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
+    implementation "com.google.code.gson:gson:2.8.9"
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', project.minecraft.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': project.minecraft.version
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+        freeCompilerArgs = ['-Xjvm-default=all']
+    }
+}
+
+jar {
+    manifest {
+        attributes 'FMLCorePlugin': '',
+                   'FMLCorePluginContainsFMLMod': 'true'
+    }
+    from {
+        configurations.runtimeClasspath.findAll { it.name.startsWith('kotlin-') }.collect { zipTree(it) }
+    }
+}
