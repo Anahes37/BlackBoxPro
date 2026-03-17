@@ -49,12 +49,13 @@ object BlackBoxProForge {
 
     @SubscribeEvent
     fun onChatReceived(event: ClientChatReceivedEvent) {
-        val type = when (event.type.toInt()) {
+        val type = event.type.ordinal
+        val typeName = when (type) {
             0 -> "CHAT"
             1 -> "SYSTEM"
             2 -> "ACTION_BAR"
             else -> "UNKNOWN"
         }
-        ChatHistoryBuffer.addMessage(event.message, type)
+        ChatHistoryBuffer.addMessage(event.message, typeName)
     }
 }

@@ -38,20 +38,20 @@ object NetworkHandler {
         val packet = event.packet
         if (packet.channel() != BlackBoxChannels.COMMAND) return
 
-        val buf = packet.payload()
+        val buf = PacketBuffer(packet.payload())
         val maxSize = BlackBoxConfig.current.network.maxPayloadSize
         // readString 内部已包含 VarInt 长度前缀解码，与服务端 encodeString 格式一致
-        val json = buf.readString(maxSize)
-        logger.debug("Received command: {}", json)
+        val json: String = buf.readString(maxSize)
+        logger.debug("Received command: {}", json as Any)
 
         var extractedId: String? = null
         try {
-            val obj = gson.fromJson(json, JsonObject::class.java)
+            val obj = gson.fromJson(json, JsonObject::class.java) as JsonObject
             extractedId = obj.get("id")?.asString
             val action = obj.get("action")?.asString
 
             if (extractedId == null || action == null) {
-                logger.error("Malformed command (missing id or action): {}", json)
+                logger.error("Malformed command (missing id or action): {}", json as Any)
                 if (extractedId != null) {
                     sendResponse(gson.toJson(mapOf("id" to extractedId, "status" to "failure", "message" to "Malformed command: missing action")))
                 }
@@ -66,7 +66,7 @@ object NetworkHandler {
             )
             CommandDispatcher.dispatch(message)
         } catch (e: Exception) {
-            logger.error("Failed to parse command: {}", json, e)
+            logger.error("Failed to parse command: {}", json as Any, e)
             if (extractedId != null) {
                 sendResponse(gson.toJson(mapOf("id" to extractedId, "status" to "failure", "message" to "Parse error: ${e.message}")))
             }
@@ -81,7 +81,7 @@ object NetworkHandler {
             // writeString 内部已包含 VarInt 长度前缀编码，与服务端 decodeString 格式一致
             buf.writeString(json)
             connection.sendPacket(CPacketCustomPayload(BlackBoxChannels.RESPONSE, buf))
-            logger.debug("Sent response: {}", json)
+            logger.debug("Sent response: {}", json as Any)
         } else {
             logger.warn("Cannot send response, connection is null.")
         }

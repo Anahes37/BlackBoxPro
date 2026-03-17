@@ -8,6 +8,7 @@ import com.blackboxpro.forge.util.requireDouble
 import com.blackboxpro.forge.util.requireInt
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
+import net.minecraft.util.math.RayTraceResult
 import net.minecraft.util.math.Vec3d
 
 class InteractEntityAtAction : ActionExecutor {
@@ -26,8 +27,9 @@ class InteractEntityAtAction : ActionExecutor {
         val entity = world.getEntityByID(entityId)
             ?: return ActionResult.fail("Entity not found: $entityId")
 
-        val target = Vec3d(targetX, targetY, targetZ)
-        mc.playerController.interactWithEntity(player, entity, target, hand)
+        val hitVec = Vec3d(targetX, targetY, targetZ)
+        val rayTrace = RayTraceResult(entity, hitVec)
+        mc.playerController.interactWithEntity(player, entity, rayTrace, hand)
         return ActionResult.ok("Interacted with entity $entityId at ($targetX, $targetY, $targetZ)")
     }
 }

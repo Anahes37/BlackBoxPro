@@ -1,29 +1,29 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url = 'https://maven.minecraftforge.net/' }
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-    }
-    dependencies {
-        classpath 'com.anatawa12.forge:ForgeGradle:2.3-1.0.+'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
+plugins {
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.1'
+    id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
+}
+
+// Read version from root project's gradle.properties
+def rootProps = new Properties()
+rootProps.load(file("${rootDir}/../gradle.properties").newReader())
+def rootVersion = rootProps.getProperty('version', '0.0.0')
+
+group = 'com.blackboxpro'
+version = rootVersion
+archivesBaseName = "BlackBoxPro-forge-1.12.2"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 
-apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'kotlin'
-
-group = 'com.blackboxpro'
-version = mod_version
-archivesBaseName = 'blackboxpro-forge'
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-
 minecraft {
-    version = "${minecraft_version}-${forge_version}"
-    runDir = 'run'
-    mappings = mcp_mappings
+    mcVersion = '1.12.2'
+    mcpMappingChannel = 'stable'
+    mcpMappingVersion = '39'
+
+    extraRunJvmArguments.addAll('-ea:com.blackboxpro')
 }
 
 repositories {
@@ -35,20 +35,6 @@ dependencies {
     implementation "com.google.code.gson:gson:2.8.9"
 }
 
-processResources {
-    inputs.property 'version', project.version
-    inputs.property 'mcversion', project.minecraft.version
-
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-        expand 'version': project.version, 'mcversion': project.minecraft.version
-    }
-
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-    }
-}
-
 compileKotlin {
     kotlinOptions {
         jvmTarget = '1.8'
@@ -56,7 +42,17 @@ compileKotlin {
     }
 }
 
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', '1.12.2'
+
+    filesMatching('mcmod.info') {
+        expand 'version': project.version, 'mcversion': '1.12.2'
+    }
+}
+
 jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes 'FMLCorePlugin': '',
                    'FMLCorePluginContainsFMLMod': 'true'

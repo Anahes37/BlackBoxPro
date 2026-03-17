@@ -1,1 +1,12 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven {
+            name 'GTNH Maven'
+            url 'https://nexus.gtnewhorizons.com/repository/public/'
+        }
+    }
+}
+
 rootProject.name = 'BlackBoxPro-Forge'
