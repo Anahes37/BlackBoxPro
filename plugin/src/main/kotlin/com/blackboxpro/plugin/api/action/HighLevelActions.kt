@@ -204,4 +204,74 @@ object HighLevelActions {
      */
     fun swapHands(player: Player): CompletableFuture<ResponseMessage> =
         PlayerActions.swapHands(player)
+
+    // ======================== 截图 ========================
+
+    /**
+     * 触发客户端截图。
+     */
+    fun screenshot(
+        player: Player,
+        testId: String = "default",
+        prefix: String? = null
+    ): CompletableFuture<ResponseMessage> =
+        ScreenshotActions.screenshot(player, testId, prefix, player.name)
+
+    // ======================== 查询 ========================
+
+    /**
+     * 查询主手/副手物品。
+     */
+    fun queryHeldItem(player: Player, hand: String = "main_hand"): CompletableFuture<ResponseMessage> =
+        QueryActions.queryHeldItem(player, hand)
+
+    /**
+     * 查询背包指定槽位物品。
+     */
+    fun queryInventorySlot(player: Player, slot: Int? = null): CompletableFuture<ResponseMessage> =
+        QueryActions.queryInventorySlot(player, slot)
+
+    /**
+     * 查询玩家完整状态。
+     */
+    fun queryPlayerState(player: Player): CompletableFuture<ResponseMessage> =
+        QueryActions.queryPlayerState(player)
+
+    /**
+     * 查询附近实体。
+     */
+    fun queryNearbyEntities(player: Player, radius: Double = 10.0, type: String? = null): CompletableFuture<ResponseMessage> =
+        QueryActions.queryNearbyEntities(player, radius, type)
+
+    /**
+     * 查询当前容器状态。
+     */
+    fun queryContainerState(player: Player): CompletableFuture<ResponseMessage> =
+        QueryActions.queryContainerState(player)
+
+    /**
+     * 查询聊天历史。
+     */
+    fun queryChatHistory(player: Player, count: Int = 10, filter: String? = null): CompletableFuture<ResponseMessage> =
+        QueryActions.queryChatHistory(player, count, filter)
+
+    /**
+     * 玩家跳跃。
+     */
+    fun jump(player: Player): CompletableFuture<ResponseMessage> =
+        QueryActions.jump(player)
+
+    // ======================== 导航与瞄准 ========================
+
+    /**
+     * 瞄准指定方块的指定面。
+     */
+    fun lookAtBlock(player: Player, x: Int, y: Int, z: Int, face: String = "top"): CompletableFuture<ResponseMessage> =
+        NavigationActions.lookAtBlock(player, x, y, z, face)
+
+    /**
+     * AI 寻路移动到目标坐标。
+     */
+    fun navigateTo(player: Player, x: Double, y: Double, z: Double, speed: Double = 1.0): CompletableFuture<ResponseMessage> =
+        NavigationActions.navigateTo(player, x, y, z, speed)
 }
