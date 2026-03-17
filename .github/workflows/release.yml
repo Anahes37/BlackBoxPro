@@ -5,83 +5,37 @@ on:
     branches: [main]
     paths:
       - 'gradle.properties'
-      - 'plugin/gradle.properties'
-      - 'forge-1.12.2/gradle.properties'
 
 permissions:
   contents: write
 
 jobs:
-  detect-changes:
+  check-version:
     runs-on: ubuntu-latest
     outputs:
-      mod_changed: ${{ steps.check.outputs.mod_changed }}
-      forge_changed: ${{ steps.check.outputs.forge_changed }}
-      plugin_changed: ${{ steps.check.outputs.plugin_changed }}
-      mod_version: ${{ steps.check.outputs.mod_version }}
-      forge_version: ${{ steps.check.outputs.forge_version }}
-      plugin_version: ${{ steps.check.outputs.plugin_version }}
-      release_tag: ${{ steps.check.outputs.release_tag }}
+      changed: ${{ steps.check.outputs.changed }}
+      version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - name: Detect version changes
+      - name: Detect version change
         id: check
         run: |
-          # 读取当前版本
-          mod_version=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          forge_version=$(grep '^mod_version=' forge-1.12.2/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          plugin_version=$(grep '^version=' plugin/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          echo "mod_version=$mod_version" >> "$GITHUB_OUTPUT"
-          echo "forge_version=$forge_version" >> "$GITHUB_OUTPUT"
-          echo "plugin_version=$plugin_version" >> "$GITHUB_OUTPUT"
-
-          # 读取上一个 commit 的版本
-          old_mod_version=$(git show HEAD~1:gradle.properties 2>/dev/null | grep '^mod_version=' | cut -d'=' -f2 | tr -d '[:space:]' || echo "")
-          old_forge_version=$(git show HEAD~1:forge-1.12.2/gradle.properties 2>/dev/null | grep '^mod_version=' | cut -d'=' -f2 | tr -d '[:space:]' || echo "")
-          old_plugin_version=$(git show HEAD~1:plugin/gradle.properties 2>/dev/null | grep '^version=' | cut -d'=' -f2 | tr -d '[:space:]' || echo "")
-
-          # 比较
-          mod_changed=false
-          forge_changed=false
-          plugin_changed=false
-          if [ "$mod_version" != "$old_mod_version" ]; then
-            mod_changed=true
-            echo "Mod version changed: $old_mod_version -> $mod_version"
+          version=$(grep '^version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          old_version=$(git show HEAD~1:gradle.properties 2>/dev/null | grep '^version=' | cut -d'=' -f2 | tr -d '[:space:]' || echo "")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$version" != "$old_version" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Version changed: $old_version -> $version"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
-          if [ "$forge_version" != "$old_forge_version" ]; then
-            forge_changed=true
-            echo "Forge version changed: $old_forge_version -> $forge_version"
-          fi
-          if [ "$plugin_version" != "$old_plugin_version" ]; then
-            plugin_changed=true
-            echo "Plugin version changed: $old_plugin_version -> $plugin_version"
-          fi
-
-          echo "mod_changed=$mod_changed" >> "$GITHUB_OUTPUT"
-          echo "forge_changed=$forge_changed" >> "$GITHUB_OUTPUT"
-          echo "plugin_changed=$plugin_changed" >> "$GITHUB_OUTPUT"
-
-          # 生成 tag（组合所有变更的版本号）
-          tag_parts=""
-          if [ "$mod_changed" = "true" ]; then
-            tag_parts="mod-v${mod_version}"
-          fi
-          if [ "$forge_changed" = "true" ]; then
-            [ -n "$tag_parts" ] && tag_parts="${tag_parts}+"
-            tag_parts="${tag_parts}forge-v${forge_version}"
-          fi
-          if [ "$plugin_changed" = "true" ]; then
-            [ -n "$tag_parts" ] && tag_parts="${tag_parts}+"
-            tag_parts="${tag_parts}plugin-v${plugin_version}"
-          fi
-          echo "release_tag=$tag_parts" >> "$GITHUB_OUTPUT"
 
   build-and-release:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.mod_changed == 'true' || needs.detect-changes.outputs.forge_changed == 'true' || needs.detect-changes.outputs.plugin_changed == 'true'
+    needs: check-version
+    if: needs.check-version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,81 +50,34 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build Fabric & NeoForge
-        if: needs.detect-changes.outputs.mod_changed == 'true'
         run: ./gradlew :fabric-1.21.11:build :neoforge-1.21.11:build
 
-      - name: Setup JDK 8 for Forge 1.12.2
-        if: needs.detect-changes.outputs.forge_changed == 'true'
-        uses: actions/setup-java@v4
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-
       - name: Build Forge 1.12.2
-        if: needs.detect-changes.outputs.forge_changed == 'true'
         run: cd forge-1.12.2 && ./gradlew build
 
-      - name: Restore JDK 21
-        if: needs.detect-changes.outputs.forge_changed == 'true' && needs.detect-changes.outputs.plugin_changed == 'true'
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
       - name: Build Plugin
-        if: needs.detect-changes.outputs.plugin_changed == 'true'
         run: cd plugin && ./gradlew jar
 
-      - name: Generate release notes
-        id: notes
-        run: |
-          notes=""
-          if [ "${{ needs.detect-changes.outputs.mod_changed }}" = "true" ]; then
-            notes="${notes}### Mod v${{ needs.detect-changes.outputs.mod_version }}\n"
-            notes="${notes}- blackboxpro-fabric-${{ needs.detect-changes.outputs.mod_version }}.jar\n"
-            notes="${notes}- blackboxpro-neoforge-${{ needs.detect-changes.outputs.mod_version }}.jar\n\n"
-          fi
-          if [ "${{ needs.detect-changes.outputs.forge_changed }}" = "true" ]; then
-            notes="${notes}### Forge Mod v${{ needs.detect-changes.outputs.forge_version }}\n"
-            notes="${notes}- blackboxpro-forge-${{ needs.detect-changes.outputs.forge_version }}.jar\n\n"
-          fi
-          if [ "${{ needs.detect-changes.outputs.plugin_changed }}" = "true" ]; then
-            notes="${notes}### Plugin v${{ needs.detect-changes.outputs.plugin_version }}\n"
-            notes="${notes}- BlackBoxPro-Plugin-${{ needs.detect-changes.outputs.plugin_version }}.jar\n"
-          fi
-          echo "body<<EOF" >> "$GITHUB_OUTPUT"
-          echo -e "$notes" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
       - name: Collect artifacts
-        id: artifacts
         run: |
           mkdir -p release-artifacts
-          files=""
-
-          if [ "${{ needs.detect-changes.outputs.mod_changed }}" = "true" ]; then
-            mod_ver="${{ needs.detect-changes.outputs.mod_version }}"
-            # 复制 JAR（排除 sources/dev 等变体）
-            cp fabric-1.21.11/build/libs/blackboxpro-fabric-${mod_ver}.jar release-artifacts/
-            cp neoforge-1.21.11/build/libs/blackboxpro-neoforge-${mod_ver}.jar release-artifacts/
-          fi
-
-          if [ "${{ needs.detect-changes.outputs.forge_changed }}" = "true" ]; then
-            forge_ver="${{ needs.detect-changes.outputs.forge_version }}"
-            cp forge-1.12.2/build/libs/blackboxpro-forge-${forge_ver}.jar release-artifacts/
-          fi
-
-          if [ "${{ needs.detect-changes.outputs.plugin_changed }}" = "true" ]; then
-            plugin_ver="${{ needs.detect-changes.outputs.plugin_version }}"
-            cp plugin/build/libs/BlackBoxPro-Plugin-${plugin_ver}.jar release-artifacts/
-          fi
-
-          echo "dir=release-artifacts" >> "$GITHUB_OUTPUT"
+          ver="${{ needs.check-version.outputs.version }}"
+          cp fabric-1.21.11/build/libs/BlackBoxPro-fabric-1.21.11-${ver}.jar release-artifacts/
+          cp neoforge-1.21.11/build/libs/BlackBoxPro-neoforge-1.21.11-${ver}.jar release-artifacts/
+          cp forge-1.12.2/build/libs/BlackBoxPro-forge-1.12.2-${ver}.jar release-artifacts/
+          cp plugin/build/libs/BlackBoxPro-Plugin-${ver}.jar release-artifacts/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.detect-changes.outputs.release_tag }}
-          name: Release ${{ needs.detect-changes.outputs.release_tag }}
-          body: ${{ steps.notes.outputs.body }}
+          tag_name: v${{ needs.check-version.outputs.version }}
+          name: Release v${{ needs.check-version.outputs.version }}
+          body: |
+            ## v${{ needs.check-version.outputs.version }}
+
+            ### Artifacts
+            - BlackBoxPro-fabric-1.21.11-${{ needs.check-version.outputs.version }}.jar
+            - BlackBoxPro-neoforge-1.21.11-${{ needs.check-version.outputs.version }}.jar
+            - BlackBoxPro-forge-1.12.2-${{ needs.check-version.outputs.version }}.jar
+            - BlackBoxPro-Plugin-${{ needs.check-version.outputs.version }}.jar
           files: release-artifacts/*.jar
