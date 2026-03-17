@@ -14,9 +14,14 @@ class PlayerLookAction : ActionExecutor {
         val pitch = params.requireDouble("pitch").toFloat()
         val onGround = params.getBooleanOrDefault("onGround", true)
 
-        val networkHandler = MinecraftClient.getInstance().networkHandler
+        val client = MinecraftClient.getInstance()
+        val player = client.player
+            ?: return ActionResult.fail("Player not available")
+        val networkHandler = client.networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
+        player.yaw = yaw
+        player.pitch = pitch
         networkHandler.sendPacket(PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, onGround, false))
         return ActionResult.ok()
     }
