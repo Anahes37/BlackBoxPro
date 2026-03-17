@@ -43,9 +43,14 @@ object ScreenshotHelper {
     fun nextIndex(directory: Path): Int {
         val dir = directory.toFile()
         if (!dir.exists()) return 1
-        return (dir.listFiles()
-            ?.mapNotNull { INDEX_PATTERN.matchEntire(it.name)?.groupValues?.get(1)?.toIntOrNull() }
-            ?.maxOrNull() ?: 0) + 1
+        val files = dir.listFiles() ?: return 1
+        var maxIdx = 0
+        for (f in files) {
+            val m = INDEX_PATTERN.matchEntire(f.name) ?: continue
+            val idx = m.groupValues[1].toIntOrNull() ?: continue
+            if (idx > maxIdx) maxIdx = idx
+        }
+        return maxIdx + 1
     }
 
     fun sanitize(name: String): String =

@@ -53,10 +53,6 @@ processResources {
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    manifest {
-        attributes 'FMLCorePlugin': '',
-                   'FMLCorePluginContainsFMLMod': 'true'
-    }
     from {
         configurations.runtimeClasspath.findAll { it.name.startsWith('kotlin-') }.collect { zipTree(it) }
     }
