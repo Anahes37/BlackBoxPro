@@ -6,16 +6,16 @@ import com.blackboxpro.fabric.util.getStringOrNull
 import com.blackboxpro.fabric.util.HandUtil
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket
 
 class SwingArmAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val hand = HandUtil.fromString(params.getStringOrNull("hand") ?: "main_hand")
 
-        val packet = HandSwingC2SPacket(hand)
-        MinecraftClient.getInstance().networkHandler?.sendPacket(packet)
-            ?: return ActionResult.fail("Network handler is not available")
+        val player = MinecraftClient.getInstance().player
+            ?: return ActionResult.fail("Player not available")
 
+        // swingHand 同时播放客户端动画 + 发送 HandSwingC2SPacket
+        player.swingHand(hand)
         return ActionResult.ok("Swung arm with ${hand.name.lowercase()}")
     }
 }

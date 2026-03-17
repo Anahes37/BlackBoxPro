@@ -6,16 +6,16 @@ import com.blackboxpro.forge.util.HandUtil
 import com.blackboxpro.forge.util.getStringOrNull
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.network.play.client.CPacketAnimation
 
 class SwingArmAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val hand = HandUtil.fromString(params.getStringOrNull("hand") ?: "main_hand")
 
-        val connection = Minecraft.getMinecraft().connection
-            ?: return ActionResult.fail("Not connected to server")
+        val player = Minecraft.getMinecraft().player
+            ?: return ActionResult.fail("Player not available")
 
-        connection.sendPacket(CPacketAnimation(hand))
+        // swingArm 同时播放客户端动画 + 发送 CPacketAnimation
+        player.swingArm(hand)
         return ActionResult.ok("Swung arm with ${hand.name.lowercase()}")
     }
 }
