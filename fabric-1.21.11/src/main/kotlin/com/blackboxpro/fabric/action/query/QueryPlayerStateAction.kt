@@ -4,6 +4,7 @@ import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
+import net.minecraft.registry.Registries
 
 /**
  * 读取玩家完整状态信息。
@@ -35,6 +36,24 @@ class QueryPlayerStateAction : ActionExecutor {
             addProperty("selectedSlot", player.inventory.selectedSlot)
             addProperty("experienceLevel", player.experienceLevel)
             addProperty("experienceProgress", player.experienceProgress)
+
+            // v1.3.0 新增字段
+            addProperty("absorption", player.absorptionAmount)
+            addProperty("armorValue", player.armor)
+            addProperty("airSupply", player.air)
+            addProperty("maxAirSupply", player.maxAir)
+            addProperty("isSwimming", player.isSwimming)
+            addProperty("isUsingItem", player.isUsingItem)
+            addProperty("isFallFlying", player.isGliding)
+            addProperty("fallDistance", player.fallDistance)
+            addProperty("vehicleId", player.vehicle?.id ?: -1)
+            val world = client.world
+            addProperty("dimension", world?.registryKey?.value?.toString() ?: "unknown")
+            addProperty("biome", world?.getBiome(player.blockPos)?.key
+                ?.map { it.value.toString() }?.orElse("unknown") ?: "unknown")
+            val mainItem = player.mainHandStack
+            addProperty("mainHandItem", if (mainItem.isEmpty) "empty"
+                else Registries.ITEM.getId(mainItem.item).toString())
         }
 
         return ActionResult.ok("Player state queried", data)

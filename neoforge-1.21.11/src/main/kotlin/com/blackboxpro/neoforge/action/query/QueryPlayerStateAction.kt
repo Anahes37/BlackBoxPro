@@ -4,6 +4,7 @@ import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
+import net.minecraft.core.registries.BuiltInRegistries
 
 /**
  * 读取玩家完整状态信息。
@@ -35,6 +36,23 @@ class QueryPlayerStateAction : ActionExecutor {
             addProperty("selectedSlot", player.inventory.getSelectedSlot())
             addProperty("experienceLevel", player.experienceLevel)
             addProperty("experienceProgress", player.experienceProgress)
+
+            // v1.3.0 新增字段
+            addProperty("absorption", player.absorptionAmount)
+            addProperty("armorValue", player.armorValue)
+            addProperty("airSupply", player.airSupply)
+            addProperty("maxAirSupply", player.maxAirSupply)
+            addProperty("isSwimming", player.isSwimming)
+            addProperty("isUsingItem", player.isUsingItem)
+            addProperty("isFallFlying", player.isFallFlying)
+            addProperty("fallDistance", player.fallDistance)
+            addProperty("vehicleId", player.vehicle?.id ?: -1)
+            addProperty("dimension", player.level().dimension().identifier().toString())
+            addProperty("biome", player.level().getBiome(player.blockPosition()).unwrapKey()
+                .map { it.identifier().toString() }.orElse("unknown"))
+            val mainItem = player.mainHandItem
+            addProperty("mainHandItem", if (mainItem.isEmpty) "empty"
+                else BuiltInRegistries.ITEM.getKey(mainItem.item).toString())
         }
 
         return ActionResult.ok("Player state queried", data)
