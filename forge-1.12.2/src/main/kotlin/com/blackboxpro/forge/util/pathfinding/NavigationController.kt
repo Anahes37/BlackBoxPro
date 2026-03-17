@@ -2,12 +2,17 @@ package com.blackboxpro.forge.util.pathfinding
 
 import com.blackboxpro.forge.action.composite.TickScheduler
 import com.blackboxpro.forge.config.NavigationConfig
-import com.blackboxpro.forge.util.calculateYawPitch
+import com.blackboxpro.forge.util.InjectedMovementInput
 import net.minecraft.client.Minecraft
-import net.minecraft.network.play.client.CPacketPlayer
 import org.apache.logging.log4j.LogManager
+import kotlin.math.atan2
 import kotlin.math.sqrt
 
+/**
+ * 路径跟随控制器。
+ * 每 tick 通过 [InjectedMovementInput] 注入 forward 输入 + yaw 转向，驱动玩家沿 A* 路径移动，
+ * MC 物理引擎自动处理碰撞/重力/速度。
+ */
 class NavigationController(
     private val path: List<PathNode>,
     private val speed: Double,
@@ -15,18 +20,30 @@ class NavigationController(
     private val config: NavigationConfig
 ) {
     private val logger = LogManager.getLogger("BlackBoxPro-Navigation")
-    private var currentIndex = 1
+    private var currentIndex = 1 // 跳过起点
     private var ticksElapsed = 0
     private var active = false
+    private var injected: InjectedMovementInput? = null
 
     fun start() {
         if (path.size < 2) return
+        val player = Minecraft.getMinecraft().player ?: return
+        val input = InjectedMovementInput()
+        input.install(player)
+        injected = input
         active = true
         TickScheduler.schedule(1) { tick() }
     }
 
     fun stop() {
+        if (!active) return
         active = false
+        injected?.let { input ->
+            input.reset()
+            input.uninstall()
+            Minecraft.getMinecraft().player?.isSprinting = false
+        }
+        injected = null
     }
 
     private fun tick() {
@@ -40,7 +57,7 @@ class NavigationController(
         ticksElapsed++
         val mc = Minecraft.getMinecraft()
         val player = mc.player ?: run { stop(); return }
-        val connection = mc.connection ?: run { stop(); return }
+        val input = injected ?: run { stop(); return }
 
         if (currentIndex >= path.size) {
             logger.debug("Navigation completed in {} ticks", ticksElapsed)
@@ -54,8 +71,9 @@ class NavigationController(
 
         var dx = targetX - player.posX
         var dz = targetZ - player.posZ
-        var horizontalDist = sqrt(dx * dx + dz * dz)
+        val horizontalDist = sqrt(dx * dx + dz * dz)
 
+        // 到达当前路径点 → 前进到下一节点
         if (horizontalDist < config.nodeArrivalThreshold) {
             currentIndex++
             if (currentIndex >= path.size) {
@@ -66,27 +84,16 @@ class NavigationController(
             target = path[currentIndex]
             dx = target.x + 0.5 - player.posX
             dz = target.z + 0.5 - player.posZ
-            horizontalDist = sqrt(dx * dx + dz * dz)
         }
 
-        if (target.jumpRequired && player.onGround && target.y > player.posY.toInt()) {
-            player.jump()
-        }
-
-        val stepSize = config.stepSize * speed
-        val ratio = if (horizontalDist > 0.01)
-            (stepSize / horizontalDist).coerceAtMost(1.0) else 1.0
-        val newX = player.posX + dx * ratio
-        val newZ = player.posZ + dz * ratio
-        val newY = if (player.onGround) target.y.toDouble() else player.posY
-
-        val (yaw, _) = calculateYawPitch(dx, 0.0, dz)
+        // 转向目标节点
+        val yaw = (-atan2(dx, dz) * 180.0 / Math.PI).toFloat()
         player.rotationYaw = yaw
 
-        player.setPosition(newX, newY, newZ)
-        connection.sendPacket(
-            CPacketPlayer.PositionRotation(newX, newY, newZ, yaw, player.rotationPitch, player.onGround)
-        )
+        // 注入输入
+        input.forward = true
+        input.jumping = target.jumpRequired && player.onGround && target.y > player.posY.toInt()
+        player.isSprinting = speed > 1.0
 
         TickScheduler.schedule(1) { tick() }
     }
