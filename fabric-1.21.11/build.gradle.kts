@@ -4,7 +4,7 @@ plugins {
 }
 
 base {
-    archivesName.set("blackboxpro-fabric")
+    archivesName.set("BlackBoxPro-fabric-${property("minecraft_version")}")
 }
 
 repositories {

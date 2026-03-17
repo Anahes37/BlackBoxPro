@@ -4,7 +4,7 @@ plugins {
 }
 
 base {
-    archivesName.set("blackboxpro-neoforge")
+    archivesName.set("BlackBoxPro-neoforge-${property("minecraft_version")}")
 }
 
 repositories {
