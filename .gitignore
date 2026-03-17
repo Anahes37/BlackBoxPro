@@ -38,3 +38,8 @@ plugin/.gradle/
 plugin/gradle/
 plugin/gradlew
 plugin/gradlew.bat
+
+# forge-1.12.2 子项目（独立 Gradle wrapper，需要 Gradle 4.9）
+forge-1.12.2/.gradle/
+
+docs/
