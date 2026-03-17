@@ -9,5 +9,5 @@ pluginManagement {
 
 rootProject.name = "BlackBoxPro"
 
-include("fabric")
-include("neoforge")
+include("fabric-1.21.11")
+include("neoforge-1.21.11")
