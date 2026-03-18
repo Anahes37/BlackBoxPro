@@ -63,8 +63,47 @@ allowed-tools: [Terminal, Bash, Read]
 
 1. 用 `Terminal read` 读取最后 n 行并展示
 
+## 构建与部署
+
+Fabric Mod 构建:
+```bash
+cd E:/Desktop/IDEA/BlackBoxPro && ./gradlew :fabric-1.21.11:build
+```
+
+NeoForge Mod 构建:
+```bash
+cd E:/Desktop/IDEA/BlackBoxPro && ./gradlew :neoforge-1.21.11:build
+```
+
+Plugin 构建:
+```bash
+cd E:/Desktop/IDEA/BlackBoxPro/plugin && ./gradlew jar
+```
+
+部署 Fabric Mod:
+```bash
+cp "E:/Desktop/IDEA/BlackBoxPro/fabric-1.21.11/build/libs/blackboxpro-fabric-*.jar" "I:/PCL/.minecraft/versions/1.21.11-Fabric 0.18.4/mods/"
+```
+
+部署 Plugin:
+```bash
+cp "E:/Desktop/IDEA/BlackBoxPro/plugin/build/libs/BlackBoxPro-Plugin-*.jar" "E:/paper-1.21.11/plugins/"
+```
+
+## 测试
+
+通过服务端控制台执行集成测试:
+```
+blackbox test Player
+```
+
+- 22 个测试用例，每个用例 3 阶段截图（before / during / after）
+- 截图路径: `I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\screenshots\blackboxpro\Player\integration_<timestamp>\`
+
 ## 注意事项
 
 - 启动命令中的路径使用 Git Bash 风格（`/e/` 而非 `E:\`）
 - 发送命令时始终在末尾追加 `\n`
 - 不要在终端中使用 `cd` 以外的 Windows 命令
+- 修改 Plugin 后需要重启服务端（TabooLib 不支持 PlugMan 热重载）
+- 修改 Mod 后需要重启客户端

@@ -14,6 +14,8 @@ allowed-tools: [Terminal, Bash, Read]
 - 启动脚本: `I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\launch.bat`
 - 启动命令: `cmd //c "I:\\PCL\\.minecraft\\versions\\1.21.11-Fabric 0.18.4\\launch.bat"`
 - 客户端日志: `I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\logs\latest.log`
+- Mod 目录: `I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\mods`
+- 截图目录: `I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\screenshots\blackboxpro`
 - 终端: Terminal 2（通过 `Terminal list` 获取，选择列表中的第二个终端）
 - 客户端启动后会通过 `--quickPlayMultiplayer localhost:25565` 自动连接本地服务端
 
@@ -63,6 +65,30 @@ allowed-tools: [Terminal, Bash, Read]
 
 优先使用终端输出，如果终端输出不够详细则补充日志文件内容。
 
+## 构建与部署
+
+Fabric Mod 构建:
+```bash
+cd E:/Desktop/IDEA/BlackBoxPro && ./gradlew :fabric-1.21.11:build
+```
+
+部署 Mod:
+```bash
+cp "E:/Desktop/IDEA/BlackBoxPro/fabric-1.21.11/build/libs/blackboxpro-fabric-*.jar" "I:/PCL/.minecraft/versions/1.21.11-Fabric 0.18.4/mods/"
+```
+
+## 测试
+
+通过服务端控制台执行集成测试:
+```
+blackbox test Player
+```
+
+- 22 个测试用例，每个用例 3 阶段截图（before / during / after）
+- 共生成 68 张截图（1 开始 + 22×3 + 1 结束）
+- 截图路径: `I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\screenshots\blackboxpro\Player\integration_<timestamp>\`
+- 截图命名: `XXX_<id>_1_before.png` / `XXX_<id>_2_during.png` / `XXX_<id>_3_after.png`
+
 ## 注意事项
 
 - 客户端是 GUI 程序，终端输出主要是 log4j 日志和 libpng 警告
@@ -70,3 +96,5 @@ allowed-tools: [Terminal, Bash, Read]
 - launch.bat 中已配置 `--quickPlayMultiplayer localhost:25565`，启动后会自动连接本地服务端
 - 离线模式，玩家名为 `Player`
 - Ctrl+C 可能无法完全终止客户端（Java GUI 进程），必要时需要 `taskkill`
+- 修改 Mod 后需要重启客户端
+- 修改 Plugin 后需要重启服务端（TabooLib 不支持 PlugMan 热重载）
