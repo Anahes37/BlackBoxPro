@@ -64,6 +64,7 @@ object ActionRegistry {
         register("click_slot", ClickSlotAction())
         register("click_button", ClickButtonAction())
         register("close_container", CloseContainerAction())
+        register("open_inventory", OpenInventoryAction())
         register("set_carried_item", SetCarriedItemAction())
         register("creative_set_slot", CreativeSetSlotAction())
         register("pick_item", PickItemAction())
