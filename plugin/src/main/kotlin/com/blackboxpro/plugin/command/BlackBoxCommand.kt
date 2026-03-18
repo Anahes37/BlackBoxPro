@@ -3,6 +3,7 @@ package com.blackboxpro.plugin.command
 import com.blackboxpro.plugin.BlackBoxPro
 import com.blackboxpro.plugin.api.BlackBoxApi
 import com.blackboxpro.plugin.channel.ChannelHandler
+import com.blackboxpro.plugin.channel.ResponseMessage
 import com.blackboxpro.plugin.config.BlackBoxSettings
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -47,8 +48,11 @@ object BlackBoxCommand {
                         sender.sendMessage("§c[BlackBoxPro] 玩家 $playerName 不在线。")
                         return@execute
                     }
-                    BlackBoxApi.send(player, action)
-                    sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}")
+                    val timeoutMs = BlackBoxSettings.responseTimeoutMs
+                    BlackBoxApi.sendAsync(player, action, timeoutMs = timeoutMs).thenAccept { response ->
+                        sendResponseFeedback(sender, response)
+                    }
+                    sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}§a，等待响应... (超时: ${timeoutMs}ms)")
                 }
                 dynamic("params") {
                     execute<CommandSender> { sender, context, _ ->
@@ -66,10 +70,12 @@ object BlackBoxCommand {
                             sender.sendMessage("§c[BlackBoxPro] 无效的 JSON 参数: ${e.message}")
                             return@execute
                         }
-                        BlackBoxApi.sendAsync(player, action, params).thenAccept { response ->
-                            sender.sendMessage("§6[BlackBoxPro] 响应: §f${response.status} §7${response.message ?: ""}")
+                        // 使用配置的超时时间
+                        val timeoutMs = BlackBoxSettings.responseTimeoutMs
+                        BlackBoxApi.sendAsync(player, action, params, timeoutMs = timeoutMs).thenAccept { response ->
+                            sendResponseFeedback(sender, response)
                         }
-                        sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}§a，等待响应...")
+                        sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}§a，等待响应... (超时: ${timeoutMs}ms)")
                     }
                 }
             }
@@ -114,15 +120,36 @@ object BlackBoxCommand {
             return
         }
         val params = FlatParamParser.parse(rawParams)
+        // 统一使用 sendAsync，确保有超时机制
+        val timeoutMs = BlackBoxSettings.responseTimeoutMs
+        BlackBoxApi.sendAsync(player, action, params, timeoutMs = timeoutMs).thenAccept { response ->
+            sendResponseFeedback(sender, response)
+        }
         if (params.size() == 0) {
-            BlackBoxApi.send(player, action)
-            sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}")
+            sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}§a，等待响应... (超时: ${timeoutMs}ms)")
         } else {
-            // 使用 callback 模式避免 sendAsync 中的 CompletableFuture.delayedExecutor（Java 9+）
-            BlackBoxApi.send(player, action, params) { response ->
-                sender.sendMessage("§6[BlackBoxPro] 响应: §f${response.status} §7${response.message ?: ""}")
-            }
             sender.sendMessage("§a[BlackBoxPro] 已发送指令 §f$action §a给 §f${player.name}§a，参数: §7$params")
+        }
+    }
+
+    /**
+     * 统一的响应反馈输出。
+     * debug 模式下输出完整 JSON 数据。
+     */
+    private fun sendResponseFeedback(sender: CommandSender, response: ResponseMessage) {
+        sender.sendMessage("§6[BlackBoxPro] 响应: §f${response.status} §7${response.message ?: ""}")
+        if (response.data != null && response.data.size() > 0) {
+            if (BlackBoxSettings.debug) {
+                val dataStr = gson.toJson(response.data)
+                if (dataStr.length <= 500) {
+                    sender.sendMessage("§6[BlackBoxPro] 数据: §f$dataStr")
+                } else {
+                    sender.sendMessage("§6[BlackBoxPro] 数据 (截断): §f${dataStr.take(500)}...")
+                    sender.sendMessage("§7[BlackBoxPro] 完整数据已输出到控制台日志")
+                }
+            } else {
+                sender.sendMessage("§7[BlackBoxPro] 响应包含数据 (${response.data.size()} 字段)，开启 debug 模式查看详情")
+            }
         }
     }
 

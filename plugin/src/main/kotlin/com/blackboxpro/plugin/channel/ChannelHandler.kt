@@ -110,7 +110,8 @@ object ChannelHandler : PluginMessageListener {
         }
 
         if (BlackBoxSettings.debug) {
-            info("[BlackBoxPro] ← ${player.name} | ${response.status} (id=${response.id}) ${response.message ?: ""}")
+            val dataInfo = if (response.data != null && response.data.size() > 0) " data=${response.data}" else ""
+            info("[BlackBoxPro] ← ${player.name} | ${response.status} (id=${response.id}) ${response.message ?: ""}$dataInfo")
         }
 
         // 触发一次性回调

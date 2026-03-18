@@ -1,10 +1,12 @@
 # BlackBoxPro 服务端插件配置
 
-# 调试模式：开启后会在控制台输出收发的 JSON 消息
+# 调试模式：开启后会在控制台输出收发的 JSON 消息，
+# 同时 exec/send 命令会输出完整的响应数据
 debug: false
 
 # 等待客户端响应的默认超时时间（毫秒）
-response-timeout-ms: 5000
+# 对于 screenshot 等耗时操作，建议调大此值（如 15000）
+response-timeout-ms: 10000
 
 # Plugin Message 最大载荷大小（字节），与客户端 Mod 配置对齐
 max-payload-size: 32767
