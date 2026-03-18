@@ -16,7 +16,7 @@ object FlatParamParser {
      * - `true` / `false` → Boolean
      * - 纯整数 → Number (Long)
      * - 含小数 → Number (Double)
-     * - 其余 → String（下划线替换为空格）
+     * - 其余 → String（保留原始值）
      */
     fun parse(args: List<String>): JsonObject = JsonObject().apply {
         for (arg in args) {
@@ -29,7 +29,7 @@ object FlatParamParser {
                 raw.equals("false", ignoreCase = true) -> addProperty(key, false)
                 raw.toLongOrNull() != null -> addProperty(key, raw.toLong())
                 raw.toDoubleOrNull() != null -> addProperty(key, raw.toDouble())
-                else -> addProperty(key, raw.replace('_', ' '))
+                else -> addProperty(key, raw)
             }
         }
     }
