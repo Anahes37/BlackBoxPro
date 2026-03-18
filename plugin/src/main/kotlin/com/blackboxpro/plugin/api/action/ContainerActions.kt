@@ -27,6 +27,10 @@ object ContainerActions {
             addProperty("windowId", windowId)
         })
 
+    /** 关闭当前打开的容器（客户端自动获取 windowId） */
+    fun closeContainer(player: Player): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "close_container")
+
     fun setCarriedItem(player: Player, slot: Int): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "set_carried_item", JsonObject().apply {
             addProperty("slot", slot)
