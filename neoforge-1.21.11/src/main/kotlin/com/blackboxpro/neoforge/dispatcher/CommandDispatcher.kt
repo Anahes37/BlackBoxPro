@@ -78,13 +78,15 @@ object CommandDispatcher {
             }
 
             try {
-                val result = executor.execute(message.params)
-                sendResponse(
-                    id = message.id,
-                    status = if (result.success) "success" else "failure",
-                    message = result.message,
-                    data = result.data
-                )
+                val result = executor.execute(message.params, message.id)
+                if (!result.async) {
+                    sendResponse(
+                        id = message.id,
+                        status = if (result.success) "success" else "failure",
+                        message = result.message,
+                        data = result.data
+                    )
+                }
             } catch (e: IllegalArgumentException) {
                 logger.warn("Invalid params for action {}: {}", message.action, e.message)
                 sendResponse(message.id, "failure", "Invalid params: ${e.message}")
@@ -103,7 +105,8 @@ object CommandDispatcher {
         return actionId in config.allowedActions
     }
 
-    private fun sendResponse(
+    /** 供异步 Action 自行发送响应，不要在普通 Action 中调用 */
+    internal fun sendResponse(
         id: String,
         status: String,
         message: String? = null,

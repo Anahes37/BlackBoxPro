@@ -5,7 +5,7 @@ import net.minecraft.client.Screenshot
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 /**
  * 截图工具类。
@@ -25,12 +25,11 @@ object ScreenshotHelper {
     )
 
     /**
-     * 捕获当前帧缓冲并保存为 PNG。
-     * 必须在主线程调用。takeScreenshot 回调在同一帧内同步执行。
+     * 异步捕获当前帧缓冲并保存为 PNG。
+     * 必须在主线程调用。结果通过回调返回，避免阻塞主线程。
      */
-    fun capture(directory: Path, fileName: String): ScreenshotResult {
+    fun captureAsync(directory: Path, fileName: String, callback: Consumer<Result<ScreenshotResult>>) {
         val framebuffer = Minecraft.getInstance().mainRenderTarget
-        val future = CompletableFuture<ScreenshotResult>()
 
         Screenshot.takeScreenshot(framebuffer) { image ->
             try {
@@ -41,15 +40,13 @@ object ScreenshotHelper {
                 val w = image.getWidth()
                 val h = image.getHeight()
                 logger.info("Screenshot saved: {} ({}x{}, {} bytes)", filePath, w, h, fileSize)
-                future.complete(ScreenshotResult(filePath, w, h, fileSize))
+                callback.accept(Result.success(ScreenshotResult(filePath, w, h, fileSize)))
             } catch (e: Exception) {
-                future.completeExceptionally(e)
+                callback.accept(Result.failure(e))
             } finally {
                 image.close()
             }
         }
-
-        return future.get()
     }
 
     /**
