@@ -157,6 +157,15 @@ class CreateWorldAction : ActionExecutor {
             val setNameMethod = uiState.javaClass.methods.find { it.name == "setName" && it.parameterCount == 1 }
             setNameMethod?.invoke(uiState, name)
             logger.info("Set world name to: {}", name)
+
+            // 启用作弊（允许执行命令）
+            val setAllowCommandsMethod = uiState.javaClass.methods.find { it.name == "setAllowCommands" && it.parameterCount == 1 }
+            if (setAllowCommandsMethod != null) {
+                setAllowCommandsMethod.invoke(uiState, true)
+                logger.info("Enabled allowCommands (cheats)")
+            } else {
+                logger.warn("Could not find setAllowCommands method")
+            }
         } else {
             logger.warn("Could not find uiState field, using default world name")
         }
