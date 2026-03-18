@@ -11,3 +11,4 @@ rootProject.name = "BlackBoxPro"
 
 include("fabric-1.21.11")
 include("neoforge-1.21.11")
+include("neoforge-1.21.1")
