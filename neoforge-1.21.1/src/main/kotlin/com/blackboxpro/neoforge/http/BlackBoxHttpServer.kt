@@ -29,9 +29,13 @@ object BlackBoxHttpServer {
     var running = false
         private set
 
-    fun start() {
+    fun start(port: Int? = null, bindAddress: String? = null) {
         val config = BlackBoxConfig.current.http
-        if (!config.enabled) {
+        val actualPort = port ?: config.port
+        val actualBind = bindAddress ?: config.bindAddress
+
+        // 仅在无参调用（Mod 自启动）时检查 config.enabled
+        if (port == null && bindAddress == null && !config.enabled) {
             logger.info("HTTP server is disabled in config")
             return
         }
@@ -41,7 +45,7 @@ object BlackBoxHttpServer {
         }
 
         try {
-            val addr = InetSocketAddress(config.bindAddress, config.port)
+            val addr = InetSocketAddress(actualBind, actualPort)
             val httpServer = HttpServer.create(addr, 0)
             httpServer.executor = Executors.newCachedThreadPool { r ->
                 Thread(r, "BlackBoxPro-Http").apply { isDaemon = true }
@@ -50,7 +54,7 @@ object BlackBoxHttpServer {
             httpServer.start()
             server = httpServer
             running = true
-            logger.info("HTTP server started on {}:{}", config.bindAddress, config.port)
+            logger.info("HTTP server started on {}:{}", actualBind, actualPort)
         } catch (e: Exception) {
             logger.error("Failed to start HTTP server", e)
         }

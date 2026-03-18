@@ -13,6 +13,7 @@ import com.blackboxpro.neoforge.action.debug.*
 import com.blackboxpro.neoforge.action.composite.*
 import com.blackboxpro.neoforge.action.query.*
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
 
 object ActionRegistry {
 
@@ -20,6 +21,9 @@ object ActionRegistry {
     private val mutableExecutors = mutableMapOf<String, ActionExecutor>()
     private var executors: Map<String, ActionExecutor> = emptyMap()
     private var frozen = false
+
+    /** 外部 action（第三方 Mod 注册），不受 frozen 限制 */
+    private val externalExecutors = ConcurrentHashMap<String, ActionExecutor>()
 
     fun register(actionId: String, executor: ActionExecutor) {
         check(!frozen) { "ActionRegistry is frozen, cannot register new actions" }
@@ -30,9 +34,30 @@ object ActionRegistry {
         logger.debug("Registered action: {}", actionId)
     }
 
-    fun find(actionId: String): ActionExecutor? = executors[actionId]
+    /** 注册外部 action，可在运行时调用 */
+    fun registerExternal(actionId: String, executor: ActionExecutor) {
+        if (executors.containsKey(actionId)) {
+            logger.warn("External action '{}' shadows built-in action", actionId)
+        }
+        externalExecutors[actionId] = executor
+        logger.info("Registered external action: {}", actionId)
+    }
+
+    /** 注销外部 action */
+    fun unregisterExternal(actionId: String): Boolean {
+        val removed = externalExecutors.remove(actionId) != null
+        if (removed) {
+            logger.info("Unregistered external action: {}", actionId)
+        }
+        return removed
+    }
+
+    fun find(actionId: String): ActionExecutor? =
+        executors[actionId] ?: externalExecutors[actionId]
 
     fun size(): Int = executors.size
+
+    fun externalSize(): Int = externalExecutors.size
 
     fun registerAll() {
         check(!frozen) { "ActionRegistry already initialized" }
