@@ -9,6 +9,36 @@ BlackBoxPro 是一个 Minecraft 自动化黑盒测试框架，通过 Plugin Mess
 - 包根路径：`com.blackboxpro`
 - Minecraft 版本：1.21.11、1.12.2（多版本架构，模块名含 MC 版本号）
 
+## 测试模式分离
+
+BlackBoxPro 当前有两类测试模式，后续分析、构建、启动环境前必须先判断模式：
+
+1. `plugin + 客户端联合测试`
+2. `纯客户端测试`
+
+### plugin + 客户端联合测试
+
+- 面向 `1.21.11`、`1.12.2`
+- 目标是验证服务端 `plugin`、Plugin Message、客户端执行链路
+- 需要服务端 + 客户端同时在线
+- 典型入口是 `blackbox test <player>`、服务端命令或 `plugin` API
+
+### 纯客户端测试
+
+- 当前面向 `neoforge-1.21.1`
+- 目标是验证客户端本地 Action、单机世界管理、HTTP 回包链路
+- 不依赖服务端 `plugin`
+- 启动方式是 `.\gradlew :neoforge-1.21.1:runClient`
+- 通讯方式是本地 HTTP：`127.0.0.1:25580`
+
+### 当前约定
+
+- 用户提到 `纯客户端`、`纯 mod`、`runClient`、`create_world`、`join_world`、`leave_world` 时，优先按纯客户端测试处理
+- 用户提到 `plugin`、`联调`、`服务端`、`blackbox test` 时，优先按联合测试处理
+- `test_world.sh`、`test_socket.py` 属于纯客户端测试脚本，不属于服务端联调脚本
+
+详细说明见 `测试模式说明.md`。
+
 ## 项目结构
 
 ```

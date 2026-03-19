@@ -26,6 +26,21 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 
 `fabric-1.21.11` 和 `neoforge-1.21.11` 由根项目统一管理；`forge-1.12.2` 和 `plugin` 为独立 Gradle 项目。
 
+## 测试模式
+
+测试模式现已拆分为两类：
+
+- `plugin + 客户端联合测试`：面向 `1.21.11`、`1.12.2`，验证服务端 `plugin`、Plugin Message 和客户端执行链路
+- `纯客户端测试`：当前面向 `neoforge-1.21.1`，通过 `runClient + 本地 HTTP API` 验证客户端本地 Action 和单机世界管理
+
+纯客户端里的世界管理 Action 采用原子完成语义：
+
+- `create_world` 只有真正进入世界后才返回成功
+- `join_world` 只有真正进入已有世界后才返回成功；不存在或坏掉的本地存档会直接失败，不再弹原版加载失败流程
+- `leave_world` 只有真正回到主菜单后才返回成功
+
+详细约定见 [测试模式说明.md](./测试模式说明.md)。
+
 ## 支持的行为 (86+)
 
 | 分类 | 示例 | 数量 |
