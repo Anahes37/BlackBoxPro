@@ -6,6 +6,8 @@ import com.blackboxpro.neoforge.dispatcher.ActionRegistry
 import com.blackboxpro.neoforge.dispatcher.CommandDispatcher
 import com.blackboxpro.neoforge.network.NetworkHandler
 import com.blackboxpro.neoforge.util.ChatHistoryBuffer
+import com.blackboxpro.neoforge.util.NeoForgeRuntimeScreenshotProvider
+import com.blackboxpro.runtime.screenshot.RuntimeScreenshotBridge
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.Mod
@@ -22,7 +24,10 @@ class BlackBoxProNeoForge(modBus: IEventBus) {
         // 1. 加载配置
         BlackBoxConfig.load()
 
-        // 2. 注册所有行为执行器
+        // 2. 绑定运行时桥接
+        RuntimeScreenshotBridge.bind(NeoForgeRuntimeScreenshotProvider)
+
+        // 3. 注册所有行为执行器
         ActionRegistry.registerAll()
 
         // 3. 初始化调度器

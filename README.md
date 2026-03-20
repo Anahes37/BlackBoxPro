@@ -18,9 +18,9 @@ Minecraft 自动化黑盒测试框架。服务端插件通过 Plugin Message Cha
 | 模块 | 角色 | 框架 | JVM |
 |------|------|------|-----|
 | `mod/common` | 无 MC 依赖的共享协议层 | Kotlin + Gson | 8 |
-| `mod:1.21.11:runtime` | NeoForge 共享运行时实现层 | NeoForm + Kotlin | 21 |
-| `mod:1.21.11:fabric` | 客户端 Mod | Fabric 1.21.11 + fabric-language-kotlin | 21 |
-| `mod:1.21.11:neoforge` | NeoForge loader wrapper | NeoForge 21.11.x + KotlinForForge | 21 |
+| `mod:1.21.11:runtime` | 1.21.11 公共运行时核心（当前含共享 bridge/core 与部分共享 Action） | NeoForm + Kotlin | 21 |
+| `mod:1.21.11:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.11 + fabric-language-kotlin | 21 |
+| `mod:1.21.11:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.11.x + KotlinForForge | 21 |
 | `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2 | 21 |
 | `forge-1.12.2` | 客户端 Mod（独立项目） | Forge 1.12.2 | 8 |
 
@@ -43,7 +43,8 @@ BlackBoxPro/
 说明：
 - 根项目负责聚合构建。
 - `mod` 是独立 Gradle 工程，负责 common/runtime/fabric/neoforge。
-- `runtime` 现在开始承载 1.21.11 公共桥接核心（dispatcher/scheduler/config/response）。
+- `runtime` 现在开始承载 1.21.11 公共桥接核心（dispatcher/scheduler/config/response）以及首批共享 Action。
+- `screenshot` 已提升为 runtime 共享编排能力，Fabric / NeoForge 仅保留平台截图实现。
 - NeoForge 1.21.11 产物按 `common + runtime + neoforge-wrapper` 分层构建。
 - Fabric 1.21.11 已接入 `runtime` 公共核心源码，但平台实现仍保留在 Fabric 模块内。
 - `plugin` 与 `forge-1.12.2` 通过 composite build 依赖 `mod/common`。

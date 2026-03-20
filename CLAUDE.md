@@ -72,6 +72,7 @@ BlackBoxPro/                    # 根聚合项目
   - `runtime`：开始承载 1.21.11 公共 bridge/core，并保留当前 Mojang/NeoForm 命名下的 MC 实现
   - `neoforge`：入口、事件桥、配置加载、网络注册等 loader 包装层
 - Fabric 侧已接入 `runtime` 中的公共 bridge/core 源码，平台实现仍保留在 Fabric 模块
+- 当前已共享到 `runtime` 的代表能力：dispatcher / scheduler / config snapshot / response sender / `wait` / `batch` / `screenshot`
 - Fabric API / NeoForge / NeoForm
 - fabric-language-kotlin / KotlinForForge
 - SLF4J 日志
