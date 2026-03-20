@@ -1,3 +1,3 @@
 package com.blackboxpro.fabric.action.composite
 
-typealias WaitAction = com.blackboxpro.runtime.action.composite.WaitAction
+typealias WaitAction = com.blackboxpro.common.action.composite.WaitAction

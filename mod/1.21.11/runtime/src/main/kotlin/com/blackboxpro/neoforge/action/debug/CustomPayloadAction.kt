@@ -2,7 +2,7 @@ package com.blackboxpro.neoforge.action.debug
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.runtime.config.RuntimeBlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.util.requireString
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft

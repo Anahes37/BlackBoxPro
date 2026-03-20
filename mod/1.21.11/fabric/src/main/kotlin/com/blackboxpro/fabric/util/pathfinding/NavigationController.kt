@@ -1,7 +1,7 @@
 package com.blackboxpro.fabric.util.pathfinding
 
 import com.blackboxpro.fabric.action.composite.TickScheduler
-import com.blackboxpro.runtime.config.RuntimeNavigationConfig
+import com.blackboxpro.common.runtime.config.RuntimeNavigationConfig
 import com.blackboxpro.fabric.util.InjectedInput
 import net.minecraft.client.MinecraftClient
 import org.slf4j.LoggerFactory

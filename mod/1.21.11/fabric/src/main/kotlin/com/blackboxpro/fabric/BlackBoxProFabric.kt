@@ -7,7 +7,7 @@ import com.blackboxpro.fabric.dispatcher.CommandDispatcher
 import com.blackboxpro.fabric.network.NetworkHandler
 import com.blackboxpro.fabric.util.ChatHistoryBuffer
 import com.blackboxpro.fabric.util.FabricRuntimeScreenshotProvider
-import com.blackboxpro.runtime.screenshot.RuntimeScreenshotBridge
+import com.blackboxpro.common.runtime.screenshot.RuntimeScreenshotBridge
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
 import org.slf4j.LoggerFactory

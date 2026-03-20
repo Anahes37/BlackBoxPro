@@ -1,6 +1,7 @@
 package com.blackboxpro.neoforge.dispatcher
 
 import com.blackboxpro.common.action.ActionCatalog
+import com.blackboxpro.common.action.composite.BatchAction
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.movement.*
 import com.blackboxpro.neoforge.action.block.*
@@ -13,6 +14,7 @@ import com.blackboxpro.neoforge.action.advanced.*
 import com.blackboxpro.neoforge.action.debug.*
 import com.blackboxpro.neoforge.action.composite.*
 import com.blackboxpro.neoforge.action.query.*
+import com.blackboxpro.runtime.bindings.LoggerSupplierBinding
 import org.slf4j.LoggerFactory
 
 object ActionRegistry {
@@ -37,6 +39,9 @@ object ActionRegistry {
 
     fun registerAll() {
         check(!frozen) { "ActionRegistry already initialized" }
+
+        // Bind common actions that need platform-specific dependencies
+        val boundBatchAction = BatchAction().also { it.bind(LoggerSupplierBinding) }
 
         // === 移动与位置 ===
         register("player_move", PlayerMoveAction())
@@ -139,7 +144,7 @@ object ActionRegistry {
         register("container_transfer", ContainerTransferAction())
         register("drop_inventory", DropInventoryAction())
         register("pathfind_to", PathfindToAction())
-        register("batch", BatchAction())
+        register("batch", boundBatchAction)
         register("wait", WaitAction())
         register("respawn", RespawnAction())
         register("craft_recipe", CraftRecipeAction())

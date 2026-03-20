@@ -2,8 +2,8 @@ package com.blackboxpro.neoforge.action.composite
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.runtime.config.RuntimeBlackBoxConfig
-import com.blackboxpro.runtime.scheduler.RuntimeTickScheduler
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
+import com.blackboxpro.common.runtime.scheduler.RuntimeTickScheduler
 import com.blackboxpro.neoforge.dispatcher.ActionRegistry
 import com.blackboxpro.neoforge.util.requireInt
 import com.google.gson.JsonObject

@@ -1,8 +1,9 @@
 package com.blackboxpro.neoforge.dispatcher
 
 import com.blackboxpro.neoforge.network.NetworkHandler
-import com.blackboxpro.runtime.dispatcher.RuntimeCommandDispatcher
-import com.blackboxpro.runtime.dispatcher.RuntimeResponseSender
+import com.blackboxpro.runtime.bindings.LoggerSupplierBinding
+import com.blackboxpro.common.runtime.dispatcher.RuntimeCommandDispatcher
+import com.blackboxpro.common.runtime.dispatcher.RuntimeResponseSender
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
@@ -19,7 +20,7 @@ object CommandDispatcher {
 
     fun init() {
         RuntimeCommandDispatcher.bind(
-            logger = logger,
+            loggerSupplier = LoggerSupplierBinding,
             mainThreadExecutor = object : RuntimeCommandDispatcher.MainThreadExecutor {
                 override fun execute(task: () -> Unit) {
                     Minecraft.getInstance().execute(task)

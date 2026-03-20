@@ -1,6 +1,6 @@
 package com.blackboxpro.neoforge.action.composite
 
-import com.blackboxpro.runtime.scheduler.RuntimeTickScheduler
+import com.blackboxpro.common.runtime.scheduler.RuntimeTickScheduler
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent
 import net.neoforged.neoforge.client.event.ClientTickEvent

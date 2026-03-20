@@ -1,8 +1,9 @@
 package com.blackboxpro.fabric.dispatcher
 
 import com.blackboxpro.fabric.network.NetworkHandler
-import com.blackboxpro.runtime.dispatcher.RuntimeCommandDispatcher
-import com.blackboxpro.runtime.dispatcher.RuntimeResponseSender
+import com.blackboxpro.runtime.bindings.FabricBindings
+import com.blackboxpro.common.runtime.dispatcher.RuntimeCommandDispatcher
+import com.blackboxpro.common.runtime.dispatcher.RuntimeResponseSender
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
@@ -17,7 +18,7 @@ object CommandDispatcher {
 
     fun init() {
         RuntimeCommandDispatcher.bind(
-            logger = logger,
+            loggerSupplier = FabricBindings,
             mainThreadExecutor = object : RuntimeCommandDispatcher.MainThreadExecutor {
                 override fun execute(task: () -> Unit) {
                     MinecraftClient.getInstance().execute(task)

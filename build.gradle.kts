@@ -18,7 +18,7 @@ val standaloneProjects = mapOf(
         dir = file("plugin"),
         actions = listOf("build", "clean", "jar")
     ),
-    "forge-1.12.2" to StandaloneProject(
+    "1.12.2" to StandaloneProject(
         prefix = "forge1122",
         dir = file("forge-1.12.2"),
         actions = listOf("build", "clean", "jar")
@@ -53,6 +53,10 @@ tasks.register("buildAll") {
     description = "构建所有模块并收集 jar 到根 build/libs"
     dependsOn("mod_buildAll", "plugin_build", "forge1122_build")
     finalizedBy(collectJars)
+}
+
+tasks.named("forge1122_build") {
+    dependsOn("mod_buildAll")
 }
 
 tasks.register("cleanAll") {

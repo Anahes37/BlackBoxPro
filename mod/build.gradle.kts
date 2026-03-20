@@ -1,9 +1,5 @@
 import java.util.Properties
 
-plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.2.0" apply false
-}
-
 val sharedProps = Properties().apply {
     file("gradle.properties").reader().use(::load)
 }

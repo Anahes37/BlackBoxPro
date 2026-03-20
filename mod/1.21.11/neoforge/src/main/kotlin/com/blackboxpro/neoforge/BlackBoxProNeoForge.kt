@@ -7,7 +7,7 @@ import com.blackboxpro.neoforge.dispatcher.CommandDispatcher
 import com.blackboxpro.neoforge.network.NetworkHandler
 import com.blackboxpro.neoforge.util.ChatHistoryBuffer
 import com.blackboxpro.neoforge.util.NeoForgeRuntimeScreenshotProvider
-import com.blackboxpro.runtime.screenshot.RuntimeScreenshotBridge
+import com.blackboxpro.common.runtime.screenshot.RuntimeScreenshotBridge
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.Mod

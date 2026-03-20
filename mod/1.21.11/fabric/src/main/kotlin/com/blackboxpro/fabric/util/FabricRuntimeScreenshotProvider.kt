@@ -1,6 +1,6 @@
 package com.blackboxpro.fabric.util
 
-import com.blackboxpro.runtime.screenshot.RuntimeScreenshotBridge
+import com.blackboxpro.common.runtime.screenshot.RuntimeScreenshotBridge
 import net.minecraft.client.MinecraftClient
 import java.nio.file.Path
 

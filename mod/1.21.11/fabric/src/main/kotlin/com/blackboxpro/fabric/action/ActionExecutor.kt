@@ -1,4 +1,4 @@
 package com.blackboxpro.fabric.action
 
-typealias ActionExecutor = com.blackboxpro.runtime.action.ActionExecutor
-typealias ActionResult = com.blackboxpro.runtime.action.ActionResult
+typealias ActionExecutor = com.blackboxpro.common.runtime.action.ActionExecutor
+typealias ActionResult = com.blackboxpro.common.runtime.action.ActionResult

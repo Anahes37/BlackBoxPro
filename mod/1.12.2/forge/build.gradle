@@ -1,0 +1,72 @@
+plugins {
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.1'
+    id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
+}
+
+// Read version from root project's gradle.properties
+def rootProps = new Properties()
+rootProps.load(file("${rootDir}/../gradle.properties").newReader())
+def rootVersion = rootProps.getProperty('version', '0.0.0')
+configurations.create('embeddedCommon')
+def commonJar = file("${rootDir}/../mod/common/build/libs/blackboxpro-common-${rootVersion}.jar")
+
+group = 'com.blackboxpro'
+version = rootVersion
+archivesBaseName = "BlackBoxPro-forge-1.12.2"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+minecraft {
+    mcVersion = '1.12.2'
+    mcpMappingChannel = 'stable'
+    mcpMappingVersion = '39'
+
+    extraRunJvmArguments.addAll('-ea:com.blackboxpro')
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly files(commonJar)
+    embeddedCommon files(commonJar)
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
+    implementation "com.google.code.gson:gson:2.8.9"
+}
+
+compileKotlin {
+    dependsOn gradle.includedBuild('common').task(':jar')
+    kotlinOptions {
+        jvmTarget = '1.8'
+        freeCompilerArgs = ['-Xjvm-default=all']
+    }
+}
+
+compileJava {
+    dependsOn gradle.includedBuild('common').task(':jar')
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', '1.12.2'
+
+    filesMatching('mcmod.info') {
+        expand 'version': project.version, 'mcversion': '1.12.2'
+    }
+}
+
+jar {
+    dependsOn gradle.includedBuild('common').task(':jar')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.embeddedCommon.collect { zipTree(it) }
+    }
+    from {
+        configurations.runtimeClasspath.findAll { it.name.startsWith('kotlin-') }.collect { zipTree(it) }
+    }
+}

@@ -1,3 +1,3 @@
 package com.blackboxpro.fabric.action.composite
 
-typealias BatchAction = com.blackboxpro.runtime.action.composite.BatchAction
+typealias BatchAction = com.blackboxpro.common.action.composite.BatchAction

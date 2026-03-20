@@ -2,7 +2,7 @@ package com.blackboxpro.neoforge.action.composite
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.runtime.config.RuntimeBlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.util.getBooleanOrDefault
 import com.blackboxpro.neoforge.util.getDoubleOrDefault
 import com.blackboxpro.neoforge.util.getIntOrDefault

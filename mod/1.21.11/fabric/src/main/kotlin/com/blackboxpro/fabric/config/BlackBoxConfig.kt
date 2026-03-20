@@ -1,7 +1,7 @@
 package com.blackboxpro.fabric.config
 
-import com.blackboxpro.runtime.config.RuntimeBlackBoxConfig
-import com.blackboxpro.runtime.config.RuntimeBlackBoxConfigSnapshot
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfigSnapshot
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import net.fabricmc.loader.api.FabricLoader

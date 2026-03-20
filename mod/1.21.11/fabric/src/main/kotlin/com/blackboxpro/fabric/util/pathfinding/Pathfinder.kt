@@ -1,6 +1,6 @@
 package com.blackboxpro.fabric.util.pathfinding
 
-import com.blackboxpro.runtime.config.RuntimeNavigationConfig
+import com.blackboxpro.common.runtime.config.RuntimeNavigationConfig
 import net.minecraft.client.world.ClientWorld
 import net.minecraft.util.math.BlockPos
 import org.slf4j.LoggerFactory

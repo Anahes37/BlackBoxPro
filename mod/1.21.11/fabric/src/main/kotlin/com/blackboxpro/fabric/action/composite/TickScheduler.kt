@@ -1,6 +1,6 @@
 package com.blackboxpro.fabric.action.composite
 
-import com.blackboxpro.runtime.scheduler.RuntimeTickScheduler
+import com.blackboxpro.common.runtime.scheduler.RuntimeTickScheduler
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import org.slf4j.LoggerFactory

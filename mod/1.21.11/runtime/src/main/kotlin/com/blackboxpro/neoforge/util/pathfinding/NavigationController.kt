@@ -1,7 +1,7 @@
 package com.blackboxpro.neoforge.util.pathfinding
 
-import com.blackboxpro.runtime.scheduler.RuntimeTickScheduler
-import com.blackboxpro.runtime.config.RuntimeNavigationConfig
+import com.blackboxpro.common.runtime.scheduler.RuntimeTickScheduler
+import com.blackboxpro.common.runtime.config.RuntimeNavigationConfig
 import com.blackboxpro.neoforge.util.InjectedInput
 import net.minecraft.client.Minecraft
 import org.slf4j.LoggerFactory

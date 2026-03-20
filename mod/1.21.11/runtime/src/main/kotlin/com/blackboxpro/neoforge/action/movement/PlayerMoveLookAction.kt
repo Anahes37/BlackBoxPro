@@ -2,8 +2,8 @@ package com.blackboxpro.neoforge.action.movement
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.runtime.scheduler.RuntimeTickScheduler
-import com.blackboxpro.runtime.config.RuntimeBlackBoxConfig
+import com.blackboxpro.common.runtime.scheduler.RuntimeTickScheduler
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.util.InjectedInput
 import com.blackboxpro.neoforge.util.getDoubleOrDefault
 import com.blackboxpro.neoforge.util.getIntOrDefault

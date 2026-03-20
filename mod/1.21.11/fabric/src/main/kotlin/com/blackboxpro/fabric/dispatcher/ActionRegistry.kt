@@ -1,6 +1,7 @@
 package com.blackboxpro.fabric.dispatcher
 
 import com.blackboxpro.common.action.ActionCatalog
+import com.blackboxpro.common.action.composite.BatchAction
 import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.movement.*
 import com.blackboxpro.fabric.action.block.*
@@ -13,6 +14,7 @@ import com.blackboxpro.fabric.action.advanced.*
 import com.blackboxpro.fabric.action.debug.*
 import com.blackboxpro.fabric.action.composite.*
 import com.blackboxpro.fabric.action.query.*
+import com.blackboxpro.runtime.bindings.FabricBindings
 import org.slf4j.LoggerFactory
 
 object ActionRegistry {
@@ -37,6 +39,9 @@ object ActionRegistry {
 
     fun registerAll() {
         check(!frozen) { "ActionRegistry already initialized" }
+
+        // Bind common actions that need platform-specific dependencies
+        val boundBatchAction = BatchAction().also { it.bind(FabricBindings) }
 
         // === 移动与位置 ===
         register("player_move", PlayerMoveAction())
@@ -139,7 +144,7 @@ object ActionRegistry {
         register("container_transfer", ContainerTransferAction())
         register("drop_inventory", DropInventoryAction())
         register("pathfind_to", PathfindToAction())
-        register("batch", BatchAction())
+        register("batch", boundBatchAction)
         register("wait", WaitAction())
         register("respawn", RespawnAction())
         register("craft_recipe", CraftRecipeAction())
