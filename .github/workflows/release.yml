@@ -50,28 +50,22 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Fix gradlew permissions
-        run: chmod +x gradlew forge-1.12.2/gradlew plugin/gradlew
+        run: chmod +x gradlew mod/gradlew plugin/gradlew forge-1.12.2/gradlew
 
       - name: Stop Gradle daemons
         run: ./gradlew --stop || true
 
-      - name: Build Fabric & NeoForge
-        run: ./gradlew :fabric-1.21.11:build :neoforge-1.21.11:build --no-daemon
-
-      - name: Build Forge 1.12.2
-        run: cd forge-1.12.2 && ./gradlew build
-
-      - name: Build Plugin
-        run: cd plugin && ./gradlew jar
+      - name: Build all modules
+        run: ./gradlew buildAll --no-daemon
 
       - name: Collect artifacts
         run: |
           mkdir -p release-artifacts
           ver="${{ needs.check-version.outputs.version }}"
-          cp fabric-1.21.11/build/libs/BlackBoxPro-fabric-1.21.11-${ver}.jar release-artifacts/
-          cp neoforge-1.21.11/build/libs/BlackBoxPro-neoforge-1.21.11-${ver}.jar release-artifacts/
-          cp forge-1.12.2/build/libs/BlackBoxPro-forge-1.12.2-${ver}.jar release-artifacts/
-          cp plugin/build/libs/BlackBoxPro-Plugin-${ver}.jar release-artifacts/
+          cp "mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-${ver}.jar" release-artifacts/
+          cp "mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-${ver}.jar" release-artifacts/
+          cp "forge-1.12.2/build/libs/BlackBoxPro-forge-1.12.2-${ver}.jar" release-artifacts/
+          cp "plugin/build/libs/BlackBoxPro-Plugin-${ver}.jar" release-artifacts/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

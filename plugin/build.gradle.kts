@@ -22,6 +22,7 @@ val rootProps = Properties().apply {
 version = rootProps.getProperty("version", "0.0.0")
 val commonVersion = rootProps.getProperty("version", "0.0.0")
 val embeddedCommon by configurations.creating
+val commonJar = file("${rootDir}/../mod/common/build/libs/blackboxpro-common-$commonVersion.jar")
 
 taboolib {
     env {
@@ -42,8 +43,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("com.blackboxpro:common:$commonVersion")
-    embeddedCommon("com.blackboxpro:common:$commonVersion")
+    compileOnly(files(commonJar))
+    embeddedCommon(files(commonJar))
     compileOnly(kotlin("stdlib"))
     compileOnly("com.google.code.gson:gson:2.11.0")
     compileOnly("ink.ptms.core:v12105:12105:mapped")
@@ -55,10 +56,15 @@ tasks.withType<JavaCompile> {
 }
 
 tasks.withType<KotlinCompile> {
+    dependsOn(gradle.includedBuild("common").task(":jar"))
     compilerOptions {
         jvmTarget.set(JVM_1_8)
         freeCompilerArgs.add("-Xjvm-default=all")
     }
+}
+
+tasks.withType<JavaCompile> {
+    dependsOn(gradle.includedBuild("common").task(":jar"))
 }
 
 java {

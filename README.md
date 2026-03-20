@@ -1,19 +1,17 @@
 # BlackBoxPro
 
-Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服务端插件向客户端 Mod 下发 JSON 指令，Mod 在客户端模拟真实玩家行为（移动、交互、GUI 操作、战斗等），用于对服务端插件逻辑进行自动化功能测试。
+Minecraft 自动化黑盒测试框架。服务端插件通过 Plugin Message Channel 向客户端 Mod 下发 JSON 指令，客户端模拟真实玩家行为并回传结果，用于服务端插件功能测试。
 
 ## 架构
 
-```
+```text
 ┌─────────────────────┐     blackbox:command      ┌──────────────────────┐
-│   Bukkit Server     │ ────────────────────────▶  │  Fabric / NeoForge   │
-│   (plugin 模块)     │                            │  / Forge 客户端 Mod  │
-│                     │ ◀────────────────────────  │                     │
-│                     │     blackbox:response      │                     │
-└─────────────────────┘                            └──────────────────────┘
+│   Bukkit Server     │ ────────────────────────▶ │  Fabric / NeoForge   │
+│   (plugin 模块)     │                           │  / Forge 客户端 Mod  │
+│                     │ ◀──────────────────────── │                      │
+│                     │     blackbox:response     │                      │
+└─────────────────────┘                           └──────────────────────┘
 ```
-
-服务端插件通过 `blackbox:command` 通道发送 JSON 指令，客户端 Mod 执行后通过 `blackbox:response` 通道回报结果。
 
 ## 模块
 
@@ -22,15 +20,31 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 | `mod/common` | 无 MC 依赖的共享协议层 | Kotlin + Gson | 8 |
 | `mod:1.21.11:fabric` | 客户端 Mod | Fabric 1.21.11 + fabric-language-kotlin | 21 |
 | `mod:1.21.11:neoforge` | 客户端 Mod | NeoForge 21.11.x + KotlinForForge | 21 |
-| `forge-1.12.2` | 客户端 Mod（遗留独立构建） | Forge 1.12.2 | 8 |
-| `plugin` | 服务端插件实现，依赖 `common` | Paper/Spigot + TabooLib 6.2 | 21 |
+| `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2 | 21 |
+| `forge-1.12.2` | 客户端 Mod（独立项目） | Forge 1.12.2 | 8 |
 
-仓库根现在是聚合构建入口：
-- `mod` 负责客户端相关模块，结构参考 Zeus。
-- `plugin` 和 `forge-1.12.2` 保持独立 Gradle 项目。
-- `plugin` 通过组合构建依赖 `mod/common`。
+## 仓库结构
 
-## 支持的行为 (86+)
+```text
+BlackBoxPro/
+├── mod/
+│   ├── common/
+│   └── 1.21.11/
+│       ├── fabric/
+│       └── neoforge/
+├── plugin/
+├── forge-1.12.2/
+├── build.gradle.kts        # 根聚合入口
+└── settings.gradle.kts
+```
+
+说明：
+- 根项目负责聚合构建。
+- `mod` 是独立 Gradle 工程，负责 common/fabric/neoforge。
+- `plugin`、`forge-1.12.2` 保持独立构建。
+- `plugin` 与 `forge-1.12.2` 通过 composite build 依赖 `mod/common`。
+
+## 支持的行为
 
 | 分类 | 示例 | 数量 |
 |------|------|------|
@@ -50,7 +64,7 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 
 消息格式：JSON over Plugin Message Channel（VarInt length + UTF-8 bytes）。
 
-指令 (Server → Client)：
+指令：
 ```json
 {
   "id": "uuid",
@@ -60,7 +74,7 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 }
 ```
 
-响应 (Client → Server)：
+响应：
 ```json
 {
   "id": "uuid",
@@ -70,59 +84,39 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 }
 ```
 
-## 服务端 API
-
-`BlackBoxApi` 提供三种调用模式：
-
-```kotlin
-// Fire-and-forget
-BlackBoxApi.send(player, "chat_message", params)
-
-// 回调
-BlackBoxApi.send(player, "click_slot", params) { response ->
-    // 处理响应
-}
-
-// CompletableFuture（推荐）
-BlackBoxApi.sendAsync(player, "pathfind_to", params).thenAccept { response ->
-    // 处理响应
-}
-```
-
-同时提供高级封装 `HighLevelActions`，简化常见操作的参数构建。
-
 ## 构建
 
-```bash
-# 客户端模块（common + fabric + neoforge）
-cd mod && ./gradlew buildAll
+在仓库根目录执行：
 
-# 服务端插件（独立项目，组合构建依赖 mod/common）
-cd plugin && ./gradlew jar
+```powershell
+# 构建 1.21.11 mod（common + fabric + neoforge）
+.\gradlew mod_buildAll
 
-# Forge 1.12.2（独立项目，运行 Gradle 需 JDK 17+/21，JDK 8 toolchain 自动下载）
-cd forge-1.12.2 && ./gradlew build
+# 构建 plugin
+.\gradlew plugin_build
 
-# 仓库根聚合构建
-./gradlew mod_buildAll plugin_build
+# 构建 forge 1.12.2
+.\gradlew forge1122_build
 
-# 全量构建 + 收集产物到根 build/libs
-./gradlew buildAll collectJars
+# 全量构建并收集产物到根 build\libs
+.\gradlew buildAll
 ```
 
-产物路径：
+## 产物路径
+
 - `mod/common/build/libs/blackboxpro-common-*.jar`
-- `mod/1.21.11/fabric/build/libs/blackboxpro-fabric-*.jar`
-- `mod/1.21.11/neoforge/build/libs/blackboxpro-neoforge-*.jar`
-- `forge-1.12.2/build/libs/blackboxpro-forge-*.jar`
+- `mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-*.jar`
+- `mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-*.jar`
 - `plugin/build/libs/BlackBoxPro-Plugin-*.jar`
+- `forge-1.12.2/build/libs/BlackBoxPro-forge-1.12.2-*.jar`
+- `build/libs/` 为根聚合收集目录
 
 ## 技术栈
 
-- Kotlin, JVM 21 / JVM 8 (forge-1.12.2)
-- Gradle (Kotlin DSL)
+- Kotlin
+- Gradle Kotlin DSL
 - Fabric API / NeoForge / Forge
-- TabooLib 6.2 (plugin)
+- TabooLib 6.2（plugin）
 - Gson
 
 ## 许可证

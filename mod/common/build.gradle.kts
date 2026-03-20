@@ -29,7 +29,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_1_8)
-        freeCompilerArgs.add("-Xjvm-default=all")
+        freeCompilerArgs.addAll("-Xjvm-default=all", "-Xmetadata-version=1.9.0")
     }
 }
 

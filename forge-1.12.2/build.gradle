@@ -7,7 +7,8 @@ plugins {
 def rootProps = new Properties()
 rootProps.load(file("${rootDir}/../gradle.properties").newReader())
 def rootVersion = rootProps.getProperty('version', '0.0.0')
-def embeddedCommon = configurations.create('embeddedCommon')
+configurations.create('embeddedCommon')
+def commonJar = file("${rootDir}/../mod/common/build/libs/blackboxpro-common-${rootVersion}.jar")
 
 group = 'com.blackboxpro'
 version = rootVersion
@@ -32,17 +33,22 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.blackboxpro:common:${rootVersion}"
-    embeddedCommon "com.blackboxpro:common:${rootVersion}"
+    compileOnly files(commonJar)
+    embeddedCommon files(commonJar)
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
     implementation "com.google.code.gson:gson:2.8.9"
 }
 
 compileKotlin {
+    dependsOn gradle.includedBuild('common').task(':jar')
     kotlinOptions {
         jvmTarget = '1.8'
         freeCompilerArgs = ['-Xjvm-default=all']
     }
+}
+
+compileJava {
+    dependsOn gradle.includedBuild('common').task(':jar')
 }
 
 processResources {
