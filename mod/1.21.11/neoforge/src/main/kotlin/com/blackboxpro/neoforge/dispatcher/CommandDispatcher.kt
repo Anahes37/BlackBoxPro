@@ -1,12 +1,13 @@
 package com.blackboxpro.neoforge.dispatcher
 
-import com.blackboxpro.neoforge.network.NetworkHandler
 import com.blackboxpro.neoforge.config.BlackBoxConfig
+import com.blackboxpro.neoforge.network.NetworkHandler
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent
+import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.common.NeoForge
 import org.slf4j.LoggerFactory
 
@@ -23,6 +24,11 @@ object CommandDispatcher {
     private val delayedQueue = ArrayDeque<DelayedCommand>()
 
     fun init() {
+        RuntimeResponseSender.bind(object : RuntimeResponseSender.Sender {
+            override fun sendResponse(id: String, status: String, message: String?, data: JsonObject?) {
+                this@CommandDispatcher.sendResponse(id, status, message, data)
+            }
+        })
         NeoForge.EVENT_BUS.register(this)
     }
 
@@ -110,7 +116,7 @@ object CommandDispatcher {
         id: String,
         status: String,
         message: String? = null,
-        data: com.google.gson.JsonObject? = null
+        data: JsonObject? = null
     ) {
         val response = ResponseMessage(id, status, message, data)
         val json = gson.toJson(response)

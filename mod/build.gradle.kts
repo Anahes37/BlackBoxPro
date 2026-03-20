@@ -25,16 +25,17 @@ subprojects {
 
 val collectJars = tasks.register<Copy>("collectJars") {
     group = "build"
-    description = "收集 common/fabric/neoforge 的 jar 到 mod/build/libs"
+    description = "收集 common/runtime/fabric/neoforge 的 jar 到 mod/build/libs"
     into(layout.buildDirectory.dir("libs"))
     from(project(":common").layout.buildDirectory.dir("libs"))
+    from(project(":1.21.11:runtime").layout.buildDirectory.dir("libs"))
     from(project(":1.21.11:fabric").layout.buildDirectory.dir("libs"))
     from(project(":1.21.11:neoforge").layout.buildDirectory.dir("libs"))
 }
 
 tasks.register("buildAll") {
     group = "build"
-    description = "构建 common、fabric、neoforge 并收集 jar"
-    dependsOn(":common:build", ":1.21.11:fabric:build", ":1.21.11:neoforge:build")
+    description = "构建 common、runtime、fabric、neoforge 并收集 jar"
+    dependsOn(":common:build", ":1.21.11:runtime:build", ":1.21.11:fabric:build", ":1.21.11:neoforge:build")
     finalizedBy(collectJars)
 }

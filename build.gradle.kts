@@ -31,7 +31,7 @@ for ((name, project) in standaloneProjects) {
             group = "standalone"
             description = "$action 独立项目 $name"
             workingDir = project.dir
-            commandLine(project.gradlew.absolutePath, action)
+            commandLine(project.gradlew.absolutePath, "--no-daemon", action)
             isIgnoreExitValue = (action == "clean")
         }
     }

@@ -16,8 +16,9 @@ BlackBoxPro/                    # 根聚合项目
 ├── mod/                        # 客户端相关独立 Gradle 工程
 │   ├── common/                 # 共享协议层
 │   └── 1.21.11/
-│       ├── fabric/             # Fabric 客户端 Mod
-│       └── neoforge/           # NeoForge 客户端 Mod
+│       ├── runtime/            # NeoForge 运行时实现层（Mojang/NeoForm 命名）
+│       ├── fabric/             # Fabric 客户端 Mod（暂时独立）
+│       └── neoforge/           # NeoForge loader wrapper
 ├── forge-1.12.2/               # Forge 1.12.2 客户端 Mod（独立项目）
 ├── plugin/                     # Bukkit 服务端插件（独立项目）
 ├── gradle.properties           # 根版本号与 1.21.11 依赖版本
@@ -64,9 +65,13 @@ BlackBoxPro/                    # 根聚合项目
 
 ## 技术栈
 
-### 客户端 Mod (mod:1.21.11:fabric / mod:1.21.11:neoforge)
+### 客户端 Mod (mod:1.21.11:runtime / mod:1.21.11:fabric / mod:1.21.11:neoforge)
 
-- Fabric API / NeoForge
+- NeoForge 侧现为 `common + runtime + neoforge-wrapper` 分层：
+  - `runtime`：Mojang/NeoForm 命名下的 vanilla/MC 实现
+  - `neoforge`：入口、事件桥、配置加载、网络注册等 loader 包装层
+- Fabric 侧当前仍直接依赖 `common`，暂未接入 runtime
+- Fabric API / NeoForge / NeoForm
 - fabric-language-kotlin / KotlinForForge
 - SLF4J 日志
 - 无外部依赖，纯 Minecraft 协议操作
@@ -186,7 +191,7 @@ com.blackboxpro.plugin
 ### 本地构建
 
 ```powershell
-# 构建 1.21.11 mod（common + fabric + neoforge）
+# 构建 1.21.11 mod（common + runtime + fabric + neoforge）
 .\gradlew mod_buildAll
 
 # 构建服务端插件

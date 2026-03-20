@@ -2,7 +2,7 @@ package com.blackboxpro.neoforge.action.composite
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.config.BlackBoxConfig
+import com.blackboxpro.neoforge.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.util.getBooleanOrDefault
 import com.blackboxpro.neoforge.util.getDoubleOrDefault
 import com.blackboxpro.neoforge.util.getIntOrDefault
@@ -26,7 +26,7 @@ class NavigateToAction : ActionExecutor {
         val targetY = params.requireDouble("y")
         val targetZ = params.requireDouble("z")
         val speed = params.getDoubleOrDefault("speed", 1.0)
-        val navConfig = BlackBoxConfig.current.navigation
+        val navConfig = RuntimeBlackBoxConfig.current.navigation
         val timeout = params.getIntOrDefault("timeout", navConfig.defaultTimeout)
         val allowJump = params.getBooleanOrDefault("allowJump", true)
 

@@ -6,6 +6,13 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "2.2.0"
 }
 
+evaluationDependsOn(":common")
+evaluationDependsOn(":1.21.11:runtime")
+
+val commonSourceSet = project(":common").extensions.getByType(SourceSetContainer::class.java).getByName("main")
+val runtimeSourceSet = project(":1.21.11:runtime").extensions.getByType(SourceSetContainer::class.java).getByName("main")
+val localSourceSet = extensions.getByType(SourceSetContainer::class.java).getByName("main")
+
 base {
     archivesName.set("BlackBoxPro-neoforge-${property("minecraft_version")}")
 }
@@ -17,10 +24,20 @@ repositories {
 
 neoForge {
     version = property("neoforge_version").toString()
+
+    runs {
+        configureEach {
+            val blackboxpro = mods.create("blackboxpro")
+            blackboxpro.sourceSet(localSourceSet)
+            blackboxpro.sourceSet(runtimeSourceSet)
+            blackboxpro.sourceSet(commonSourceSet)
+        }
+    }
 }
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":1.21.11:runtime"))
     implementation("thedarkcolour:kotlinforforge-neoforge:${property("kotlin_for_forge_version")}")
 }
 
@@ -30,6 +47,9 @@ tasks.processResources {
     filesMatching("META-INF/neoforge.mods.toml") {
         expand("version" to project.version)
     }
+
+    from(runtimeSourceSet.resources)
+    from(commonSourceSet.resources)
 }
 
 java {
@@ -44,9 +64,11 @@ kotlin {
 }
 
 tasks.named<Jar>("jar") {
-    from(project(":common").the<SourceSetContainer>()["main"].output)
+    from(runtimeSourceSet.output)
+    from(commonSourceSet.output)
 }
 
 tasks.named<Jar>("sourcesJar") {
-    from(project(":common").the<SourceSetContainer>()["main"].allSource)
+    from(runtimeSourceSet.allSource)
+    from(commonSourceSet.allSource)
 }

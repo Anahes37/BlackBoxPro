@@ -26,9 +26,11 @@ gradle.beforeProject {
 }
 
 include("common")
+include("1.21.11:runtime")
 include("1.21.11:fabric")
 include("1.21.11:neoforge")
 
 project(":1.21.11").projectDir = file("1.21.11")
+project(":1.21.11:runtime").projectDir = file("1.21.11/runtime")
 project(":1.21.11:fabric").projectDir = file("1.21.11/fabric")
 project(":1.21.11:neoforge").projectDir = file("1.21.11/neoforge")

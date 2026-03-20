@@ -1,12 +1,12 @@
 package com.blackboxpro.neoforge.action.composite
 
 import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent
+import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.common.NeoForge
 import org.slf4j.LoggerFactory
 
-object TickScheduler {
+object TickScheduler : RuntimeTickScheduler.Scheduler {
 
     private val logger = LoggerFactory.getLogger("BlackBoxPro-TickScheduler")
 
@@ -18,6 +18,7 @@ object TickScheduler {
     private val tasks = ArrayDeque<ScheduledTask>()
 
     fun init() {
+        RuntimeTickScheduler.bind(this)
         NeoForge.EVENT_BUS.register(this)
     }
 
@@ -45,7 +46,7 @@ object TickScheduler {
         }
     }
 
-    fun schedule(delayTicks: Int, task: () -> Unit) {
+    override fun schedule(delayTicks: Int, task: () -> Unit) {
         if (delayTicks <= 0) {
             task()
         } else {
@@ -53,7 +54,7 @@ object TickScheduler {
         }
     }
 
-    fun clear() {
+    override fun clear() {
         tasks.clear()
     }
 }

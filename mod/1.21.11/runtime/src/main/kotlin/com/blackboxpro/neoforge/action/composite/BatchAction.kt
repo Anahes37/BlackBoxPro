@@ -2,7 +2,7 @@ package com.blackboxpro.neoforge.action.composite
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.config.BlackBoxConfig
+import com.blackboxpro.neoforge.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.dispatcher.ActionRegistry
 import com.google.gson.JsonObject
 import org.slf4j.LoggerFactory
@@ -15,7 +15,7 @@ class BatchAction : ActionExecutor {
         val actionsArray = params.getAsJsonArray("actions")
             ?: return ActionResult.fail("Missing required field: actions")
 
-        val maxBatchSize = BlackBoxConfig.current.execution.maxBatchSize
+        val maxBatchSize = RuntimeBlackBoxConfig.current.execution.maxBatchSize
         if (actionsArray.size() > maxBatchSize) {
             return ActionResult.fail("Batch too large: ${actionsArray.size()} > $maxBatchSize")
         }
@@ -49,9 +49,9 @@ class BatchAction : ActionExecutor {
             }
 
             if (action == "wait") {
-                val maxDelay = BlackBoxConfig.current.execution.maxDelayTicks
+                val maxDelay = RuntimeBlackBoxConfig.current.execution.maxDelayTicks
                 val ticks = (actionParams.get("ticks")?.asInt ?: 0).coerceAtMost(maxDelay)
-                TickScheduler.schedule(ticks) {
+                RuntimeTickScheduler.schedule(ticks) {
                     executeBatchStep(actions, index + 1)
                 }
                 return

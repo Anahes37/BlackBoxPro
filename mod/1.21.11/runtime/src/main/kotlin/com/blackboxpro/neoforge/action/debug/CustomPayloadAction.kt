@@ -2,7 +2,7 @@ package com.blackboxpro.neoforge.action.debug
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.config.BlackBoxConfig
+import com.blackboxpro.neoforge.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.util.requireString
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
@@ -48,7 +48,7 @@ class CustomPayloadAction : ActionExecutor {
             return ActionResult.fail("Invalid base64 data: ${e.message}")
         }
 
-        val maxSize = BlackBoxConfig.current.network.maxPayloadSize
+        val maxSize = RuntimeBlackBoxConfig.current.network.maxPayloadSize
         if (data.size > maxSize) {
             return ActionResult.fail("Payload too large: ${data.size} > $maxSize")
         }

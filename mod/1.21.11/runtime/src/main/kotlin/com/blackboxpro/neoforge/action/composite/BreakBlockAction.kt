@@ -2,7 +2,7 @@ package com.blackboxpro.neoforge.action.composite
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.config.BlackBoxConfig
+import com.blackboxpro.neoforge.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.dispatcher.ActionRegistry
 import com.blackboxpro.neoforge.util.requireInt
 import com.google.gson.JsonObject
@@ -53,7 +53,7 @@ class BreakBlockAction : ActionExecutor {
         }
 
         // Step 3: 延迟后完成挖掘
-        TickScheduler.schedule(breakTicks) {
+        RuntimeTickScheduler.schedule(breakTicks) {
             // 回调时检查方块是否仍然存在
             val world = Minecraft.getInstance().level ?: return@schedule
             val pos = BlockPos(x, y, z)
@@ -77,7 +77,7 @@ class BreakBlockAction : ActionExecutor {
      * @return tick 数，-1 表示不可破坏
      */
     private fun calculateBreakTicks(client: Minecraft, x: Int, y: Int, z: Int): Int {
-        val defaultTicks = BlackBoxConfig.current.execution.defaultBreakTicks
+        val defaultTicks = RuntimeBlackBoxConfig.current.execution.defaultBreakTicks
         val world = client.level ?: return defaultTicks
         val player = client.player ?: return defaultTicks
         val pos = BlockPos(x, y, z)

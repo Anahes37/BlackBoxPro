@@ -78,15 +78,15 @@ data class BlackBoxConfig(
             if (Files.exists(configPath)) {
                 try {
                     val json = Files.readString(configPath)
-                    current = gson.fromJson(json, BlackBoxConfig::class.java) ?: BlackBoxConfig()
+                    apply(gson.fromJson(json, BlackBoxConfig::class.java) ?: BlackBoxConfig())
                     logger.info("Config loaded from {}", configPath)
                 } catch (e: Exception) {
                     logger.error("Failed to load config, using defaults", e)
-                    current = BlackBoxConfig()
+                    apply(BlackBoxConfig())
                     save()
                 }
             } else {
-                current = BlackBoxConfig()
+                apply(BlackBoxConfig())
                 save()
                 logger.info("Default config created at {}", configPath)
             }
@@ -100,5 +100,55 @@ data class BlackBoxConfig(
                 logger.error("Failed to save config", e)
             }
         }
+
+        private fun apply(config: BlackBoxConfig) {
+            current = config
+            RuntimeBlackBoxConfig.update(config.toRuntimeSnapshot())
+        }
+
+        private fun BlackBoxConfig.toRuntimeSnapshot() = RuntimeBlackBoxConfigSnapshot(
+            logging = RuntimeLoggingConfig(
+                level = logging.level,
+                logCommands = logging.logCommands,
+                logResponses = logging.logResponses,
+                logPackets = logging.logPackets
+            ),
+            network = RuntimeNetworkConfig(
+                commandChannel = network.commandChannel,
+                responseChannel = network.responseChannel,
+                maxPayloadSize = network.maxPayloadSize
+            ),
+            execution = RuntimeExecutionConfig(
+                maxDelayTicks = execution.maxDelayTicks,
+                maxBatchSize = execution.maxBatchSize,
+                defaultBreakTicks = execution.defaultBreakTicks
+            ),
+            pathfinding = RuntimePathfindingConfig(
+                maxDistance = pathfinding.maxDistance,
+                stepSize = pathfinding.stepSize,
+                arrivalThreshold = pathfinding.arrivalThreshold
+            ),
+            safety = RuntimeSafetyConfig(
+                enabled = safety.enabled,
+                allowedActions = safety.allowedActions,
+                blockedActions = safety.blockedActions,
+                requireServerHandshake = safety.requireServerHandshake
+            ),
+            screenshot = RuntimeScreenshotConfig(
+                rootDirectory = screenshot.rootDirectory,
+                maxPerTest = screenshot.maxPerTest
+            ),
+            navigation = RuntimeNavigationConfig(
+                maxDistance = navigation.maxDistance,
+                arrivalThreshold = navigation.arrivalThreshold,
+                stepSize = navigation.stepSize,
+                maxIterations = navigation.maxIterations,
+                maxPathLength = navigation.maxPathLength,
+                defaultTimeout = navigation.defaultTimeout,
+                jumpCost = navigation.jumpCost,
+                fallCost = navigation.fallCost,
+                nodeArrivalThreshold = navigation.nodeArrivalThreshold
+            )
+        )
     }
 }

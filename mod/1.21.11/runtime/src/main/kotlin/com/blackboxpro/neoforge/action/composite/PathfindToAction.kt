@@ -2,7 +2,7 @@ package com.blackboxpro.neoforge.action.composite
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.config.BlackBoxConfig
+import com.blackboxpro.neoforge.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.util.getDoubleOrDefault
 import com.blackboxpro.neoforge.util.requireDouble
 import com.google.gson.JsonObject
@@ -22,7 +22,7 @@ class PathfindToAction : ActionExecutor {
         val player = client.player
             ?: return ActionResult.fail("Player not available")
 
-        val pathConfig = BlackBoxConfig.current.pathfinding
+        val pathConfig = RuntimeBlackBoxConfig.current.pathfinding
         val dx = targetX - player.x
         val dy = targetY - player.y
         val dz = targetZ - player.z
@@ -52,7 +52,7 @@ class PathfindToAction : ActionExecutor {
         val player = client.player ?: return
         val networkHandler = client.connection ?: return
 
-        val pathConfig = BlackBoxConfig.current.pathfinding
+        val pathConfig = RuntimeBlackBoxConfig.current.pathfinding
         val stepSize = pathConfig.stepSize * speed
 
         val dx = targetX - player.x
@@ -73,7 +73,7 @@ class PathfindToAction : ActionExecutor {
             ServerboundMovePlayerPacket.Pos(newX, newY, newZ, player.onGround(), false)
         )
 
-        TickScheduler.schedule(1) {
+        RuntimeTickScheduler.schedule(1) {
             moveStep(targetX, targetY, targetZ, speed, remainingSteps - 1)
         }
     }

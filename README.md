@@ -18,8 +18,9 @@ Minecraft 自动化黑盒测试框架。服务端插件通过 Plugin Message Cha
 | 模块 | 角色 | 框架 | JVM |
 |------|------|------|-----|
 | `mod/common` | 无 MC 依赖的共享协议层 | Kotlin + Gson | 8 |
+| `mod:1.21.11:runtime` | NeoForge 共享运行时实现层 | NeoForm + Kotlin | 21 |
 | `mod:1.21.11:fabric` | 客户端 Mod | Fabric 1.21.11 + fabric-language-kotlin | 21 |
-| `mod:1.21.11:neoforge` | 客户端 Mod | NeoForge 21.11.x + KotlinForForge | 21 |
+| `mod:1.21.11:neoforge` | NeoForge loader wrapper | NeoForge 21.11.x + KotlinForForge | 21 |
 | `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2 | 21 |
 | `forge-1.12.2` | 客户端 Mod（独立项目） | Forge 1.12.2 | 8 |
 
@@ -30,6 +31,7 @@ BlackBoxPro/
 ├── mod/
 │   ├── common/
 │   └── 1.21.11/
+│       ├── runtime/
 │       ├── fabric/
 │       └── neoforge/
 ├── plugin/
@@ -40,9 +42,11 @@ BlackBoxPro/
 
 说明：
 - 根项目负责聚合构建。
-- `mod` 是独立 Gradle 工程，负责 common/fabric/neoforge。
-- `plugin`、`forge-1.12.2` 保持独立构建。
+- `mod` 是独立 Gradle 工程，负责 common/runtime/fabric/neoforge。
+- NeoForge 1.21.11 产物按 `common + runtime + neoforge-wrapper` 分层构建。
+- Fabric 1.21.11 当前仍直接依赖 `common`，暂未接入 runtime。
 - `plugin` 与 `forge-1.12.2` 通过 composite build 依赖 `mod/common`。
+
 
 ## 支持的行为
 

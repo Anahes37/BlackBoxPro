@@ -1,7 +1,7 @@
 package com.blackboxpro.neoforge.util.pathfinding
 
-import com.blackboxpro.neoforge.action.composite.TickScheduler
-import com.blackboxpro.neoforge.config.NavigationConfig
+import com.blackboxpro.neoforge.action.composite.RuntimeTickScheduler
+import com.blackboxpro.neoforge.config.RuntimeNavigationConfig
 import com.blackboxpro.neoforge.util.InjectedInput
 import net.minecraft.client.Minecraft
 import org.slf4j.LoggerFactory
@@ -17,7 +17,7 @@ class NavigationController(
     private val path: List<PathNode>,
     private val speed: Double,
     private val timeout: Int,
-    private val config: NavigationConfig
+    private val config: RuntimeNavigationConfig
 ) {
     private val logger = LoggerFactory.getLogger("BlackBoxPro-Navigation")
     private var currentIndex = 1 // 跳过起点
@@ -32,7 +32,7 @@ class NavigationController(
         input.install(player)
         injected = input
         active = true
-        TickScheduler.schedule(1) { tick() }
+        RuntimeTickScheduler.schedule(1) { tick() }
     }
 
     fun stop() {
@@ -96,6 +96,6 @@ class NavigationController(
         input.sprinting = speed > 1.0
         player.isSprinting = speed > 1.0
 
-        TickScheduler.schedule(1) { tick() }
+        RuntimeTickScheduler.schedule(1) { tick() }
     }
 }

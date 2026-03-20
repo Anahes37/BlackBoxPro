@@ -2,8 +2,8 @@ package com.blackboxpro.neoforge.action.client
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.config.BlackBoxConfig
-import com.blackboxpro.neoforge.dispatcher.CommandDispatcher
+import com.blackboxpro.neoforge.config.RuntimeBlackBoxConfig
+import com.blackboxpro.neoforge.dispatcher.RuntimeResponseSender
 import com.blackboxpro.neoforge.util.ScreenshotHelper
 import com.blackboxpro.neoforge.util.getStringOrNull
 import com.google.gson.JsonObject
@@ -36,7 +36,7 @@ class ScreenshotAction : ActionExecutor {
         val prefix = params.getStringOrNull("prefix")
 
         // 读取配置
-        val screenshotConfig = BlackBoxConfig.current.screenshot
+        val screenshotConfig = RuntimeBlackBoxConfig.current.screenshot
 
         // 目录构建
         val directory = client.gameDirectory.toPath()
@@ -70,10 +70,10 @@ class ScreenshotAction : ActionExecutor {
                         addProperty("fileSize", screenshot.fileSize)
                         addProperty("index", index)
                     }
-                    CommandDispatcher.sendResponse(commandId, "success", "Screenshot saved: $fileName.png", data)
+                    RuntimeResponseSender.sendResponse(commandId, "success", "Screenshot saved: $fileName.png", data)
                 },
                 onFailure = { e ->
-                    CommandDispatcher.sendResponse(commandId, "failure", "Screenshot failed: ${e.message}")
+                    RuntimeResponseSender.sendResponse(commandId, "failure", "Screenshot failed: ${e.message}")
                 }
             )
         }
