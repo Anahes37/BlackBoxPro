@@ -15,11 +15,13 @@ BlackBoxPro 是一个 Minecraft 自动化黑盒测试框架，通过 Plugin Mess
 BlackBoxPro/                    # 根聚合项目
 ├── mod/                        # 客户端相关独立 Gradle 工程
 │   ├── common/                 # 共享协议层
-│   └── 1.21.11/
-│       ├── runtime/            # 1.21.11 公共运行时核心（共享桥接 + 当前 NeoForge MC 实现）
-│       ├── fabric/             # Fabric wrapper + 平台实现
-│       └── neoforge/           # NeoForge wrapper + 平台实现
-├── forge-1.12.2/               # Forge 1.12.2 客户端 Mod（独立项目）
+│   ├── 1.21.11/
+│   │   ├── runtime/            # 1.21.11 公共运行时核心（共享桥接 + 当前 NeoForge MC 实现）
+│   │   ├── fabric/             # Fabric wrapper + 平台实现
+│   │   └── neoforge/           # NeoForge wrapper + 平台实现
+│   └── 1.12.2/                 # Forge 1.12.2 独立构建根
+│       ├── runtime/            # 1.12.2 运行时桥接
+│       └── forge/              # 1.12.2 Forge 客户端产物
 ├── plugin/                     # Bukkit 服务端插件（独立项目）
 ├── gradle.properties           # 根版本号与 1.21.11 依赖版本
 ├── build.gradle.kts            # 根聚合构建入口
@@ -37,15 +39,16 @@ BlackBoxPro/                    # 根聚合项目
 | `mod:1.21.11:runtime` | 1.21.11 公共运行时核心 | NeoForm + Kotlin JVM | 无 loader 入口 |
 | `mod:1.21.11:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.11 + fabric-language-kotlin | `BlackBoxProFabric : ClientModInitializer` |
 | `mod:1.21.11:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.11.x + KotlinForForge | `BlackBoxProNeoForge` (`@Mod`) |
-| `forge-1.12.2` | 客户端 Mod | Forge 1.12.2 + Kotlin 1.9.25（独立 Gradle 项目，JDK 8） | `BlackBoxProForge` (`@Mod` object) |
+| `mod/1.12.2` | 客户端 Mod | Forge 1.12.2 + Kotlin 1.9.25（独立 Gradle 项目，JDK 8） | `BlackBoxProForge` (`@Mod` object) |
 | `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2.4 | `BlackBoxPro : Plugin()` (object) |
 | `mod/common` | 共享协议层 | Kotlin + Gson | 无 MC 入口 |
 
 ### 版本号管理
 
-- `gradle.properties` (根) → `version=x.x.x` → `mod/common`、Fabric、NeoForge、plugin、forge-1.12.2 共用
+- `gradle.properties` (根) → `version=x.x.x` → `mod/common`、Fabric、NeoForge、plugin、mod/1.12.2 共用
 - `plugin/gradle.properties` 仅保留 group 等补充属性
-- `forge-1.12.2` / `plugin` 通过 composite build 依赖 `mod/common`
+- `mod/1.12.2` 为独立 Gradle 构建根，单独运行时通过 `includeBuild('../common')` 依赖 `mod/common`
+- `plugin` 通过 composite build 依赖 `mod/common`
 - CI 与本地构建统一以根聚合任务为入口
 
 ## 通讯架构
@@ -78,7 +81,7 @@ BlackBoxPro/                    # 根聚合项目
 - SLF4J 日志
 - 无外部依赖，纯 Minecraft 协议操作
 
-### 客户端 Mod (forge-1.12.2)
+### 客户端 Mod (mod/1.12.2)
 
 - Forge 1.12.2-14.23.5.2860 + ForgeGradle 2.3
 - Kotlin 1.9.25（JDK 8）
@@ -96,7 +99,7 @@ BlackBoxPro/                    # 根聚合项目
 
 ## 客户端 Mod 架构 (fabric / neoforge / forge 三端对称)
 
-三个 Mod 模块结构对称，逻辑一致（forge-1.12.2 为最大兼容子集）：
+三个 Mod 模块结构对称，逻辑一致（mod/1.12.2 为最大兼容子集）：
 
 ```
 com.blackboxpro.{fabric|neoforge|forge}
@@ -180,7 +183,7 @@ com.blackboxpro.plugin
 
 1. 在 `action/` 对应子包下创建 `XxxAction` 类，实现 `ActionExecutor`
 2. 在 `ActionRegistry.registerAll()` 中注册 `register("action_id", XxxAction())`
-3. fabric、neoforge、forge-1.12.2 三个模块需同步添加（forge 为兼容子集，API 不同时需适配）
+3. fabric、neoforge、mod/1.12.2 三个模块需同步添加（forge 为兼容子集，API 不同时需适配）
 4. plugin 模块：在对应的 `XxxActions` object 中新增方法，`ActionParamRegistry` 注册参数
 
 ### 错误处理
@@ -211,7 +214,7 @@ com.blackboxpro.plugin
 - `mod/common/build/libs/blackboxpro-common-{version}.jar`
 - `mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-{version}.jar`
 - `mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-{version}.jar`
-- `forge-1.12.2/build/libs/BlackBoxPro-forge-1.12.2-{version}.jar`
+- `mod/1.12.2/build/libs/BlackBoxPro-forge-1.12.2-{version}.jar`
 - `plugin/build/libs/BlackBoxPro-Plugin-{version}.jar`
 - `build/libs/` 为根聚合后的收集目录
 

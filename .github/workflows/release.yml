@@ -50,7 +50,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Fix gradlew permissions
-        run: chmod +x gradlew mod/gradlew plugin/gradlew forge-1.12.2/gradlew
+        run: chmod +x gradlew mod/gradlew plugin/gradlew mod/1.12.2/gradlew
 
       - name: Stop Gradle daemons
         run: ./gradlew --stop || true
@@ -64,7 +64,7 @@ jobs:
           ver="${{ needs.check-version.outputs.version }}"
           cp "mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-${ver}.jar" release-artifacts/
           cp "mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-${ver}.jar" release-artifacts/
-          cp "forge-1.12.2/build/libs/BlackBoxPro-forge-1.12.2-${ver}.jar" release-artifacts/
+          cp "mod/1.12.2/build/libs/BlackBoxPro-forge-1.12.2-${ver}.jar" release-artifacts/
           cp "plugin/build/libs/BlackBoxPro-Plugin-${ver}.jar" release-artifacts/
 
       - name: Create GitHub Release
