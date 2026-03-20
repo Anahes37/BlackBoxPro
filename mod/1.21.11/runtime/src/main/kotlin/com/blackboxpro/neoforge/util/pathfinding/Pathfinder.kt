@@ -1,6 +1,6 @@
 package com.blackboxpro.neoforge.util.pathfinding
 
-import com.blackboxpro.neoforge.config.RuntimeNavigationConfig
+import com.blackboxpro.runtime.config.RuntimeNavigationConfig
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
 import org.slf4j.LoggerFactory

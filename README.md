@@ -43,8 +43,9 @@ BlackBoxPro/
 说明：
 - 根项目负责聚合构建。
 - `mod` 是独立 Gradle 工程，负责 common/runtime/fabric/neoforge。
+- `runtime` 现在开始承载 1.21.11 公共桥接核心（dispatcher/scheduler/config/response）。
 - NeoForge 1.21.11 产物按 `common + runtime + neoforge-wrapper` 分层构建。
-- Fabric 1.21.11 当前仍直接依赖 `common`，暂未接入 runtime。
+- Fabric 1.21.11 已接入 `runtime` 公共核心源码，但平台实现仍保留在 Fabric 模块内。
 - `plugin` 与 `forge-1.12.2` 通过 composite build 依赖 `mod/common`。
 
 

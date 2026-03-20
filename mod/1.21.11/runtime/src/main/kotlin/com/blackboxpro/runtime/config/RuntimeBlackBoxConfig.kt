@@ -1,4 +1,4 @@
-package com.blackboxpro.neoforge.config
+package com.blackboxpro.runtime.config
 
 data class RuntimeLoggingConfig(
     val level: String = "INFO",

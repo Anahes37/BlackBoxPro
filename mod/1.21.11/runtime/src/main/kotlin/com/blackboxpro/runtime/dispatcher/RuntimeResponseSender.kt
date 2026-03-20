@@ -1,4 +1,4 @@
-package com.blackboxpro.neoforge.dispatcher
+package com.blackboxpro.runtime.dispatcher
 
 import com.google.gson.JsonObject
 

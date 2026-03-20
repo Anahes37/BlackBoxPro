@@ -1,7 +1,7 @@
 package com.blackboxpro.fabric.util.pathfinding
 
 import com.blackboxpro.fabric.action.composite.TickScheduler
-import com.blackboxpro.fabric.config.NavigationConfig
+import com.blackboxpro.runtime.config.RuntimeNavigationConfig
 import com.blackboxpro.fabric.util.InjectedInput
 import net.minecraft.client.MinecraftClient
 import org.slf4j.LoggerFactory
@@ -17,7 +17,7 @@ class NavigationController(
     private val path: List<PathNode>,
     private val speed: Double,
     private val timeout: Int,
-    private val config: NavigationConfig
+    private val config: RuntimeNavigationConfig
 ) {
     private val logger = LoggerFactory.getLogger("BlackBoxPro-Navigation")
     private var currentIndex = 1 // 跳过起点

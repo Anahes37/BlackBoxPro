@@ -1,6 +1,6 @@
 package com.blackboxpro.fabric.util.pathfinding
 
-import com.blackboxpro.fabric.config.NavigationConfig
+import com.blackboxpro.runtime.config.RuntimeNavigationConfig
 import net.minecraft.client.world.ClientWorld
 import net.minecraft.util.math.BlockPos
 import org.slf4j.LoggerFactory
@@ -24,7 +24,7 @@ object Pathfinder {
         start: BlockPos,
         goal: BlockPos,
         world: ClientWorld,
-        config: NavigationConfig
+        config: RuntimeNavigationConfig
     ): List<PathNode> {
         val openSet = PriorityQueue<PathNode>(compareBy { it.f })
         val closedSet = HashSet<Long>()
@@ -69,7 +69,7 @@ object Pathfinder {
 
     private fun expandNeighbor(
         current: PathNode, dx: Int, dz: Int, dy: Int, isJump: Boolean, costMultiplier: Double,
-        goal: BlockPos, world: ClientWorld, config: NavigationConfig,
+        goal: BlockPos, world: ClientWorld, config: RuntimeNavigationConfig,
         openSet: PriorityQueue<PathNode>, closedSet: HashSet<Long>, bestG: HashMap<Long, Double>
     ) {
         val nx = current.x + dx

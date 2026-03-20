@@ -6,6 +6,13 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "2.2.0"
 }
 
+evaluationDependsOn(":1.21.11:runtime")
+
+val commonSourceSet = project(":common").the<SourceSetContainer>()["main"]
+val runtimeSharedDir = project(":1.21.11:runtime").file("src/main/kotlin/com/blackboxpro/runtime")
+
+the<SourceSetContainer>()["main"].java.srcDir(runtimeSharedDir)
+
 base {
     archivesName.set("BlackBoxPro-fabric-${property("minecraft_version")}")
 }
@@ -45,9 +52,9 @@ kotlin {
 }
 
 tasks.named<Jar>("jar") {
-    from(project(":common").the<SourceSetContainer>()["main"].output)
+    from(commonSourceSet.output)
 }
 
 tasks.named<Jar>("sourcesJar") {
-    from(project(":common").the<SourceSetContainer>()["main"].allSource)
+    from(commonSourceSet.allSource)
 }

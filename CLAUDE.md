@@ -16,9 +16,9 @@ BlackBoxPro/                    # 根聚合项目
 ├── mod/                        # 客户端相关独立 Gradle 工程
 │   ├── common/                 # 共享协议层
 │   └── 1.21.11/
-│       ├── runtime/            # NeoForge 运行时实现层（Mojang/NeoForm 命名）
-│       ├── fabric/             # Fabric 客户端 Mod（暂时独立）
-│       └── neoforge/           # NeoForge loader wrapper
+│       ├── runtime/            # 1.21.11 公共运行时核心（共享桥接 + 当前 NeoForge MC 实现）
+│       ├── fabric/             # Fabric wrapper + 平台实现
+│       └── neoforge/           # NeoForge wrapper + 平台实现
 ├── forge-1.12.2/               # Forge 1.12.2 客户端 Mod（独立项目）
 ├── plugin/                     # Bukkit 服务端插件（独立项目）
 ├── gradle.properties           # 根版本号与 1.21.11 依赖版本
@@ -34,8 +34,9 @@ BlackBoxPro/                    # 根聚合项目
 
 | 模块 | 角色 | 框架 | 入口类 |
 |------|------|------|--------|
-| `mod:1.21.11:fabric` | 客户端 Mod | Fabric 1.21.11 + fabric-language-kotlin | `BlackBoxProFabric : ClientModInitializer` |
-| `mod:1.21.11:neoforge` | 客户端 Mod | NeoForge 21.11.x + KotlinForForge | `BlackBoxProNeoForge` (`@Mod`) |
+| `mod:1.21.11:runtime` | 1.21.11 公共运行时核心 | NeoForm + Kotlin JVM | 无 loader 入口 |
+| `mod:1.21.11:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.11 + fabric-language-kotlin | `BlackBoxProFabric : ClientModInitializer` |
+| `mod:1.21.11:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.11.x + KotlinForForge | `BlackBoxProNeoForge` (`@Mod`) |
 | `forge-1.12.2` | 客户端 Mod | Forge 1.12.2 + Kotlin 1.9.25（独立 Gradle 项目，JDK 8） | `BlackBoxProForge` (`@Mod` object) |
 | `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2.4 | `BlackBoxPro : Plugin()` (object) |
 | `mod/common` | 共享协议层 | Kotlin + Gson | 无 MC 入口 |
@@ -68,9 +69,9 @@ BlackBoxPro/                    # 根聚合项目
 ### 客户端 Mod (mod:1.21.11:runtime / mod:1.21.11:fabric / mod:1.21.11:neoforge)
 
 - NeoForge 侧现为 `common + runtime + neoforge-wrapper` 分层：
-  - `runtime`：Mojang/NeoForm 命名下的 vanilla/MC 实现
+  - `runtime`：开始承载 1.21.11 公共 bridge/core，并保留当前 Mojang/NeoForm 命名下的 MC 实现
   - `neoforge`：入口、事件桥、配置加载、网络注册等 loader 包装层
-- Fabric 侧当前仍直接依赖 `common`，暂未接入 runtime
+- Fabric 侧已接入 `runtime` 中的公共 bridge/core 源码，平台实现仍保留在 Fabric 模块
 - Fabric API / NeoForge / NeoForm
 - fabric-language-kotlin / KotlinForForge
 - SLF4J 日志

@@ -2,8 +2,8 @@ package com.blackboxpro.neoforge.action.client
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.config.RuntimeBlackBoxConfig
-import com.blackboxpro.neoforge.dispatcher.RuntimeResponseSender
+import com.blackboxpro.runtime.config.RuntimeBlackBoxConfig
+import com.blackboxpro.runtime.dispatcher.RuntimeResponseSender
 import com.blackboxpro.neoforge.util.ScreenshotHelper
 import com.blackboxpro.neoforge.util.getStringOrNull
 import com.google.gson.JsonObject
