@@ -1,5 +1,6 @@
 package com.blackboxpro.neoforge.dispatcher
 
+import com.blackboxpro.common.action.ActionCatalog
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.movement.*
 import com.blackboxpro.neoforge.action.block.*
@@ -169,6 +170,21 @@ object ActionRegistry {
         // 冻结注册表：快照为不可变 Map，释放 mutable 引用
         executors = mutableExecutors.toMap()
         frozen = true
+        validateAgainstCatalog()
         logger.info("All actions registered. Total: {}", executors.size)
+    }
+
+    private fun validateAgainstCatalog() {
+        val expected = ActionCatalog.getActionIds().toSet()
+        val actual = executors.keys
+        val missing = expected - actual
+        val extra = actual - expected
+
+        if (missing.isNotEmpty()) {
+            logger.warn("Action catalog mismatch, missing executors: {}", missing.joinToString(", "))
+        }
+        if (extra.isNotEmpty()) {
+            logger.warn("Action catalog mismatch, untracked executors: {}", extra.joinToString(", "))
+        }
     }
 }

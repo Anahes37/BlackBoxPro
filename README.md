@@ -95,7 +95,7 @@ BlackBoxApi.sendAsync(player, "pathfind_to", params).thenAccept { response ->
 
 ```bash
 # 客户端模块（common + fabric + neoforge）
-./gradlew -p mod buildAll
+cd mod && ./gradlew buildAll
 
 # 服务端插件（独立项目，组合构建依赖 mod/common）
 cd plugin && ./gradlew jar
@@ -112,8 +112,8 @@ cd forge-1.12.2 && ./gradlew build
 
 产物路径：
 - `mod/common/build/libs/blackboxpro-common-*.jar`
-- `fabric-1.21.11/build/libs/blackboxpro-fabric-*.jar`
-- `neoforge-1.21.11/build/libs/blackboxpro-neoforge-*.jar`
+- `mod/1.21.11/fabric/build/libs/blackboxpro-fabric-*.jar`
+- `mod/1.21.11/neoforge/build/libs/blackboxpro-neoforge-*.jar`
 - `forge-1.12.2/build/libs/blackboxpro-forge-*.jar`
 - `plugin/build/libs/BlackBoxPro-Plugin-*.jar`
 

@@ -8,7 +8,7 @@ plugins {
 }
 
 val rootProps = Properties().apply {
-    file("../../gradle.properties").reader().use(::load)
+    file("../gradle.properties").reader().use(::load)
 }
 
 group = "com.blackboxpro"

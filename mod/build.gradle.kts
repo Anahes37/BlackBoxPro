@@ -5,7 +5,7 @@ plugins {
 }
 
 val sharedProps = Properties().apply {
-    file("../gradle.properties").reader().use(::load)
+    file("gradle.properties").reader().use(::load)
 }
 
 allprojects {

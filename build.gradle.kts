@@ -1,5 +1,4 @@
 val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
-val rootGradlew = if (isWindows) file("gradlew.bat") else file("gradlew")
 
 data class StandaloneProject(
     val prefix: String,
@@ -12,8 +11,7 @@ val standaloneProjects = mapOf(
     "mod" to StandaloneProject(
         prefix = "mod",
         dir = file("mod"),
-        actions = listOf("build", "clean", "buildAll", "collectJars"),
-        gradlew = rootGradlew
+        actions = listOf("build", "clean", "buildAll", "collectJars")
     ),
     "plugin" to StandaloneProject(
         prefix = "plugin",
@@ -44,8 +42,8 @@ val collectJars = tasks.register<Copy>("collectJars") {
     description = "收集所有模块的 jar 到根 build/libs"
     into(layout.buildDirectory.dir("libs"))
     from(file("mod/common/build/libs"))
-    from(file("fabric-1.21.11/build/libs"))
-    from(file("neoforge-1.21.11/build/libs"))
+    from(file("mod/1.21.11/fabric/build/libs"))
+    from(file("mod/1.21.11/neoforge/build/libs"))
     from(file("plugin/build/libs"))
     from(file("forge-1.12.2/build/libs"))
 }
