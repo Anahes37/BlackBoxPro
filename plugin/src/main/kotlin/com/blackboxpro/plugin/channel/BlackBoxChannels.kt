@@ -1,5 +1,7 @@
 package com.blackboxpro.plugin.channel
 
+import com.blackboxpro.common.protocol.BlackBoxChannels as ProtocolChannels
+
 /**
  * Plugin Message Channel 标识符，与 Fabric/NeoForge 客户端 Mod 对齐。
  *
@@ -8,6 +10,6 @@ package com.blackboxpro.plugin.channel
  * - RESPONSE: 客户端 → 服务端 (C2S)
  */
 object BlackBoxChannels {
-    const val COMMAND = "blackbox:command"
-    const val RESPONSE = "blackbox:response"
+    const val COMMAND = ProtocolChannels.COMMAND
+    const val RESPONSE = ProtocolChannels.RESPONSE
 }

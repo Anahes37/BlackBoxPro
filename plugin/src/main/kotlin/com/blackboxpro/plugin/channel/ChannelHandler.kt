@@ -110,7 +110,8 @@ object ChannelHandler : PluginMessageListener {
         }
 
         if (BlackBoxSettings.debug) {
-            val dataInfo = if (response.data != null && response.data.size() > 0) " data=${response.data}" else ""
+            val data = response.data
+            val dataInfo = if (data != null && data.size() > 0) " data=$data" else ""
             info("[BlackBoxPro] ← ${player.name} | ${response.status} (id=${response.id}) ${response.message ?: ""}$dataInfo")
         }
 

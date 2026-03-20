@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     id("fabric-loom") version "1.14-SNAPSHOT"
     id("org.jetbrains.kotlin.jvm") version "2.2.0"
@@ -12,6 +15,8 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":common"))
+
     minecraft("com.mojang:minecraft:${property("minecraft_version")}")
     mappings("net.fabricmc:yarn:${property("yarn_mappings")}:v2")
     modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
@@ -37,4 +42,12 @@ java {
 
 kotlin {
     jvmToolchain(21)
+}
+
+tasks.named<Jar>("jar") {
+    from(project(":common").the<SourceSetContainer>()["main"].output)
+}
+
+tasks.named<Jar>("sourcesJar") {
+    from(project(":common").the<SourceSetContainer>()["main"].allSource)
 }

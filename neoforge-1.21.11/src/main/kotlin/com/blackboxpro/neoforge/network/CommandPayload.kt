@@ -1,5 +1,6 @@
 package com.blackboxpro.neoforge.network
 
+import com.blackboxpro.common.protocol.BlackBoxChannels
 import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
@@ -12,7 +13,7 @@ data class CommandPayload(val json: String) : CustomPacketPayload {
 
     companion object {
         val TYPE = CustomPacketPayload.Type<CommandPayload>(
-            Identifier.fromNamespaceAndPath("blackbox", "command")
+            Identifier.fromNamespaceAndPath(BlackBoxChannels.NAMESPACE, BlackBoxChannels.COMMAND_PATH)
         )
 
         val STREAM_CODEC: StreamCodec<ByteBuf, CommandPayload> =

@@ -138,9 +138,10 @@ object BlackBoxCommand {
      */
     private fun sendResponseFeedback(sender: CommandSender, response: ResponseMessage) {
         sender.sendMessage("§6[BlackBoxPro] 响应: §f${response.status} §7${response.message ?: ""}")
-        if (response.data != null && response.data.size() > 0) {
+        val data = response.data
+        if (data != null && data.size() > 0) {
             if (BlackBoxSettings.debug) {
-                val dataStr = gson.toJson(response.data)
+                val dataStr = gson.toJson(data)
                 if (dataStr.length <= 500) {
                     sender.sendMessage("§6[BlackBoxPro] 数据: §f$dataStr")
                 } else {
@@ -148,7 +149,7 @@ object BlackBoxCommand {
                     sender.sendMessage("§7[BlackBoxPro] 完整数据已输出到控制台日志")
                 }
             } else {
-                sender.sendMessage("§7[BlackBoxPro] 响应包含数据 (${response.data.size()} 字段)，开启 debug 模式查看详情")
+                sender.sendMessage("§7[BlackBoxPro] 响应包含数据 (${data.size()} 字段)，开启 debug 模式查看详情")
             }
         }
     }

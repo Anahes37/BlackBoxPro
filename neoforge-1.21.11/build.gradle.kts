@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     id("net.neoforged.moddev") version "2.0.140"
     id("org.jetbrains.kotlin.jvm") version "2.2.0"
@@ -13,11 +16,12 @@ repositories {
 }
 
 neoForge {
-    version = providers.gradleProperty("neoforge_version").get()
+    version = property("neoforge_version").toString()
 }
 
 dependencies {
-    implementation("thedarkcolour:kotlinforforge-neoforge:${providers.gradleProperty("kotlin_for_forge_version").get()}")
+    implementation(project(":common"))
+    implementation("thedarkcolour:kotlinforforge-neoforge:${property("kotlin_for_forge_version")}")
 }
 
 tasks.processResources {
@@ -37,4 +41,12 @@ java {
 
 kotlin {
     jvmToolchain(21)
+}
+
+tasks.named<Jar>("jar") {
+    from(project(":common").the<SourceSetContainer>()["main"].output)
+}
+
+tasks.named<Jar>("sourcesJar") {
+    from(project(":common").the<SourceSetContainer>()["main"].allSource)
 }

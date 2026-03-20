@@ -19,12 +19,16 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 
 | 模块 | 角色 | 框架 | JVM |
 |------|------|------|-----|
-| `fabric-1.21.11` | 客户端 Mod | Fabric 1.21.11 + fabric-language-kotlin | 21 |
-| `neoforge-1.21.11` | 客户端 Mod | NeoForge 21.11.x + KotlinForForge | 21 |
-| `forge-1.12.2` | 客户端 Mod | Forge 1.12.2 | 8 |
-| `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2 | 21 |
+| `mod/common` | 无 MC 依赖的共享协议层 | Kotlin + Gson | 8 |
+| `mod:1.21.11:fabric` | 客户端 Mod | Fabric 1.21.11 + fabric-language-kotlin | 21 |
+| `mod:1.21.11:neoforge` | 客户端 Mod | NeoForge 21.11.x + KotlinForForge | 21 |
+| `forge-1.12.2` | 客户端 Mod（遗留独立构建） | Forge 1.12.2 | 8 |
+| `plugin` | 服务端插件实现，依赖 `common` | Paper/Spigot + TabooLib 6.2 | 21 |
 
-`fabric-1.21.11` 和 `neoforge-1.21.11` 由根项目统一管理；`forge-1.12.2` 和 `plugin` 为独立 Gradle 项目。
+仓库根现在是聚合构建入口：
+- `mod` 负责客户端相关模块，结构参考 Zeus。
+- `plugin` 和 `forge-1.12.2` 保持独立 Gradle 项目。
+- `plugin` 通过组合构建依赖 `mod/common`。
 
 ## 支持的行为 (86+)
 
@@ -90,20 +94,24 @@ BlackBoxApi.sendAsync(player, "pathfind_to", params).thenAccept { response ->
 ## 构建
 
 ```bash
-# Fabric + NeoForge（根项目）
-./gradlew :fabric-1.21.11:build :neoforge-1.21.11:build
+# 客户端模块（common + fabric + neoforge）
+./gradlew -p mod buildAll
 
-# Forge 1.12.2（独立项目，需 JDK 8）
-cd forge-1.12.2 && ./gradlew build
-
-# 服务端插件（独立项目）
+# 服务端插件（独立项目，组合构建依赖 mod/common）
 cd plugin && ./gradlew jar
 
-# 全量构建 + 收集产物到 build/libs
+# Forge 1.12.2（独立项目，运行 Gradle 需 JDK 17+/21，JDK 8 toolchain 自动下载）
+cd forge-1.12.2 && ./gradlew build
+
+# 仓库根聚合构建
+./gradlew mod_buildAll plugin_build
+
+# 全量构建 + 收集产物到根 build/libs
 ./gradlew buildAll collectJars
 ```
 
 产物路径：
+- `mod/common/build/libs/blackboxpro-common-*.jar`
 - `fabric-1.21.11/build/libs/blackboxpro-fabric-*.jar`
 - `neoforge-1.21.11/build/libs/blackboxpro-neoforge-*.jar`
 - `forge-1.12.2/build/libs/blackboxpro-forge-*.jar`
