@@ -4,8 +4,11 @@ import com.blackboxpro.common.runtime.LogHandler
 import com.blackboxpro.common.runtime.LoggerSupplier
 import com.blackboxpro.common.runtime.screenshot.RuntimeScreenshotBridge
 import net.minecraft.client.Minecraft
+import net.minecraft.util.ScreenShotHelper
 import org.apache.logging.log4j.LogManager
 import java.nio.file.Path
+import javax.imageio.ImageIO
+
 
 /**
  * Forge 1.12.2 platform bindings for common runtime.
@@ -22,6 +25,8 @@ object ForgeBindings : LoggerSupplier {
     }
 
     override fun getLogger(name: String): LogHandler = Log4jLogHandler(LogManager.getLogger(name))
+
+    fun init() = Unit
 }
 
 private class Log4jLogHandler(private val logger: org.apache.logging.log4j.Logger) : LogHandler {
@@ -45,29 +50,18 @@ class ForgeScreenshotProvider : RuntimeScreenshotBridge.Provider {
     override fun captureAsync(directory: Path, fileName: String, callback: (Result<RuntimeScreenshotBridge.CaptureResult>) -> Unit) {
         try {
             val mc = Minecraft.getMinecraft()
-            val screenshot = mc.getScreenshot() ?: run {
-                callback(Result.failure(IllegalStateException("Failed to capture screenshot")))
-                return
-            }
-
+            val image = ScreenShotHelper.createScreenshot(mc.displayWidth, mc.displayHeight, mc.framebuffer)
             directory.toFile().mkdirs()
             val file = java.io.File(directory.toFile(), "$fileName.png")
-
-            Thread {
-                try {
-                    javax.imageio.ImageIO.write(screenshot, "PNG", file)
-                    callback(Result.success(
-                        RuntimeScreenshotBridge.CaptureResult(
-                            filePath = file.toPath(),
-                            width = screenshot.width,
-                            height = screenshot.height,
-                            fileSize = file.length()
-                        )
-                    ))
-                } catch (e: Exception) {
-                    callback(Result.failure(e))
-                }
-            }.start()
+            ImageIO.write(image, "png", file)
+            callback(Result.success(
+                RuntimeScreenshotBridge.CaptureResult(
+                    filePath = file.toPath(),
+                    width = image.width,
+                    height = image.height,
+                    fileSize = file.length()
+                )
+            ))
         } catch (e: Exception) {
             callback(Result.failure(e))
         }

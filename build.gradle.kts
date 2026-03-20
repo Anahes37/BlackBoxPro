@@ -20,7 +20,7 @@ val standaloneProjects = mapOf(
     ),
     "1.12.2" to StandaloneProject(
         prefix = "forge1122",
-        dir = file("forge-1.12.2"),
+        dir = file("mod/1.12.2"),
         actions = listOf("build", "clean", "jar")
     )
 )
@@ -41,22 +41,15 @@ val collectJars = tasks.register<Copy>("collectJars") {
     group = "build"
     description = "收集所有模块的 jar 到根 build/libs"
     into(layout.buildDirectory.dir("libs"))
-    from(file("mod/common/build/libs"))
-    from(file("mod/1.21.11/fabric/build/libs"))
-    from(file("mod/1.21.11/neoforge/build/libs"))
+    from(file("mod/build/libs"))
     from(file("plugin/build/libs"))
-    from(file("forge-1.12.2/build/libs"))
 }
 
 tasks.register("buildAll") {
     group = "build"
     description = "构建所有模块并收集 jar 到根 build/libs"
-    dependsOn("mod_buildAll", "plugin_build", "forge1122_build")
+    dependsOn("mod_buildAll", "plugin_build")
     finalizedBy(collectJars)
-}
-
-tasks.named("forge1122_build") {
-    dependsOn("mod_buildAll")
 }
 
 tasks.register("cleanAll") {

@@ -3,7 +3,8 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
 }
 
-def commonJar = file("${rootDir}/../common/build/libs/blackboxpro-common-${project.version}.jar")
+def commonJar = rootProject.ext.commonJar
+def standaloneCommonBuild = gradle.includedBuilds.find { it.name == 'common' }
 
 archivesBaseName = 'BlackBoxPro-runtime-1.12.2'
 
@@ -32,7 +33,9 @@ dependencies {
 }
 
 compileKotlin {
-    dependsOn gradle.includedBuild('common').task(':jar')
+    if (standaloneCommonBuild != null) {
+        dependsOn standaloneCommonBuild.task(':jar')
+    }
     kotlinOptions {
         jvmTarget = '1.8'
         freeCompilerArgs = ['-Xjvm-default=all']
@@ -40,5 +43,13 @@ compileKotlin {
 }
 
 compileJava {
-    dependsOn gradle.includedBuild('common').task(':jar')
+    if (standaloneCommonBuild != null) {
+        dependsOn standaloneCommonBuild.task(':jar')
+    }
+}
+
+tasks.named('jar') {
+    if (standaloneCommonBuild != null) {
+        dependsOn standaloneCommonBuild.task(':jar')
+    }
 }

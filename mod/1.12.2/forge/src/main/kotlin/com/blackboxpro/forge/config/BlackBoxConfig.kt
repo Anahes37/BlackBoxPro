@@ -2,6 +2,13 @@ package com.blackboxpro.forge.config
 
 import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfigSnapshot
+import com.blackboxpro.common.runtime.config.RuntimeExecutionConfig
+import com.blackboxpro.common.runtime.config.RuntimeLoggingConfig
+import com.blackboxpro.common.runtime.config.RuntimeNavigationConfig
+import com.blackboxpro.common.runtime.config.RuntimeNetworkConfig
+import com.blackboxpro.common.runtime.config.RuntimePathfindingConfig
+import com.blackboxpro.common.runtime.config.RuntimeSafetyConfig
+import com.blackboxpro.common.runtime.config.RuntimeScreenshotConfig
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import net.minecraftforge.fml.common.Loader
@@ -111,38 +118,38 @@ data class BlackBoxConfig(
         private fun apply() {
             RuntimeBlackBoxConfig.update(
                 RuntimeBlackBoxConfigSnapshot(
-                    logging = RuntimeBlackBoxConfigSnapshot.LoggingConfig(
+                    logging = RuntimeLoggingConfig(
                         level = current.logging.level,
                         logCommands = current.logging.logCommands,
                         logResponses = current.logging.logResponses,
                         logPackets = current.logging.logPackets
                     ),
-                    network = RuntimeBlackBoxConfigSnapshot.NetworkConfig(
+                    network = RuntimeNetworkConfig(
                         commandChannel = current.network.commandChannel,
                         responseChannel = current.network.responseChannel,
                         maxPayloadSize = current.network.maxPayloadSize
                     ),
-                    execution = RuntimeBlackBoxConfigSnapshot.ExecutionConfig(
+                    execution = RuntimeExecutionConfig(
                         maxDelayTicks = current.execution.maxDelayTicks,
                         maxBatchSize = current.execution.maxBatchSize,
                         defaultBreakTicks = current.execution.defaultBreakTicks
                     ),
-                    pathfinding = RuntimeBlackBoxConfigSnapshot.PathfindingConfig(
+                    pathfinding = RuntimePathfindingConfig(
                         maxDistance = current.pathfinding.maxDistance,
                         stepSize = current.pathfinding.stepSize,
                         arrivalThreshold = current.pathfinding.arrivalThreshold
                     ),
-                    safety = RuntimeBlackBoxConfigSnapshot.SafetyConfig(
+                    safety = RuntimeSafetyConfig(
                         enabled = current.safety.enabled,
                         allowedActions = current.safety.allowedActions,
                         blockedActions = current.safety.blockedActions,
                         requireServerHandshake = current.safety.requireServerHandshake
                     ),
-                    screenshot = RuntimeBlackBoxConfigSnapshot.ScreenshotConfig(
+                    screenshot = RuntimeScreenshotConfig(
                         rootDirectory = current.screenshot.rootDirectory,
                         maxPerTest = current.screenshot.maxPerTest
                     ),
-                    navigation = RuntimeBlackBoxConfigSnapshot.NavigationConfig(
+                    navigation = RuntimeNavigationConfig(
                         maxDistance = current.navigation.maxDistance,
                         arrivalThreshold = current.navigation.arrivalThreshold,
                         stepSize = current.navigation.stepSize,
