@@ -43,3 +43,9 @@ plugin/gradlew.bat
 mod/1.12.2/.gradle/
 
 docs/
+
+# Server/client runtime artifacts
+logs/
+META-INF/
+*.log
+*.log.gz
