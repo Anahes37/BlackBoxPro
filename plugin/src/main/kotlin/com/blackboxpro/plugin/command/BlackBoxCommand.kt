@@ -27,7 +27,7 @@ object BlackBoxCommand {
             sender.sendMessage("§6[BlackBoxPro] §fServer Plugin v${BlackBoxPro.VERSION}")
             sender.sendMessage("§7/blackbox send <player> <action> [params_json] §f- 发送指令 (JSON)")
             sender.sendMessage("§7/blackbox exec <player> <action> [key:value ...] §f- 发送指令 (扁平化)")
-            sender.sendMessage("§7/blackbox test <player> §f- 执行集成测试")
+            sender.sendMessage("§7/blackbox test <player> [full|category <分类>|action <id>] §f- 执行黑盒测试")
             sender.sendMessage("§7/blackbox status §f- 查看状态")
             sender.sendMessage("§7/blackbox reload §f- 重载配置")
         }
@@ -168,6 +168,43 @@ object BlackBoxCommand {
                     return@execute
                 }
                 BlackBoxTestRunner.runAll(player, sender)
+            }
+            dynamic("mode") {
+                suggestUncheck { listOf("full", "category", "action") }
+                execute<CommandSender> { sender, context, _ ->
+                    val playerName = context["player"]
+                    val player = Bukkit.getPlayerExact(playerName)
+                    if (player == null) {
+                        sender.sendMessage("§c[BlackBoxPro] 玩家 $playerName 不在线。")
+                        return@execute
+                    }
+                    when (context["mode"].lowercase()) {
+                        "full" -> BlackBoxTestRunner.runFull(player, sender)
+                        else -> sender.sendMessage("§c[BlackBoxPro] 用法: /blackbox test <player> [full|category <分类>|action <id>]")
+                    }
+                }
+                dynamic("value") {
+                    suggestUncheck {
+                        when (ctx["mode"].lowercase()) {
+                            "category" -> BlackBoxTestRunner.categories()
+                            "action" -> ActionParamRegistry.getActionIds()
+                            else -> emptyList()
+                        }
+                    }
+                    execute<CommandSender> { sender, context, _ ->
+                        val playerName = context["player"]
+                        val player = Bukkit.getPlayerExact(playerName)
+                        if (player == null) {
+                            sender.sendMessage("§c[BlackBoxPro] 玩家 $playerName 不在线。")
+                            return@execute
+                        }
+                        when (context["mode"].lowercase()) {
+                            "category" -> BlackBoxTestRunner.runCategory(player, sender, context["value"])
+                            "action" -> BlackBoxTestRunner.runAction(player, sender, context["value"])
+                            else -> sender.sendMessage("§c[BlackBoxPro] 用法: /blackbox test <player> [full|category <分类>|action <id>]")
+                        }
+                    }
+                }
             }
         }
     }
