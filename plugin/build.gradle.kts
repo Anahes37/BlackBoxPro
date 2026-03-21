@@ -22,7 +22,7 @@ val rootProps = Properties().apply {
 version = rootProps.getProperty("version", "0.0.0")
 val commonVersion = rootProps.getProperty("version", "0.0.0")
 val embeddedCommon by configurations.creating
-val commonJar = file("${rootDir}/../mod/common/build/libs/blackboxpro-common-$commonVersion.jar")
+val commonJar = file("${rootDir}/../common/build/libs/blackboxpro-common-$commonVersion.jar")
 
 taboolib {
     env {

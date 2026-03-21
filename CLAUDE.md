@@ -13,8 +13,8 @@ BlackBoxPro 是一个 Minecraft 自动化黑盒测试框架，通过 Plugin Mess
 
 ```
 BlackBoxPro/                    # 根聚合项目
+├── common/                     # 共享协议层
 ├── mod/                        # 客户端相关独立 Gradle 工程
-│   ├── common/                 # 共享协议层
 │   ├── 1.21.11/
 │   │   ├── runtime/            # 1.21.11 公共运行时核心（共享桥接 + 当前 NeoForge MC 实现）
 │   │   ├── fabric/             # Fabric wrapper + 平台实现
@@ -41,14 +41,14 @@ BlackBoxPro/                    # 根聚合项目
 | `mod:1.21.11:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.11.x + KotlinForForge | `BlackBoxProNeoForge` (`@Mod`) |
 | `mod/1.12.2` | 客户端 Mod | Forge 1.12.2 + Kotlin 1.9.25（独立 Gradle 项目，JDK 8） | `BlackBoxProForge` (`@Mod` object) |
 | `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2.4 | `BlackBoxPro : Plugin()` (object) |
-| `mod/common` | 共享协议层 | Kotlin + Gson | 无 MC 入口 |
+| `common` | 共享协议层 | Kotlin + Gson | 无 MC 入口 |
 
 ### 版本号管理
 
-- `gradle.properties` (根) → `version=x.x.x` → `mod/common`、Fabric、NeoForge、plugin、mod/1.12.2 共用
+- `gradle.properties` (根) → `version=x.x.x` → `common`、Fabric、NeoForge、plugin、mod/1.12.2 共用
 - `plugin/gradle.properties` 仅保留 group 等补充属性
-- `mod/1.12.2` 为独立 Gradle 构建根，单独运行时通过 `includeBuild('../common')` 依赖 `mod/common`
-- `plugin` 通过 composite build 依赖 `mod/common`
+- `mod/1.12.2` 为独立 Gradle 构建根，单独运行时通过 `includeBuild('../../common')` 依赖顶层 `common`
+- `plugin` 通过 composite build 依赖顶层 `common`
 - CI 与本地构建统一以根聚合任务为入口
 
 ## 通讯架构
@@ -211,7 +211,7 @@ com.blackboxpro.plugin
 
 ### 产物路径
 
-- `mod/common/build/libs/blackboxpro-common-{version}.jar`
+- `common/build/libs/blackboxpro-common-{version}.jar`
 - `mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-{version}.jar`
 - `mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-{version}.jar`
 - `mod/1.12.2/build/libs/BlackBoxPro-forge-1.12.2-{version}.jar`

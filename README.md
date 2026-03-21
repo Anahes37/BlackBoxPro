@@ -17,7 +17,7 @@ Minecraft 自动化黑盒测试框架。服务端插件通过 Plugin Message Cha
 
 | 模块 | 角色 | 框架 | JVM |
 |------|------|------|-----|
-| `mod/common` | 无 MC 依赖的共享协议层 | Kotlin + Gson | 8 |
+| `common` | 无 MC 依赖的共享协议层 | Kotlin + Gson | 8 |
 | `mod:1.21.11:runtime` | 1.21.11 公共运行时核心（当前含共享 bridge/core 与部分共享 Action） | NeoForm + Kotlin | 21 |
 | `mod:1.21.11:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.11 + fabric-language-kotlin | 21 |
 | `mod:1.21.11:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.11.x + KotlinForForge | 21 |
@@ -28,8 +28,8 @@ Minecraft 自动化黑盒测试框架。服务端插件通过 Plugin Message Cha
 
 ```text
 BlackBoxPro/
+├── common/
 ├── mod/
-│   ├── common/
 │   ├── 1.21.11/
 │   │   ├── runtime/
 │   │   ├── fabric/
@@ -50,7 +50,7 @@ BlackBoxPro/
 - `screenshot` 已提升为 runtime 共享编排能力，Fabric / NeoForge 仅保留平台截图实现。
 - NeoForge 1.21.11 产物按 `common + runtime + neoforge-wrapper` 分层构建。
 - Fabric 1.21.11 已接入 `runtime` 公共核心源码，但平台实现仍保留在 Fabric 模块内。
-- `plugin` 与 `mod/1.12.2` 都通过 `mod/common` 共享协议层产物。
+- `plugin` 与 `mod/1.12.2` 都通过顶层 `common` 共享协议层产物。
 
 
 ## 支持的行为
@@ -113,7 +113,7 @@ BlackBoxPro/
 
 ## 产物路径
 
-- `mod/common/build/libs/blackboxpro-common-*.jar`
+- `common/build/libs/blackboxpro-common-*.jar`
 - `mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-*.jar`
 - `mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-*.jar`
 - `plugin/build/libs/BlackBoxPro-Plugin-*.jar`

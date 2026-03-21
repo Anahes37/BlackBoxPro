@@ -34,6 +34,7 @@ include("1.21.11:runtime")
 include("1.21.11:fabric")
 include("1.21.11:neoforge")
 
+project(":common").projectDir = file("../common")
 project(":1.21.11").projectDir = file("1.21.11")
 project(":1.21.11:runtime").projectDir = file("1.21.11/runtime")
 project(":1.21.11:fabric").projectDir = file("1.21.11/fabric")

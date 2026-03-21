@@ -6,7 +6,7 @@ def modProps = new Properties()
 file("${rootDir}/../gradle.properties").withReader('UTF-8') { modProps.load(it) }
 
 def sharedVersion = modProps.getProperty('version', '0.0.0')
-ext.commonJar = file("${rootDir}/../common/build/libs/blackboxpro-common-${sharedVersion}.jar")
+ext.commonJar = file("${rootDir}/../../common/build/libs/blackboxpro-common-${sharedVersion}.jar")
 
 allprojects {
     group = 'com.blackboxpro'

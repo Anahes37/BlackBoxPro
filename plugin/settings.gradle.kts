@@ -5,6 +5,6 @@ pluginManagement {
     }
 }
 
-includeBuild("../mod/common")
+includeBuild("../common")
 
 rootProject.name = "BlackBoxPro-Plugin"
