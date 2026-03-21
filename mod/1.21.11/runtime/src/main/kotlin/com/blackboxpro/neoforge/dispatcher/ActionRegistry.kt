@@ -98,6 +98,9 @@ object ActionRegistry {
         register("player_abilities", PlayerAbilitiesAction())
         register("resource_pack_response", ResourcePackResponseAction())
         register("screenshot", ScreenshotAction())
+        register("create_world", CreateWorldAction())
+        register("join_world", JoinWorldAction())
+        register("leave_world", LeaveWorldAction())
 
         // === 进阶交互 ===
         register("edit_book", EditBookAction())

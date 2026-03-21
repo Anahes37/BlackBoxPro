@@ -12,7 +12,10 @@ object BlackBoxTestCatalog {
     private val unsupportedOn1122 = setOf(
         "bundle_selected_slot",
         "chunk_batch_received",
+        "create_world",
         "debug_sample_subscription",
+        "join_world",
+        "leave_world",
         "pick_entity",
         "pick_item_from_block",
         "pick_item_from_entity",
@@ -70,6 +73,9 @@ object BlackBoxTestCatalog {
         "set_beacon_effect",
         "rename_item",
         "select_trade",
+        "create_world",
+        "join_world",
+        "leave_world",
         "custom_payload",
         "tab_complete",
         "pong",
@@ -247,6 +253,16 @@ object BlackBoxTestCatalog {
             addProperty("uuid", "00000000-0000-0000-0000-000000000000")
             addProperty("result", "accepted")
         }
+        "create_world" -> JsonObject().apply {
+            addProperty("worldName", "blackbox_test_world")
+            addProperty("gameMode", "creative")
+            addProperty("allowCommands", true)
+            addProperty("generateStructures", true)
+            addProperty("bonusChest", false)
+        }
+        "join_world" -> JsonObject().apply {
+            addProperty("worldName", "blackbox_test_world")
+        }
         "keep_alive" -> JsonObject().apply { addProperty("id", 1L) }
         "look_at" -> JsonObject().apply {
             val target = ctx.fixtureManager.relative(0.0, 1.0, 4.0)
@@ -290,7 +306,7 @@ object BlackBoxTestCatalog {
         actionId.startsWith("query_") -> "query"
         actionId in setOf("look_at", "look_at_entity", "look_at_block", "pathfind_to", "navigate_to", "break_block", "place_block_at", "attack", "use", "open_container", "container_transfer", "drop_inventory", "wait", "batch", "respawn", "craft_recipe") -> "composite"
         actionId in setOf("chat_message", "chat_command") -> "chat"
-        actionId in setOf("client_information", "player_abilities", "resource_pack_response", "screenshot") -> "client"
+        actionId in setOf("client_information", "player_abilities", "resource_pack_response", "screenshot", "create_world", "join_world", "leave_world") -> "client"
         actionId in setOf("custom_payload", "tab_complete", "keep_alive", "pong", "debug_sample_subscription", "chunk_batch_received") -> "debug"
         actionId in setOf("player_move", "player_move_look", "player_look", "player_on_ground", "confirm_teleportation", "move_vehicle", "paddle_boat", "player_input") -> "movement"
         actionId in setOf("dig_start", "dig_cancel", "dig_finish", "place_block", "use_item") -> "block"

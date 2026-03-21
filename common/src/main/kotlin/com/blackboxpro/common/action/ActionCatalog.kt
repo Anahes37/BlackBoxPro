@@ -68,6 +68,9 @@ object ActionCatalog {
         register("player_abilities", "flying")
         register("resource_pack_response", "uuid", "result")
         register("screenshot", "testId", "prefix", "playerName")
+        register("create_world", "worldName", "gameMode", "difficulty", "allowCommands", "generateStructures", "bonusChest", "seed")
+        register("join_world", "worldName")
+        register("leave_world")
 
         // Advanced
         register("edit_book", "slot", "pages")
