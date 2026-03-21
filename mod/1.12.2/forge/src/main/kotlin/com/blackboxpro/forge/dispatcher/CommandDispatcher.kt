@@ -74,13 +74,15 @@ object CommandDispatcher {
             }
 
             try {
-                val result = executor.execute(message.params)
-                sendResponse(
-                    id = message.id,
-                    status = if (result.success) "success" else "failure",
-                    message = result.message,
-                    data = result.data
-                )
+                val result = executor.execute(message.params, message.id)
+                if (!result.async) {
+                    sendResponse(
+                        id = message.id,
+                        status = if (result.success) "success" else "failure",
+                        message = result.message,
+                        data = result.data
+                    )
+                }
             } catch (e: IllegalArgumentException) {
                 logger.warn("Invalid params for action {}: {}", message.action, e.message)
                 sendResponse(message.id, "failure", "Invalid params: ${e.message}")

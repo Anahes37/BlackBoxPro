@@ -9,6 +9,7 @@ import com.blackboxpro.plugin.command.testframework.BlackBoxTestContext
 import com.blackboxpro.plugin.command.testframework.BlackBoxTestProfile
 import com.blackboxpro.plugin.command.testframework.BlackBoxTestStatus
 import com.blackboxpro.plugin.command.testframework.BlackBoxLoaderProfile
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
@@ -114,9 +115,11 @@ object BlackBoxTestRunner {
         }
     }
 
-    fun runFull(player: Player, sender: CommandSender) {
+    fun runFull(player: Player, sender: CommandSender): CompletableFuture<JsonObject> =
         runCatalog(player, sender, BlackBoxTestProfile.FULL)
-    }
+
+    fun runSmoke(player: Player, sender: CommandSender): CompletableFuture<JsonObject> =
+        runCatalog(player, sender, BlackBoxTestProfile.SMOKE)
 
     fun runCategory(player: Player, sender: CommandSender, category: String) {
         runCatalog(player, sender, BlackBoxTestProfile.FULL, category = category)
@@ -134,7 +137,7 @@ object BlackBoxTestRunner {
         profile: BlackBoxTestProfile,
         category: String? = null,
         actionId: String? = null
-    ) {
+    ): CompletableFuture<JsonObject> {
         val loaderProfile = BlackBoxLoaderProfile.detect(Bukkit.getBukkitVersion())
         val cases = when {
             actionId != null -> listOfNotNull(BlackBoxTestCatalog.findAction(actionId))
@@ -143,7 +146,7 @@ object BlackBoxTestRunner {
 
         if (cases.isEmpty()) {
             sender.sendMessage("§c[BlackBoxPro Test] 没有找到匹配的测试项。")
-            return
+            return CompletableFuture.completedFuture(JsonObject().apply { addProperty("error", "No matching cases") })
         }
 
         val testId = buildString {
@@ -173,11 +176,11 @@ object BlackBoxTestRunner {
             }
         }
 
-        chain.thenCompose {
+        return chain.thenCompose {
             ctx.delay(300L)
         }.thenCompose {
             ctx.screenshot("99_test_end")
-        }.thenRun {
+        }.thenApply {
             val totalTime = System.currentTimeMillis() - startTime
             val passed = results.count { it.status == BlackBoxTestStatus.PASSED }
             val failed = results.count { it.status == BlackBoxTestStatus.FAILED }
@@ -192,10 +195,27 @@ object BlackBoxTestRunner {
             if (skipped > 0) {
                 sender.sendMessage("§e[BlackBoxPro Test] 跳过项已记录，可用 /blackbox test <player> action <id> 单独调试。")
             }
+            JsonObject().apply {
+                addProperty("passed", passed)
+                addProperty("failed", failed)
+                addProperty("skipped", skipped)
+                addProperty("total", results.size)
+                addProperty("totalMs", totalTime)
+                add("results", JsonArray().apply {
+                    results.forEach { r ->
+                        add(JsonObject().apply {
+                            addProperty("action", r.case.actionId)
+                            addProperty("status", r.status.name.lowercase())
+                            addProperty("message", r.message)
+                            r.response?.data?.let { add("data", it) }
+                        })
+                    }
+                })
+            }
         }.exceptionally { ex ->
             ScreenshotActions.screenshot(player, testId, "99_test_exception", player.name).exceptionally { null }
             sender.sendMessage("§c[BlackBoxPro Test] 测试异常中断: ${ex.message}")
-            null
+            JsonObject().apply { addProperty("error", ex.message) }
         }
     }
 
@@ -208,9 +228,10 @@ object BlackBoxTestRunner {
         val num = (index + 1).toString().padStart(3, '0')
         val tag = "${num}_${case.actionId}"
         val t0 = System.currentTimeMillis()
-        ctx.fixtureManager.resetBaseline()
 
-        return ctx.delay(300L).thenCompose {
+        return ctx.mainThread { ctx.fixtureManager.resetBaseline() }.thenCompose {
+            ctx.delay(300L)
+        }.thenCompose {
             ctx.screenshot("${tag}_1_before")
         }.thenCompose {
             case.prepare(ctx)

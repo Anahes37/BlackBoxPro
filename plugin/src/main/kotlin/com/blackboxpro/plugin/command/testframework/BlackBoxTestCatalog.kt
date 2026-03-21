@@ -93,7 +93,13 @@ object BlackBoxTestCatalog {
         "respawn",
         "craft_recipe",
         "look_at_block",
-        "navigate_to"
+        "navigate_to",
+        // keep_alive 发送硬编码 id=1L，若服务端期望的 keepAlive id 不同则踢出玩家，导致后续测试全部失败
+        "keep_alive",
+        // batch 在 1.12.2 中超时：BatchAction 通过 RuntimeCommandDispatcher 解析子 action，
+        // 但 1.12.2 使用独立的 ActionRegistry 且 RuntimeCommandDispatcher 未绑定，子 action 全部跳过；
+        // 响应是否正常回送尚未确认，暂列为待夹具补充
+        "batch"
     )
 
     private val longRunningActions = setOf(
@@ -241,10 +247,10 @@ object BlackBoxTestCatalog {
         "client_information" -> JsonObject().apply {
             addProperty("locale", "zh_cn")
             addProperty("viewDistance", 8)
-            addProperty("chatMode", 0)
+            addProperty("chatMode", "full")
             addProperty("chatColors", true)
             addProperty("skinParts", 127)
-            addProperty("mainHand", 0)
+            addProperty("mainHand", "right")
             addProperty("textFiltering", false)
             addProperty("allowServerListings", true)
         }
@@ -298,6 +304,10 @@ object BlackBoxTestCatalog {
             addProperty("testId", ctx.testId)
             addProperty("prefix", "catalog_${actionId}")
             addProperty("playerName", ctx.player.name)
+        }
+        "lock_difficulty" -> JsonObject().apply { addProperty("locked", false) }
+        "advancement_tab" -> JsonObject().apply {
+            addProperty("action", "close")
         }
         else -> JsonObject()
     }

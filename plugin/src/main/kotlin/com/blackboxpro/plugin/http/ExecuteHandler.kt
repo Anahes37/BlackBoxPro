@@ -2,11 +2,15 @@ package com.blackboxpro.plugin.http
 
 import com.blackboxpro.common.protocol.CommandMessage
 import com.blackboxpro.common.protocol.ResponseMessage
+import com.blackboxpro.plugin.command.BlackBoxTestRunner
 import com.blackboxpro.plugin.config.BlackBoxSettings
 import com.google.gson.Gson
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
+import org.bukkit.Bukkit
 import taboolib.common.platform.function.warning
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 object ExecuteHandler : HttpHandler {
 
@@ -35,6 +39,11 @@ object ExecuteHandler : HttpHandler {
             return gson.toJson(ResponseMessage("", "failure", "Parse error: ${e.message}"))
         }
 
+        // 特殊处理：run_test 在服务端执行，不需要 relay
+        if (command.action == "run_test") {
+            return handleRunTest(command)
+        }
+
         return try {
             when (BlackBoxSettings.testMode.lowercase()) {
                 "dual" -> {
@@ -51,6 +60,28 @@ object ExecuteHandler : HttpHandler {
         } catch (e: Exception) {
             warning("[BlackBoxPro] ExecuteHandler error for action '${command.action}': ${e.message}")
             gson.toJson(ResponseMessage(command.id, "failure", "Internal error: ${e.message}"))
+        }
+    }
+
+    private fun handleRunTest(command: CommandMessage): String {
+        val playerName = command.params?.get("player")?.asString
+            ?: return gson.toJson(ResponseMessage(command.id, "failure", "Missing param: player"))
+        val scope = command.params.get("scope")?.asString ?: "full"
+        val player = Bukkit.getPlayer(playerName)
+            ?: return gson.toJson(ResponseMessage(command.id, "failure", "Player not online: $playerName"))
+        val consoleSender = Bukkit.getConsoleSender()
+        return try {
+            val future = when (scope) {
+                "smoke" -> BlackBoxTestRunner.runSmoke(player, consoleSender)
+                else -> BlackBoxTestRunner.runFull(player, consoleSender)
+            }
+            val result = future.get(1800, TimeUnit.SECONDS)
+            gson.toJson(ResponseMessage(command.id, "success", "Test '$scope' completed", result))
+        } catch (e: TimeoutException) {
+            gson.toJson(ResponseMessage(command.id, "failure", "Test timed out after 30 minutes"))
+        } catch (e: Exception) {
+            warning("[BlackBoxPro] Test '$scope' exception: ${e.message}")
+            gson.toJson(ResponseMessage(command.id, "failure", "Test failed: ${e.message}"))
         }
     }
 

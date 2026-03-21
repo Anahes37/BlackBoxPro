@@ -31,4 +31,13 @@ class BlackBoxTestContext(
         submit(async = true, delay = ticks) { future.complete(Unit) }
         return future
     }
+
+    fun mainThread(block: () -> Unit): CompletableFuture<Unit> {
+        val future = CompletableFuture<Unit>()
+        submit(async = false) {
+            try { block() } catch (e: Exception) { future.completeExceptionally(e); return@submit }
+            future.complete(Unit)
+        }
+        return future
+    }
 }

@@ -100,6 +100,7 @@ object ActionRegistry {
         register("player_abilities", PlayerAbilitiesAction())
         register("resource_pack_response", ResourcePackResponseAction())
         register("screenshot", ScreenshotAction())
+        register("connect_to_server", ConnectToServerAction())
 
         // === 进阶交互 ===
         register("edit_book", EditBookAction())

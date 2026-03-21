@@ -1,12 +1,16 @@
 package com.blackboxpro.forge
 
+import com.blackboxpro.common.protocol.ResponseMessage
+import com.blackboxpro.common.runtime.dispatcher.RuntimeResponseSender
 import com.blackboxpro.forge.action.composite.TickScheduler
 import com.blackboxpro.forge.config.BlackBoxConfig
 import com.blackboxpro.forge.dispatcher.ActionRegistry
 import com.blackboxpro.forge.dispatcher.CommandDispatcher
 import com.blackboxpro.forge.http.ModHttpServer
+import com.blackboxpro.forge.http.ResponseFutureRegistry
 import com.blackboxpro.forge.util.ChatHistoryBuffer
 import com.blackboxpro.runtime.bindings.ForgeBindings
+import com.google.gson.Gson
 import net.minecraft.util.text.ITextComponent
 import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.common.MinecraftForge
@@ -29,10 +33,19 @@ object BlackBoxProForge {
 
     private val logger = LogManager.getLogger("BlackBoxProForge")
 
+    private val gson = Gson()
+
     @Mod.EventHandler
     fun init(event: FMLInitializationEvent) {
         // 0. 初始化 Forge 平台绑定
         ForgeBindings.init()
+
+        // 绑定 RuntimeResponseSender，使异步 Action 能通过 ResponseFutureRegistry 回复
+        RuntimeResponseSender.bind(object : RuntimeResponseSender.Sender {
+            override fun sendResponse(id: String, status: String, message: String?, data: com.google.gson.JsonObject?) {
+                ResponseFutureRegistry.onResponseJson(gson.toJson(ResponseMessage(id, status, message, data)))
+            }
+        })
 
         // 1. 加载配置
         BlackBoxConfig.load()
