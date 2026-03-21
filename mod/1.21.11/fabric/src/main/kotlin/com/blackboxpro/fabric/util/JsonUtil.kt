@@ -1,40 +1,31 @@
 package com.blackboxpro.fabric.util
 
+import com.blackboxpro.runtime.util.RuntimeJsonUtil
 import com.google.gson.JsonObject
 
-fun JsonObject.getStringOrNull(key: String): String? =
-    if (has(key) && !get(key).isJsonNull) get(key).asString else null
+fun JsonObject.getStringOrNull(key: String): String? = RuntimeJsonUtil.getStringOrNull(this, key)
 
 fun JsonObject.getIntOrDefault(key: String, default: Int): Int =
-    if (has(key) && !get(key).isJsonNull) get(key).asInt else default
+    RuntimeJsonUtil.getIntOrDefault(this, key, default)
 
 fun JsonObject.getLongOrDefault(key: String, default: Long): Long =
-    if (has(key) && !get(key).isJsonNull) get(key).asLong else default
+    RuntimeJsonUtil.getLongOrDefault(this, key, default)
 
 fun JsonObject.getDoubleOrDefault(key: String, default: Double): Double =
-    if (has(key) && !get(key).isJsonNull) get(key).asDouble else default
+    RuntimeJsonUtil.getDoubleOrDefault(this, key, default)
 
 fun JsonObject.getBooleanOrDefault(key: String, default: Boolean): Boolean =
-    if (has(key) && !get(key).isJsonNull) get(key).asBoolean else default
+    RuntimeJsonUtil.getBooleanOrDefault(this, key, default)
 
 fun JsonObject.getFloatOrDefault(key: String, default: Float): Float =
-    if (has(key) && !get(key).isJsonNull) get(key).asFloat else default
+    RuntimeJsonUtil.getFloatOrDefault(this, key, default)
 
-fun JsonObject.requireString(key: String): String =
-    getStringOrNull(key) ?: throw IllegalArgumentException("Missing required field: $key")
+fun JsonObject.requireString(key: String): String = RuntimeJsonUtil.requireString(this, key)
 
-fun JsonObject.requireInt(key: String): Int =
-    if (has(key) && !get(key).isJsonNull) get(key).asInt
-    else throw IllegalArgumentException("Missing required field: $key")
+fun JsonObject.requireInt(key: String): Int = RuntimeJsonUtil.requireInt(this, key)
 
-fun JsonObject.requireLong(key: String): Long =
-    if (has(key) && !get(key).isJsonNull) get(key).asLong
-    else throw IllegalArgumentException("Missing required field: $key")
+fun JsonObject.requireLong(key: String): Long = RuntimeJsonUtil.requireLong(this, key)
 
-fun JsonObject.requireDouble(key: String): Double =
-    if (has(key) && !get(key).isJsonNull) get(key).asDouble
-    else throw IllegalArgumentException("Missing required field: $key")
+fun JsonObject.requireDouble(key: String): Double = RuntimeJsonUtil.requireDouble(this, key)
 
-fun JsonObject.requireBoolean(key: String): Boolean =
-    if (has(key) && !get(key).isJsonNull) get(key).asBoolean
-    else throw IllegalArgumentException("Missing required field: $key")
+fun JsonObject.requireBoolean(key: String): Boolean = RuntimeJsonUtil.requireBoolean(this, key)

@@ -2,60 +2,45 @@ package com.blackboxpro.neoforge.dispatcher
 
 import com.blackboxpro.neoforge.network.NetworkHandler
 import com.blackboxpro.runtime.bindings.LoggerSupplierBinding
-import com.blackboxpro.common.runtime.dispatcher.RuntimeCommandDispatcher
-import com.blackboxpro.common.runtime.dispatcher.RuntimeResponseSender
-import com.google.gson.Gson
+import com.blackboxpro.runtime.bindings.SharedSlf4jLoggerSupplier
+import com.blackboxpro.runtime.dispatcher.RuntimeCommandDispatcherBootstrap
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent
 import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.common.NeoForge
-import org.slf4j.LoggerFactory
 
 object CommandDispatcher {
 
-    private val logger = LoggerFactory.getLogger("BlackBoxPro-Dispatcher")
-    private val gson = Gson()
+    private val logger = SharedSlf4jLoggerSupplier.getLogger("BlackBoxPro-Dispatcher")
 
     fun init() {
-        RuntimeCommandDispatcher.bind(
+        RuntimeCommandDispatcherBootstrap.bind(
             loggerSupplier = LoggerSupplierBinding,
-            mainThreadExecutor = object : RuntimeCommandDispatcher.MainThreadExecutor {
-                override fun execute(task: () -> Unit) {
-                    Minecraft.getInstance().execute(task)
-                }
-            },
-            actionResolver = object : RuntimeCommandDispatcher.ActionResolver {
-                override fun find(actionId: String) = ActionRegistry.find(actionId)
-            }
+            executeOnMainThread = { task -> Minecraft.getInstance().execute(task) },
+            actionResolver = ActionRegistry::find,
+            sendResponseJson = NetworkHandler::sendResponse
         )
-
-        RuntimeResponseSender.bind(object : RuntimeResponseSender.Sender {
-            override fun sendResponse(id: String, status: String, message: String?, data: JsonObject?) {
-                val response = ResponseMessage(id, status, message, data)
-                NetworkHandler.sendResponse(gson.toJson(response))
-            }
-        })
 
         NeoForge.EVENT_BUS.register(this)
     }
 
     @SubscribeEvent
     fun onClientTick(event: ClientTickEvent.Post) {
-        RuntimeCommandDispatcher.tick()
+        RuntimeCommandDispatcherBootstrap.tick()
     }
 
     @SubscribeEvent
     fun onDisconnect(event: ClientPlayerNetworkEvent.LoggingOut) {
-        val count = RuntimeCommandDispatcher.clear()
+        val count = RuntimeCommandDispatcherBootstrap.clear()
         if (count > 0) {
             logger.info("Cleared {} delayed commands on disconnect", count)
         }
     }
 
     fun dispatch(message: CommandMessage) {
-        RuntimeCommandDispatcher.dispatch(message)
+        RuntimeCommandDispatcherBootstrap.dispatch(message)
     }
 
     /** 供异步 Action 自行发送响应，不要在普通 Action 中调用 */
@@ -65,6 +50,6 @@ object CommandDispatcher {
         message: String? = null,
         data: JsonObject? = null
     ) {
-        RuntimeCommandDispatcher.sendResponse(id, status, message, data)
+        RuntimeCommandDispatcherBootstrap.sendResponse(id, status, message, data)
     }
 }

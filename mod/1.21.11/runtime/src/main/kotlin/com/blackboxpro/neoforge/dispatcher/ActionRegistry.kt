@@ -15,30 +15,23 @@ import com.blackboxpro.neoforge.action.debug.*
 import com.blackboxpro.neoforge.action.composite.*
 import com.blackboxpro.neoforge.action.query.*
 import com.blackboxpro.runtime.bindings.LoggerSupplierBinding
-import org.slf4j.LoggerFactory
+import com.blackboxpro.runtime.bindings.SharedSlf4jLoggerSupplier
+import com.blackboxpro.runtime.dispatcher.RuntimeActionRegistry
 
 object ActionRegistry {
 
-    private val logger = LoggerFactory.getLogger("BlackBoxPro-Registry")
-    private val mutableExecutors = mutableMapOf<String, ActionExecutor>()
-    private var executors: Map<String, ActionExecutor> = emptyMap()
-    private var frozen = false
+    private val registry = RuntimeActionRegistry(SharedSlf4jLoggerSupplier.getLogger("BlackBoxPro-Registry"))
 
     fun register(actionId: String, executor: ActionExecutor) {
-        check(!frozen) { "ActionRegistry is frozen, cannot register new actions" }
-        if (mutableExecutors.containsKey(actionId)) {
-            logger.warn("Overriding executor for action: {}", actionId)
-        }
-        mutableExecutors[actionId] = executor
-        logger.debug("Registered action: {}", actionId)
+        registry.register(actionId, executor)
     }
 
-    fun find(actionId: String): ActionExecutor? = executors[actionId]
+    fun find(actionId: String): ActionExecutor? = registry.find(actionId)
 
-    fun size(): Int = executors.size
+    fun size(): Int = registry.size()
 
     fun registerAll() {
-        check(!frozen) { "ActionRegistry already initialized" }
+        registry.ensureNotInitialized()
 
         // Bind common actions that need platform-specific dependencies
         val boundBatchAction = BatchAction().also { it.bind(LoggerSupplierBinding) }
@@ -172,24 +165,6 @@ object ActionRegistry {
         register("look_at_block", LookAtBlockAction())
         register("navigate_to", NavigateToAction())
 
-        // 冻结注册表：快照为不可变 Map，释放 mutable 引用
-        executors = mutableExecutors.toMap()
-        frozen = true
-        validateAgainstCatalog()
-        logger.info("All actions registered. Total: {}", executors.size)
-    }
-
-    private fun validateAgainstCatalog() {
-        val expected = ActionCatalog.getActionIds().toSet()
-        val actual = executors.keys
-        val missing = expected - actual
-        val extra = actual - expected
-
-        if (missing.isNotEmpty()) {
-            logger.warn("Action catalog mismatch, missing executors: {}", missing.joinToString(", "))
-        }
-        if (extra.isNotEmpty()) {
-            logger.warn("Action catalog mismatch, untracked executors: {}", extra.joinToString(", "))
-        }
+        registry.freezeAndValidate(ActionCatalog.getActionIds().toSet())
     }
 }
