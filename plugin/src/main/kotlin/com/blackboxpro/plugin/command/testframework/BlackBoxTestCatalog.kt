@@ -95,11 +95,7 @@ object BlackBoxTestCatalog {
         "look_at_block",
         "navigate_to",
         // keep_alive 发送硬编码 id=1L，若服务端期望的 keepAlive id 不同则踢出玩家，导致后续测试全部失败
-        "keep_alive",
-        // batch 在 1.12.2 中超时：BatchAction 通过 RuntimeCommandDispatcher 解析子 action，
-        // 但 1.12.2 使用独立的 ActionRegistry 且 RuntimeCommandDispatcher 未绑定，子 action 全部跳过；
-        // 响应是否正常回送尚未确认，暂列为待夹具补充
-        "batch"
+        "keep_alive"
     )
 
     private val longRunningActions = setOf(
@@ -293,7 +289,7 @@ object BlackBoxTestCatalog {
         }
         "query_container_slots" -> JsonObject().apply { addProperty("windowId", 0) }
         "query_block_state" -> JsonObject().apply {
-            val target = ctx.fixtureManager.block(0, -1, 0)
+            val target = ctx.fixtureManager.block(0, 0, 0)
             addProperty("x", target.blockX)
             addProperty("y", target.blockY)
             addProperty("z", target.blockZ)

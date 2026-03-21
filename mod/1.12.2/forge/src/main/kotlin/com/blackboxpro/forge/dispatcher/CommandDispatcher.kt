@@ -86,7 +86,7 @@ object CommandDispatcher {
             } catch (e: IllegalArgumentException) {
                 logger.warn("Invalid params for action {}: {}", message.action, e.message)
                 sendResponse(message.id, "failure", "Invalid params: ${e.message}")
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 logger.error("Action {} threw exception", message.action, e)
                 sendResponse(message.id, "failure", "Exception: ${e.message}")
             }

@@ -26,7 +26,7 @@ class BatchAction : ActionExecutor {
             return ActionResult.fail("Batch too large: ${actionsArray.size()} > $maxBatchSize")
         }
 
-        if (actionsArray.isEmpty) {
+        if (actionsArray.size() == 0) {
             return ActionResult.ok("Empty batch, nothing to do")
         }
 

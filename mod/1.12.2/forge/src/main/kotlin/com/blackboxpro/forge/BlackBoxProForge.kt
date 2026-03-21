@@ -4,6 +4,7 @@ import com.blackboxpro.common.protocol.ResponseMessage
 import com.blackboxpro.common.runtime.dispatcher.RuntimeResponseSender
 import com.blackboxpro.forge.action.composite.TickScheduler
 import com.blackboxpro.forge.config.BlackBoxConfig
+import com.blackboxpro.common.runtime.dispatcher.RuntimeCommandDispatcher
 import com.blackboxpro.forge.dispatcher.ActionRegistry
 import com.blackboxpro.forge.dispatcher.CommandDispatcher
 import com.blackboxpro.forge.http.ModHttpServer
@@ -11,6 +12,7 @@ import com.blackboxpro.forge.http.ResponseFutureRegistry
 import com.blackboxpro.forge.util.ChatHistoryBuffer
 import com.blackboxpro.runtime.bindings.ForgeBindings
 import com.google.gson.Gson
+import net.minecraft.client.Minecraft
 import net.minecraft.util.text.ITextComponent
 import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.common.MinecraftForge
@@ -52,6 +54,19 @@ object BlackBoxProForge {
 
         // 2. 注册所有行为执行器
         ActionRegistry.registerAll()
+
+        // 2.1 绑定 RuntimeCommandDispatcher，使 BatchAction 的子 action 能正确解析
+        RuntimeCommandDispatcher.bind(
+            loggerSupplier = ForgeBindings,
+            mainThreadExecutor = object : RuntimeCommandDispatcher.MainThreadExecutor {
+                override fun execute(task: () -> Unit) {
+                    Minecraft.getMinecraft().addScheduledTask(task)
+                }
+            },
+            actionResolver = object : RuntimeCommandDispatcher.ActionResolver {
+                override fun find(actionId: String) = ActionRegistry.find(actionId)
+            }
+        )
 
         // 3. 注册事件监听器
         MinecraftForge.EVENT_BUS.register(CommandDispatcher)

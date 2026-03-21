@@ -230,6 +230,9 @@ object BlackBoxTestRunner {
         val t0 = System.currentTimeMillis()
 
         return ctx.mainThread { ctx.fixtureManager.resetBaseline() }.thenCompose {
+            // 关闭客户端任何打开的屏幕（暂停菜单、容器 GUI 等），确保每个用例从游戏主画面开始
+            ctx.sendAction("close_container").thenApply { }.exceptionally { }
+        }.thenCompose {
             ctx.delay(300L)
         }.thenCompose {
             ctx.screenshot("${tag}_1_before")
