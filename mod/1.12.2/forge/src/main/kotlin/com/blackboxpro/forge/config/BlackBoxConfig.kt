@@ -23,9 +23,8 @@ data class LoggingConfig(
 )
 
 data class NetworkConfig(
-    val commandChannel: String = "blackbox:command",
-    val responseChannel: String = "blackbox:response",
-    val maxPayloadSize: Int = 32767
+    val httpPort: Int = 8081,
+    val responseTimeoutMs: Long = 10000L
 )
 
 data class ExecutionConfig(
@@ -125,9 +124,8 @@ data class BlackBoxConfig(
                         logPackets = current.logging.logPackets
                     ),
                     network = RuntimeNetworkConfig(
-                        commandChannel = current.network.commandChannel,
-                        responseChannel = current.network.responseChannel,
-                        maxPayloadSize = current.network.maxPayloadSize
+                        httpPort = current.network.httpPort,
+                        responseTimeoutMs = current.network.responseTimeoutMs
                     ),
                     execution = RuntimeExecutionConfig(
                         maxDelayTicks = current.execution.maxDelayTicks,

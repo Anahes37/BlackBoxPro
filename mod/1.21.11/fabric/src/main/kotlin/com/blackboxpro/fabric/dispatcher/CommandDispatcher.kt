@@ -1,6 +1,6 @@
 package com.blackboxpro.fabric.dispatcher
 
-import com.blackboxpro.fabric.network.NetworkHandler
+import com.blackboxpro.fabric.http.ResponseFutureRegistry
 import com.blackboxpro.runtime.bindings.FabricBindings
 import com.blackboxpro.runtime.bindings.SharedSlf4jLoggerSupplier
 import com.blackboxpro.runtime.dispatcher.RuntimeCommandDispatcherBootstrap
@@ -18,7 +18,7 @@ object CommandDispatcher {
             loggerSupplier = FabricBindings,
             executeOnMainThread = { task -> MinecraftClient.getInstance().execute(task) },
             actionResolver = ActionRegistry::find,
-            sendResponseJson = NetworkHandler::sendResponse
+            sendResponseJson = ResponseFutureRegistry::onResponseJson
         )
 
         ClientTickEvents.END_CLIENT_TICK.register {

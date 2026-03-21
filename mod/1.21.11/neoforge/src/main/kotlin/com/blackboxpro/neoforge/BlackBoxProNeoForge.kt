@@ -4,7 +4,7 @@ import com.blackboxpro.neoforge.action.composite.TickScheduler
 import com.blackboxpro.neoforge.config.BlackBoxConfig
 import com.blackboxpro.neoforge.dispatcher.ActionRegistry
 import com.blackboxpro.neoforge.dispatcher.CommandDispatcher
-import com.blackboxpro.neoforge.network.NetworkHandler
+import com.blackboxpro.neoforge.http.ModHttpServer
 import com.blackboxpro.neoforge.util.ChatHistoryBuffer
 import com.blackboxpro.neoforge.util.NeoForgeRuntimeScreenshotProvider
 import com.blackboxpro.common.runtime.screenshot.RuntimeScreenshotBridge
@@ -36,8 +36,8 @@ class BlackBoxProNeoForge(modBus: IEventBus) {
         // 4. 初始化 Tick 调度器（复合行为用）
         TickScheduler.init()
 
-        // 5. 注册网络通道
-        NetworkHandler.register(modBus)
+        // 5. 启动 HTTP Server
+        ModHttpServer.start()
 
         // 6. 注册聊天消息监听器（供 query_chat_history 使用）
         NeoForge.EVENT_BUS.register(ChatEventListener)

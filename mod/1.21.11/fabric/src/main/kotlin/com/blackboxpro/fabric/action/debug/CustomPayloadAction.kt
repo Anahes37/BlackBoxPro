@@ -53,7 +53,7 @@ class CustomPayloadAction : ActionExecutor {
         }
 
         // 校验 payload 大小
-        val maxSize = BlackBoxConfig.current.network.maxPayloadSize
+        val maxSize = 32768
         if (data.size > maxSize) {
             return ActionResult.fail("Payload too large: ${data.size} > $maxSize")
         }

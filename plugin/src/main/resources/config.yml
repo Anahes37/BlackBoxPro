@@ -8,5 +8,13 @@ debug: false
 # 对于 screenshot 等耗时操作，建议调大此值（如 15000）
 response-timeout-ms: 10000
 
-# Plugin Message 最大载荷大小（字节），与客户端 Mod 配置对齐
-max-payload-size: 32767
+# BlackBoxPro HTTP 服务端口（测试脚本通过此端口发送指令）
+http-port: 8080
+
+# 测试模式
+# server_only: 纯服务端，Plugin HTTP Server 不转发给 Mod
+# dual:        双端联调，所有指令通过 Plugin 转发给 Mod HTTP Server
+test-mode: dual
+
+# Mod HTTP Server 地址（dual 模式下 Plugin 转发指令的目标地址）
+mod-http-address: "http://localhost:8081"

@@ -2,7 +2,7 @@ package com.blackboxpro.plugin.command.testframework
 
 import com.blackboxpro.plugin.api.BlackBoxApi
 import com.blackboxpro.plugin.api.action.ScreenshotActions
-import com.blackboxpro.plugin.channel.ResponseMessage
+import com.blackboxpro.common.protocol.ResponseMessage
 import com.google.gson.JsonObject
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player

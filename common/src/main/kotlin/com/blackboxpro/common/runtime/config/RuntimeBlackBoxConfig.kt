@@ -8,9 +8,8 @@ data class RuntimeLoggingConfig(
 )
 
 data class RuntimeNetworkConfig(
-    val commandChannel: String = "blackbox:command",
-    val responseChannel: String = "blackbox:response",
-    val maxPayloadSize: Int = 32767
+    val httpPort: Int = 8081,
+    val responseTimeoutMs: Long = 10000L
 )
 
 data class RuntimeExecutionConfig(

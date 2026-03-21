@@ -1,9 +1,8 @@
 package com.blackboxpro.plugin.command
 
+import com.blackboxpro.common.protocol.ResponseMessage
 import com.blackboxpro.plugin.BlackBoxPro
 import com.blackboxpro.plugin.api.BlackBoxApi
-import com.blackboxpro.plugin.channel.ChannelHandler
-import com.blackboxpro.plugin.channel.ResponseMessage
 import com.blackboxpro.plugin.config.BlackBoxSettings
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -215,8 +214,9 @@ object BlackBoxCommand {
             sender.sendMessage("§6[BlackBoxPro] §f状态信息:")
             sender.sendMessage("§7  版本: §f${BlackBoxPro.VERSION}")
             sender.sendMessage("§7  调试模式: §f${BlackBoxSettings.debug}")
+            sender.sendMessage("§7  测试模式: §f${BlackBoxSettings.testMode}")
+            sender.sendMessage("§7  HTTP 端口: §f${BlackBoxSettings.httpPort}")
             sender.sendMessage("§7  响应超时: §f${BlackBoxSettings.responseTimeoutMs}ms")
-            sender.sendMessage("§7  等待响应数: §f${ChannelHandler.pendingCount()}")
             sender.sendMessage("§7  在线玩家数: §f${Bukkit.getOnlinePlayers().size}")
         }
     }

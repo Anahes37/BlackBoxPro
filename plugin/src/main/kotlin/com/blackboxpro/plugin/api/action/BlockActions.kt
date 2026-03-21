@@ -1,7 +1,7 @@
 package com.blackboxpro.plugin.api.action
 
 import com.blackboxpro.plugin.api.BlackBoxApi
-import com.blackboxpro.plugin.channel.ResponseMessage
+import com.blackboxpro.common.protocol.ResponseMessage
 import com.google.gson.JsonObject
 import org.bukkit.entity.Player
 import java.util.concurrent.CompletableFuture

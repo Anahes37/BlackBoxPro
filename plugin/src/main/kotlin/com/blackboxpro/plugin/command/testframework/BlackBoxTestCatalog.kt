@@ -176,7 +176,7 @@ object BlackBoxTestCatalog {
         )
     }
 
-    private fun verify(actionId: String, response: com.blackboxpro.plugin.channel.ResponseMessage): String? {
+    private fun verify(actionId: String, response: com.blackboxpro.common.protocol.ResponseMessage): String? {
         if (!response.isSuccess) {
             return response.message ?: response.status
         }

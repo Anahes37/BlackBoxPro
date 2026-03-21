@@ -1,6 +1,6 @@
 package com.blackboxpro.neoforge.dispatcher
 
-import com.blackboxpro.neoforge.network.NetworkHandler
+import com.blackboxpro.neoforge.http.ResponseFutureRegistry
 import com.blackboxpro.runtime.bindings.LoggerSupplierBinding
 import com.blackboxpro.runtime.bindings.SharedSlf4jLoggerSupplier
 import com.blackboxpro.runtime.dispatcher.RuntimeCommandDispatcherBootstrap
@@ -20,7 +20,7 @@ object CommandDispatcher {
             loggerSupplier = LoggerSupplierBinding,
             executeOnMainThread = { task -> Minecraft.getInstance().execute(task) },
             actionResolver = ActionRegistry::find,
-            sendResponseJson = NetworkHandler::sendResponse
+            sendResponseJson = ResponseFutureRegistry::onResponseJson
         )
 
         NeoForge.EVENT_BUS.register(this)

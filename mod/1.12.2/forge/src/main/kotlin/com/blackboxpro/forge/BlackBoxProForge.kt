@@ -4,7 +4,7 @@ import com.blackboxpro.forge.action.composite.TickScheduler
 import com.blackboxpro.forge.config.BlackBoxConfig
 import com.blackboxpro.forge.dispatcher.ActionRegistry
 import com.blackboxpro.forge.dispatcher.CommandDispatcher
-import com.blackboxpro.forge.network.NetworkHandler
+import com.blackboxpro.forge.http.ModHttpServer
 import com.blackboxpro.forge.util.ChatHistoryBuffer
 import com.blackboxpro.runtime.bindings.ForgeBindings
 import net.minecraft.util.text.ITextComponent
@@ -45,8 +45,8 @@ object BlackBoxProForge {
         MinecraftForge.EVENT_BUS.register(TickScheduler)
         MinecraftForge.EVENT_BUS.register(this)
 
-        // 4. 注册网络通道
-        NetworkHandler.register()
+        // 4. 启动 HTTP Server
+        ModHttpServer.start()
 
         logger.info("BlackBoxProForge v{} loaded. {} actions registered.", VERSION, ActionRegistry.size())
     }

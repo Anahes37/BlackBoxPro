@@ -1,7 +1,7 @@
 package com.blackboxpro.forge.dispatcher
 
 import com.blackboxpro.forge.config.BlackBoxConfig
-import com.blackboxpro.forge.network.NetworkHandler
+import com.blackboxpro.forge.http.ResponseFutureRegistry
 import com.google.gson.Gson
 import net.minecraft.client.Minecraft
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -107,6 +107,6 @@ object CommandDispatcher {
     ) {
         val response = ResponseMessage(id, status, message, data)
         val json = gson.toJson(response)
-        NetworkHandler.sendResponse(json)
+        ResponseFutureRegistry.onResponseJson(json)
     }
 }

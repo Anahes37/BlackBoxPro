@@ -48,7 +48,7 @@ class CustomPayloadAction : ActionExecutor {
             return ActionResult.fail("Invalid base64 data: ${e.message}")
         }
 
-        val maxSize = RuntimeBlackBoxConfig.current.network.maxPayloadSize
+        val maxSize = 32768
         if (data.size > maxSize) {
             return ActionResult.fail("Payload too large: ${data.size} > $maxSize")
         }

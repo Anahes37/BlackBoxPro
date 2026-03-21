@@ -1,6 +1,6 @@
 package com.blackboxpro.plugin.command.testframework
 
-import com.blackboxpro.plugin.channel.ResponseMessage
+import com.blackboxpro.common.protocol.ResponseMessage
 import java.util.concurrent.CompletableFuture
 
 data class BlackBoxPrepareResult(

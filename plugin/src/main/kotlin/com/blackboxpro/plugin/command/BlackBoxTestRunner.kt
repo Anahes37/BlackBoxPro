@@ -1,7 +1,7 @@
 package com.blackboxpro.plugin.command
 
 import com.blackboxpro.plugin.api.action.*
-import com.blackboxpro.plugin.channel.ResponseMessage
+import com.blackboxpro.common.protocol.ResponseMessage
 import com.blackboxpro.plugin.command.testframework.BlackBoxActionTestCase
 import com.blackboxpro.plugin.command.testframework.BlackBoxActionTestResult
 import com.blackboxpro.plugin.command.testframework.BlackBoxTestCatalog
