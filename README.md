@@ -18,40 +18,50 @@ Minecraft 自动化黑盒测试框架。服务端插件通过 Plugin Message Cha
 | 模块 | 角色 | 框架 | JVM |
 |------|------|------|-----|
 | `common` | 无 MC 依赖的共享协议层 | Kotlin + Gson | 8 |
-| `mod:1.21.11:runtime` | 1.21.11 公共运行时核心（当前含共享 bridge/core 与部分共享 Action） | NeoForm + Kotlin | 21 |
-| `mod:1.21.11:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.11 + fabric-language-kotlin | 21 |
-| `mod:1.21.11:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.11.x + KotlinForForge | 21 |
-| `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2 | 21 |
+| `mod:1.21.11:runtime` | 1.21.11 公共运行时核心 | NeoForm + Kotlin | 21 |
+| `mod:1.21.11:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.11 | 21 |
+| `mod:1.21.11:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.11.x | 21 |
+| `mod:1.21.1:runtime` | 1.21.1 公共运行时核心 | NeoForm + Kotlin | 21 |
+| `mod:1.21.1:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.1 | 21 |
+| `mod:1.21.1:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.1.x | 21 |
 | `mod/1.12.2` | Forge 1.12.2 客户端 Mod（独立构建根，含 `runtime` / `forge`） | Forge 1.12.2 | 8 |
+| `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2 | 21 |
 
 ## 仓库结构
 
 ```text
 BlackBoxPro/
-├── common/
-├── mod/
+├── common/                    # 共享协议层 / runtime 抽象
+├── plugin/                    # 服务端插件
+├── mod/                       # 客户端多版本工程
 │   ├── 1.21.11/
+│   │   ├── runtime/
+│   │   ├── fabric/
+│   │   └── neoforge/
+│   ├── 1.21.1/
 │   │   ├── runtime/
 │   │   ├── fabric/
 │   │   └── neoforge/
 │   └── 1.12.2/
 │       ├── runtime/
 │       └── forge/
-├── plugin/
-├── build.gradle.kts        # 根聚合入口
+├── docs/
+│   ├── design/                # 需求 / 开发设计文档
+│   ├── testing/               # 测试计划 / 用例说明
+│   └── reports/               # 测试报告 / 汇总
+├── artifacts/
+│   └── test-results/          # 本地测试结果 JSON（默认忽略）
+├── build.gradle.kts           # 根聚合入口
 └── settings.gradle.kts
 ```
 
 说明：
 - 根项目负责聚合构建。
-- `mod` 是客户端聚合入口，负责 1.21.11 模块并通过包装任务调度 `mod/1.12.2` 独立构建。
-- `mod/1.12.2` 是独立 Gradle 构建根，内部包含 `runtime` / `forge`，用于隔离 Kotlin 1.9.25 + RFG 工具链。
-- `runtime` 现在开始承载 1.21.11 公共桥接核心（dispatcher/scheduler/config/response）以及首批共享 Action。
-- `screenshot` 已提升为 runtime 共享编排能力，Fabric / NeoForge 仅保留平台截图实现。
-- NeoForge 1.21.11 产物按 `common + runtime + neoforge-wrapper` 分层构建。
-- Fabric 1.21.11 已接入 `runtime` 公共核心源码，但平台实现仍保留在 Fabric 模块内。
-- `plugin` 与 `mod/1.12.2` 都通过顶层 `common` 共享协议层产物。
-
+- `mod` 是客户端聚合入口，统一管理 `1.21.11`、`1.21.1` 与 `1.12.2`。
+- `mod/1.12.2` 是独立 Gradle 构建根，用于隔离 Kotlin 1.9.25 + RFG 工具链。
+- `runtime` 承载跨 loader 共享 bridge/core，以及逐步沉淀的共享 Action。
+- `docs/` 存放设计、测试和报告文档；根目录仅保留核心入口文件。
+- `artifacts/test-results/` 存放本地黑盒测试结果，不再散落在根目录。
 
 ## 支持的行为
 
@@ -98,7 +108,7 @@ BlackBoxPro/
 在仓库根目录执行：
 
 ```powershell
-# 构建 1.21.11 mod（common + fabric + neoforge）
+# 构建 1.21.x mod（按根任务定义）
 .\gradlew mod_buildAll
 
 # 构建 plugin
@@ -116,6 +126,8 @@ BlackBoxPro/
 - `common/build/libs/blackboxpro-common-*.jar`
 - `mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-*.jar`
 - `mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-*.jar`
+- `mod/1.21.1/fabric/build/libs/BlackBoxPro-fabric-1.21.1-*.jar`
+- `mod/1.21.1/neoforge/build/libs/BlackBoxPro-neoforge-1.21.1-*.jar`
 - `plugin/build/libs/BlackBoxPro-Plugin-*.jar`
 - `mod/1.12.2/build/libs/BlackBoxPro-forge-1.12.2-*.jar`
 - `build/libs/` 为根聚合收集目录
