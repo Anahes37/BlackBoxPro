@@ -134,6 +134,9 @@ curl -X POST http://localhost:8080/execute -d '{"id":"s","action":"stop_server"}
 # 关闭在线验证
 powershell -NoProfile -Command "
 (Get-Content '${SERVER_DIR}/server.properties') -replace 'online-mode=true','online-mode=false' | Set-Content '${SERVER_DIR}/server.properties'"
+powershell -NoProfile -Command "
+(Get-Content '${SERVER_DIR}/server.properties') -replace 'enforce-secure-profile=true','enforce-secure-profile=false' | Set-Content '${SERVER_DIR}/server.properties'"
+# enforce-secure-profile: 1.19.1+ 新增，开发账号必须关闭，否则离线玩家被拒连接
 ```
 
 **2.3 部署 plugin**

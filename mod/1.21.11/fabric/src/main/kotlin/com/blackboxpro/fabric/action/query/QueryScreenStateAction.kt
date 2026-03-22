@@ -4,7 +4,6 @@ import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.screen.DisconnectedScreen
 import net.minecraft.client.gui.screen.ingame.*
 
 /**
@@ -33,21 +32,34 @@ class QueryScreenStateAction : ActionExecutor {
                 addProperty("isContainer", false)
             }
 
-            addProperty("screenType", classifyScreen(screen))
+            val screenType = if (screen?.javaClass?.simpleName == "DisconnectedScreen") "disconnected"
+                             else classifyScreen(screen)
+            addProperty("screenType", screenType)
 
             // DisconnectedScreen：补充断线原因和详情
-            if (screen is DisconnectedScreen) {
-                runCatching {
-                    val f = DisconnectedScreen::class.java.getDeclaredField("reason")
-                    f.isAccessible = true
-                    val v = f.get(screen)
-                    if (v != null) addProperty("reason", v.toString())
+            // 用类名匹配而非 import 类型检查，兼容不同版本的 Fabric Yarn 路径
+            if (screen != null && screen.javaClass.simpleName == "DisconnectedScreen") {
+                // 尝试 reason 字段（所有已知版本）
+                val reasonFieldNames = listOf("reason", "f_96306_")
+                for (name in reasonFieldNames) {
+                    val found = runCatching {
+                        val f = screen.javaClass.getDeclaredField(name)
+                        f.isAccessible = true
+                        val v = f.get(screen)
+                        if (v != null) { addProperty("reason", v.toString()); true } else false
+                    }.getOrNull() ?: false
+                    if (found) break
                 }
-                runCatching {
-                    val f = DisconnectedScreen::class.java.getDeclaredField("info")
-                    f.isAccessible = true
-                    val v = f.get(screen)
-                    if (v != null) addProperty("info", v.toString())
+                // 尝试 info/details 字段
+                val detailFieldNames = listOf("info", "details", "f_96307_")
+                for (name in detailFieldNames) {
+                    val found = runCatching {
+                        val f = screen.javaClass.getDeclaredField(name)
+                        f.isAccessible = true
+                        val v = f.get(screen)
+                        if (v != null) { addProperty("details", v.toString()); true } else false
+                    }.getOrNull() ?: false
+                    if (found) break
                 }
             }
         }
@@ -80,7 +92,6 @@ class QueryScreenStateAction : ActionExecutor {
         is HorseScreen -> "horse"
         is BookScreen -> "book"
         is BookEditScreen -> "book_edit"
-        is DisconnectedScreen -> "disconnected"
         is HandledScreen<*> -> "container_unknown"
         else -> "other"
     }
