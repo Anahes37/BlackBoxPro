@@ -7,11 +7,10 @@ BlackBoxPro 测试环境统一管理技能。根据用户指定版本，控制�
 
 ## 当前仓库结构
 
-- 根目录：`$CWD`
+- 根目录：`$CWD`（`F:\minecraft\mod\BlackBoxPro`）
 - 1.21.11 Mod：`mod/1.21.11/fabric`、`mod/1.21.11/neoforge`
-- 共享协议层：`mod/common`
+- 1.12.2 Mod：`mod/1.12.2/forge`
 - Plugin：`plugin`
-- Forge 1.12.2：`forge-1.12.2`
 
 ## 版本环境速查
 
@@ -19,12 +18,12 @@ BlackBoxPro 测试环境统一管理技能。根据用户指定版本，控制�
 
 | 项目 | 值 |
 |------|-----|
-| Java | `E:\AdoptOpenJDK\zulu21.36.17\bin\java.exe` |
+| Java（Gradle） | `C:\Program Files\Java\jdk-21` |
 | 服务端目录 | `E:\paper-1.21.11` |
 | 服务端 JAR | `paper-1.21.11-97.jar` |
-| 服务端 JVM | `-Xms4G -Xmx4G -XX:+UseG1GC -XX:+OptimizeStringConcat -XX:MaxGCPauseMillis=10 -XX:+UseStringDeduplication` |
-| 客户端目录 | `I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4` |
-| 客户端启动 | `powershell -NoProfile -Command "& 'I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\launch.bat'"` |
+| 服务端 JVM | `-Xms4G -Xmx4G -XX:+UseG1GC` |
+| 服务端 Java | `C:\Program Files\Java\jdk-21\bin\java.exe` |
+| 客户端启动 | `runClient`（`mod/1.21.11/fabric` 子项目，待确认） |
 | 玩家名 | `Player` |
 | Mod 产物 | `$CWD\mod\1.21.11\fabric\build\libs\BlackBoxPro-fabric-1.21.11-*.jar` |
 | Plugin 产物 | `$CWD\plugin\build\libs\BlackBoxPro-Plugin-*.jar` |
@@ -33,157 +32,140 @@ BlackBoxPro 测试环境统一管理技能。根据用户指定版本，控制�
 
 | 项目 | 值 |
 |------|-----|
-| Java | `E:\AdoptOpenJDK\zulu8.0.422\bin\java.exe` |
-| 服务端目录 | `E:\paper-1.12.2` |
-| 服务端 JAR | `paper.jar` |
+| Java（Gradle） | `C:\Program Files\Java\jdk-17`（Gradle 用 17，runClient 内部自动用 8） |
+| 服务端目录 | `F:\minecraft\server\paper-1.12.2` |
+| 服务端 JAR | `Paper-1.12.2-build1620.jar` |
 | 服务端 JVM | `-Xms2G -Xmx4G -XX:+UseG1GC` |
-| RCON | 端口 `25575`，密码 `123456` |
-| 客户端目录 | `I:\PCL\.minecraft\versions\1.12.2-Forge_14.23.5.2860` |
-| 客户端启动 | `powershell -NoProfile -Command "& 'I:\PCL\.minecraft\versions\1.12.2-Forge_14.23.5.2860\start-client.bat'"` |
-| 玩家名 | `BlackBoxTester` |
-| Mod 产物 | `$CWD\forge-1.12.2\build\libs\BlackBoxPro-forge-1.12.2-*.jar` |
+| 服务端 Java | `C:\Program Files\Java\jdk-1.8\bin\java.exe` |
+| 客户端启动 | `JAVA_HOME="C:/Program Files/Java/jdk-17" ./gradlew :forge:runClient --no-daemon`（在 `mod/1.12.2` 目录） |
+| 玩家名 | `Developer`（runClient 开发模式默认名） |
+| Mod 产物 | `$CWD\mod\1.12.2\forge\build\libs\BlackBoxPro-forge-1.12.2-*.jar` |
 | Plugin 产物 | `$CWD\plugin\build\libs\BlackBoxPro-Plugin-*.jar` |
 
 ## 构建
 
-在仓库根目录执行：
+在仓库根目录执行（需指定 Java 21）：
 
-```powershell
+```bash
 # 1.21.11 mod（common + fabric + neoforge）
-.\gradlew mod_buildAll
+JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew mod_buildAll --no-daemon
 
 # plugin
-.\gradlew plugin_build
+JAVA_HOME="/c/Program Files/Java/jdk-17" ./gradlew plugin_build --no-daemon
 
 # forge 1.12.2
-.\gradlew forge1122_build
+JAVA_HOME="/c/Program Files/Java/jdk-17" ./gradlew forge1122_build --no-daemon
 
 # 全量
-.\gradlew buildAll
+JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew buildAll --no-daemon
 ```
 
 ## 部署
 
-### 1.21.11
-
-```powershell
-Copy-Item "$PWD\mod\1.21.11\fabric\build\libs\BlackBoxPro-fabric-1.21.11-*.jar" "I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\mods\" -Force
-Copy-Item "$PWD\plugin\build\libs\BlackBoxPro-Plugin-*.jar" "E:\paper-1.21.11\plugins\" -Force
-```
+Plugin jar 被服务端占用时无法覆盖，**必须先停服再部署再启服**。
 
 ### 1.12.2
 
 ```powershell
-Copy-Item "$PWD\forge-1.12.2\build\libs\BlackBoxPro-forge-1.12.2-*.jar" "I:\PCL\.minecraft\versions\1.12.2-Forge_14.23.5.2860\mods\" -Force
-Copy-Item "$PWD\plugin\build\libs\BlackBoxPro-Plugin-*.jar" "E:\paper-1.12.2\plugins\" -Force
+# 停服（见下方停止章节）
+# 部署 plugin
+Remove-Item 'F:\minecraft\server\paper-1.12.2\plugins\BlackBoxPro-Plugin-*.jar' -Force
+Copy-Item "$PWD\plugin\build\libs\BlackBoxPro-Plugin-*.jar" 'F:\minecraft\server\paper-1.12.2\plugins\' -Force
+# 部署 mod（无需停客户端，runClient 重启即可）
+# mod jar 在 mod/1.12.2/forge/build/libs/ 下，runClient 启动时自动加载
+```
+
+### 1.21.11
+
+```powershell
+Copy-Item "$PWD\mod\1.21.11\fabric\build\libs\BlackBoxPro-fabric-1.21.11-*.jar" "E:\paper-1.21.11\mods\" -Force
+Copy-Item "$PWD\plugin\build\libs\BlackBoxPro-Plugin-*.jar" "E:\paper-1.21.11\plugins\" -Force
 ```
 
 ## 启动
 
-### 服务端
+### 服务端（Terminal 1）
 
-1.21.11：
-```powershell
-Set-Location 'E:\paper-1.21.11'
-& 'E:\AdoptOpenJDK\zulu21.36.17\bin\java.exe' -Xms4G -Xmx4G -XX:+UseG1GC -XX:+OptimizeStringConcat -XX:MaxGCPauseMillis=10 -XX:+UseStringDeduplication -jar 'paper-1.21.11-97.jar' nogui
+1.12.2（先 cd 进服务端目录）：
+```bash
+cd /f/minecraft/server/paper-1.12.2
+"/c/Program Files/Java/jdk-1.8/bin/java.exe" -Xms2G -Xmx4G -XX:+UseG1GC -jar Paper-1.12.2-build1620.jar nogui
 ```
 
-1.12.2：
-```powershell
-Set-Location 'E:\paper-1.12.2'
-& 'E:\AdoptOpenJDK\zulu8.0.422\bin\java.exe' -Xms2G -Xmx4G -XX:+UseG1GC -jar 'paper.jar' nogui
+1.21.11：
+```bash
+cd /e/paper-1.21.11
+"/c/Program Files/Java/jdk-21/bin/java.exe" -Xms4G -Xmx4G -XX:+UseG1GC -jar paper-1.21.11-97.jar nogui
 ```
 
 等待日志出现 `Done`。
 
-### 客户端
+### 客户端（Terminal 2）
+
+1.12.2（在仓库根目录）：
+```bash
+cd /f/minecraft/mod/BlackBoxPro/mod/1.12.2
+JAVA_HOME="/c/Program Files/Java/jdk-17" ./gradlew :forge:runClient --no-daemon
+```
 
 1.21.11：
-```powershell
-& 'I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\launch.bat'
+```bash
+# 待确认 runClient 任务
+cd /f/minecraft/mod/BlackBoxPro
+JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :1.21.11:fabric:runClient --no-daemon
 ```
 
-1.12.2：
-```powershell
-& 'I:\PCL\.minecraft\versions\1.12.2-Forge_14.23.5.2860\start-client.bat'
-```
-
-等待服务端出现 `joined the game`。
+等待服务端出现 `joined the game`，然后发 HTTP connect_to_server（见测试章节）。
 
 ## 停止
 
-- 1.21.11 服务端：Terminal 写入 `stop\n`
-- 1.21.11 客户端：Terminal 写入 `\x03`
-- 1.12.2 客户端：Terminal 写入 `\x03`，出现 `终止批处理操作吗(Y/N)?` 后写入 `Y\n`
-- 1.12.2 服务端：优先用下方 PowerShell RCON
+**禁止使用 RCON，所有停服通过 HTTP 接口完成。**
 
-## 1.12.2 RCON（PowerShell）
+### 停止服务端
 
-```powershell
-function Invoke-BlackBoxRcon {
-    param(
-        [string]$Command,
-        [string]$Host = '127.0.0.1',
-        [int]$Port = 25575,
-        [string]$Password = '123456'
-    )
-
-    $client = [System.Net.Sockets.TcpClient]::new($Host, $Port)
-    $stream = $client.GetStream()
-    $writer = New-Object System.IO.BinaryWriter($stream)
-    $reader = New-Object System.IO.BinaryReader($stream)
-
-    function Send-RconPacket([int]$RequestId, [int]$Type, [string]$Body) {
-        $payload = [System.Text.Encoding]::UTF8.GetBytes($Body)
-        $packetLength = 4 + 4 + $payload.Length + 2
-        $writer.Write([BitConverter]::GetBytes($packetLength))
-        $writer.Write([BitConverter]::GetBytes($RequestId))
-        $writer.Write([BitConverter]::GetBytes($Type))
-        $writer.Write($payload)
-        $writer.Write([byte]0)
-        $writer.Write([byte]0)
-        $writer.Flush()
-    }
-
-    function Read-RconPacket {
-        $length = $reader.ReadInt32()
-        $requestId = $reader.ReadInt32()
-        $type = $reader.ReadInt32()
-        $bodyBytes = $reader.ReadBytes($length - 8)
-        [pscustomobject]@{
-            RequestId = $requestId
-            Type = $type
-            Body = [System.Text.Encoding]::UTF8.GetString($bodyBytes).TrimEnd([char]0)
-        }
-    }
-
-    Send-RconPacket 0 3 $Password
-    [void](Read-RconPacket)
-    Send-RconPacket 1 2 $Command
-    $response = Read-RconPacket
-    $client.Close()
-    return $response.Body
-}
+```bash
+# 两个版本通用，HTTP 端口均为 8080
+curl -s -X POST http://localhost:8080/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"stop","action":"stop_server"}'
 ```
 
-示例：
-```powershell
-Invoke-BlackBoxRcon 'blackbox test BlackBoxTester'
-Invoke-BlackBoxRcon 'stop'
+### 停止客户端
+
+- Terminal 写入 `\x03`（Ctrl-C）
+- 若出现 `终止批处理操作吗(Y/N)?`，再写入 `Y\n`
+
+## 连接服务器
+
+客户端启动后默认在主菜单，通过 HTTP 让客户端自动连接：
+
+```bash
+curl -s -X POST http://localhost:8081/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"c1","action":"connect_to_server","params":{"ip":"127.0.0.1","port":25565}}'
 ```
+
+> 注：客户端 HTTP 端口为 8081，服务端为 8080。
 
 ## 测试
 
-- 1.21.11：服务端控制台执行 `blackbox test Player`
-- 1.12.2：执行 `Invoke-BlackBoxRcon 'blackbox test BlackBoxTester'`
+```bash
+# 全量测试（1.12.2 玩家名 Developer，1.21.11 玩家名 Player）
+curl -s -X POST http://localhost:8080/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"run-1","action":"run_test","params":{"player":"Developer","scope":"full"}}'
+```
 
-截图路径：
-- `I:\PCL\.minecraft\versions\1.21.11-Fabric 0.18.4\screenshots\blackboxpro\Player\integration_<ts>\`
-- `I:\PCL\.minecraft\versions\1.12.2-Forge_14.23.5.2860\screenshots\blackboxpro\BlackBoxTester\integration_<ts>\`
+响应包含完整结果 JSON（阻塞直到完成，约 50s）。
+
+截图路径（用例主动截图时落盘）：
+- 1.12.2：`$CWD\mod\1.12.2\forge\run\screenshots\blackboxpro\`
+- 1.21.11：待确认
 
 ## 注意事项
 
-- 修改 Plugin 后必须重启服务端。
-- 修改 Mod 后必须重启客户端。
-- 1.12.2 只用 PowerShell RCON，不用 Python。
-- 两个版本不要同时启动，都会占用 `25565`。
+- 修改 Plugin 后必须停服 → 部署 → 重启服务端。
+- 修改 Mod 后需重启客户端（停止 runClient 进程后重新执行）。
+- 两个版本不要同时启动，都会占用端口 `25565`。
+- 服务端 HTTP 端口 `8080`，客户端 HTTP 端口 `8081`。
+- 禁止使用 RCON（已废弃）。

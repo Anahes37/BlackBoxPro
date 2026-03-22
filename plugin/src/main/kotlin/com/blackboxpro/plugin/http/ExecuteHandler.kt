@@ -39,9 +39,13 @@ object ExecuteHandler : HttpHandler {
             return gson.toJson(ResponseMessage("", "failure", "Parse error: ${e.message}"))
         }
 
-        // 特殊处理：run_test 在服务端执行，不需要 relay
+        // 特殊处理：服务端本地执行，不需要 relay
         if (command.action == "run_test") {
             return handleRunTest(command)
+        }
+        if (command.action == "stop_server") {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop")
+            return gson.toJson(ResponseMessage(command.id, "success", "Server stop initiated"))
         }
 
         return try {

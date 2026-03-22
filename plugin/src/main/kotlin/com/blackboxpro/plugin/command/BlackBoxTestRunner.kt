@@ -20,12 +20,9 @@ import java.util.concurrent.CompletableFuture
 /**
  * 集成测试运行器。
  *
- * 每个测试用例经历三个截图阶段：
- * - before：动作执行前的画面
- * - during：动作执行中的画面（持续性动作在中间态截图，瞬时动作在执行后立即截图）
- * - after / FAILED：动作完成后的画面
- *
- * 截图通过 [screenshot] 方法串入 Future 链，确保每张截图写入完成后再继续。
+ * 框架层不自动截图。截图完全由测试用例自身决定：
+ * - 需要视觉验证的用例在 execute() 或 verify() 里主动调用 screenshot action。
+ * - screenshot action 本身的测试用例会验证截图是否落盘。
  */
 object BlackBoxTestRunner {
 
@@ -169,7 +166,7 @@ object BlackBoxTestRunner {
         sender.sendMessage("§7  截图会话: $testId")
         sender.sendMessage("")
 
-        var chain = ctx.screenshot("00_test_start")
+        var chain = CompletableFuture.completedFuture(Unit)
         cases.forEachIndexed { index, case ->
             chain = chain.thenCompose {
                 executeCatalogCase(ctx, case, index, results)
@@ -178,8 +175,6 @@ object BlackBoxTestRunner {
 
         return chain.thenCompose {
             ctx.delay(300L)
-        }.thenCompose {
-            ctx.screenshot("99_test_end")
         }.thenApply {
             val totalTime = System.currentTimeMillis() - startTime
             val passed = results.count { it.status == BlackBoxTestStatus.PASSED }
@@ -213,7 +208,6 @@ object BlackBoxTestRunner {
                 })
             }
         }.exceptionally { ex ->
-            ScreenshotActions.screenshot(player, testId, "99_test_exception", player.name).exceptionally { null }
             sender.sendMessage("§c[BlackBoxPro Test] 测试异常中断: ${ex.message}")
             JsonObject().apply { addProperty("error", ex.message) }
         }
@@ -225,58 +219,41 @@ object BlackBoxTestRunner {
         index: Int,
         results: MutableList<BlackBoxActionTestResult>
     ): CompletableFuture<Unit> {
-        val num = (index + 1).toString().padStart(3, '0')
-        val tag = "${num}_${case.actionId}"
         val t0 = System.currentTimeMillis()
 
         return ctx.mainThread { ctx.fixtureManager.resetBaseline() }.thenCompose {
-            // 关闭客户端任何打开的屏幕（暂停菜单、容器 GUI 等），确保每个用例从游戏主画面开始
             ctx.sendAction("close_screen").thenApply { }.exceptionally { }
         }.thenCompose {
             ctx.delay(300L)
         }.thenCompose {
-            ctx.screenshot("${tag}_1_before")
-        }.thenCompose {
             case.prepare(ctx)
         }.thenCompose { prepareResult ->
             if (prepareResult.skipReason != null) {
-                ctx.screenshot("${tag}_3_SKIPPED").thenCompose {
-                    case.cleanup(ctx)
-                }.thenApply {
+                case.cleanup(ctx).thenApply {
                     val elapsed = System.currentTimeMillis() - t0
-                    val result = BlackBoxActionTestResult(case, BlackBoxTestStatus.SKIPPED, prepareResult.skipReason)
-                    results += result
+                    results += BlackBoxActionTestResult(case, BlackBoxTestStatus.SKIPPED, prepareResult.skipReason)
                     ctx.sender.sendMessage("§e[BlackBoxPro Test] §e↷ §f#${index + 1} ${case.displayName} §e- ${prepareResult.skipReason} §7(${elapsed}ms)")
                 }
             } else {
                 case.execute(ctx).handle { response, throwable -> response to throwable }.thenCompose { (response, throwable) ->
                     if (throwable != null || response == null) {
                         val reason = throwable?.message ?: "Unknown execution error"
-                        ctx.screenshot("${tag}_3_FAILED").thenCompose {
-                            case.cleanup(ctx)
-                        }.thenApply {
+                        case.cleanup(ctx).thenApply {
                             val elapsed = System.currentTimeMillis() - t0
-                            val result = BlackBoxActionTestResult(case, BlackBoxTestStatus.FAILED, reason)
-                            results += result
+                            results += BlackBoxActionTestResult(case, BlackBoxTestStatus.FAILED, reason)
                             ctx.sender.sendMessage("§c[BlackBoxPro Test] §c✗ §f#${index + 1} ${case.displayName} §c- $reason §7(${elapsed}ms)")
                         }
                     } else {
                         val verifyMessage = case.verify(ctx, response)
                         val status = if (verifyMessage == null) BlackBoxTestStatus.PASSED else BlackBoxTestStatus.FAILED
-                        val suffix = if (status == BlackBoxTestStatus.PASSED) "3_after" else "3_FAILED"
-                        ctx.screenshot("${tag}_2_during").thenCompose {
-                            ctx.screenshot("${tag}_$suffix")
-                        }.thenCompose {
-                            case.cleanup(ctx)
-                        }.thenApply {
+                        case.cleanup(ctx).thenApply {
                             val elapsed = System.currentTimeMillis() - t0
-                            val result = BlackBoxActionTestResult(case, status, verifyMessage ?: (response.message ?: response.status), response)
-                            results += result
+                            results += BlackBoxActionTestResult(case, status, verifyMessage ?: (response.message ?: response.status), response)
                             when (status) {
                                 BlackBoxTestStatus.PASSED ->
                                     ctx.sender.sendMessage("§a[BlackBoxPro Test] §a✓ §f#${index + 1} ${case.displayName} §7(${elapsed}ms)")
                                 BlackBoxTestStatus.FAILED ->
-                                    ctx.sender.sendMessage("§c[BlackBoxPro Test] §c✗ §f#${index + 1} ${case.displayName} §c- ${result.message} §7(${elapsed}ms)")
+                                    ctx.sender.sendMessage("§c[BlackBoxPro Test] §c✗ §f#${index + 1} ${case.displayName} §c- $verifyMessage §7(${elapsed}ms)")
                                 BlackBoxTestStatus.SKIPPED -> Unit
                             }
                         }
