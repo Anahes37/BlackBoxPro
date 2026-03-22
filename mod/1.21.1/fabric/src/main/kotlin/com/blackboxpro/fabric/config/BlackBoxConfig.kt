@@ -1,8 +1,0 @@
-package com.blackboxpro.fabric.config
-
-import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
-
-object BlackBoxConfig {
-    val current get() = RuntimeBlackBoxConfig.current
-    fun load() { /* 硬编码默认值，无需加载 */ }
-}

@@ -1,8 +1,8 @@
 package com.blackboxpro.fabric.action.composite
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 
 import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
-import com.blackboxpro.fabric.config.BlackBoxConfig
 import com.blackboxpro.fabric.util.getDoubleOrDefault
 import com.blackboxpro.fabric.util.requireDouble
 import com.google.gson.JsonObject
@@ -22,7 +22,7 @@ class PathfindToAction : ActionExecutor {
         val player = client.player
             ?: return ActionResult.fail("Player not available")
 
-        val pathConfig = BlackBoxConfig.current.pathfinding
+        val pathConfig = RuntimeBlackBoxConfig.current.pathfinding
         val dx = targetX - player.x
         val dy = targetY - player.y
         val dz = targetZ - player.z
@@ -52,7 +52,7 @@ class PathfindToAction : ActionExecutor {
         val player = client.player ?: return
         val networkHandler = client.networkHandler ?: return
 
-        val pathConfig = BlackBoxConfig.current.pathfinding
+        val pathConfig = RuntimeBlackBoxConfig.current.pathfinding
         val stepSize = pathConfig.stepSize * speed
 
         val dx = targetX - player.x

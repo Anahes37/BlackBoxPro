@@ -2,7 +2,6 @@ package com.blackboxpro.fabric.action.debug
 
 import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
-import com.blackboxpro.fabric.config.BlackBoxConfig
 import com.blackboxpro.fabric.util.requireString
 import com.google.gson.JsonObject
 import io.netty.buffer.Unpooled

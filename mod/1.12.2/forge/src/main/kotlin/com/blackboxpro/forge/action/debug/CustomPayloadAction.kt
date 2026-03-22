@@ -2,7 +2,6 @@ package com.blackboxpro.forge.action.debug
 
 import com.blackboxpro.forge.action.ActionExecutor
 import com.blackboxpro.forge.action.ActionResult
-import com.blackboxpro.forge.config.BlackBoxConfig
 import com.blackboxpro.forge.util.requireString
 import com.google.gson.JsonObject
 import io.netty.buffer.Unpooled

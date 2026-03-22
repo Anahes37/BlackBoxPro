@@ -1,7 +1,6 @@
 package com.blackboxpro.neoforge
 
 import com.blackboxpro.neoforge.action.composite.TickScheduler
-import com.blackboxpro.neoforge.config.BlackBoxConfig
 import com.blackboxpro.neoforge.dispatcher.ActionRegistry
 import com.blackboxpro.neoforge.dispatcher.CommandDispatcher
 import com.blackboxpro.neoforge.http.ModHttpServer
@@ -22,7 +21,6 @@ class BlackBoxProNeoForge(modBus: IEventBus) {
         val logger = LoggerFactory.getLogger("BlackBoxProNeoForge")
 
         // 1. 加载配置
-        BlackBoxConfig.load()
 
         // 2. 绑定运行时桥接
         RuntimeScreenshotBridge.bind(NeoForgeRuntimeScreenshotProvider)

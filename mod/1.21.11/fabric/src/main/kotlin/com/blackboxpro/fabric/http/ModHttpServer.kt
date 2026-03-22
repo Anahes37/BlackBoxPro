@@ -1,7 +1,7 @@
 package com.blackboxpro.fabric.http
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 
 import com.blackboxpro.common.protocol.HttpEndpoints
-import com.blackboxpro.fabric.config.BlackBoxConfig
 import com.sun.net.httpserver.HttpServer
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
@@ -13,7 +13,7 @@ object ModHttpServer {
     private var server: HttpServer? = null
 
     fun start() {
-        val port = BlackBoxConfig.current.network.httpPort
+        val port = RuntimeBlackBoxConfig.current.network.httpPort
         try {
             val s = HttpServer.create(InetSocketAddress(port), 0)
             s.createContext(HttpEndpoints.EXECUTE, ExecuteHandler)

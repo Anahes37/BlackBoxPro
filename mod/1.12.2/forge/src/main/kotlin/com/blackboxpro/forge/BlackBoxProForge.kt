@@ -3,7 +3,6 @@ package com.blackboxpro.forge
 import com.blackboxpro.common.protocol.ResponseMessage
 import com.blackboxpro.common.runtime.dispatcher.RuntimeResponseSender
 import com.blackboxpro.forge.action.composite.TickScheduler
-import com.blackboxpro.forge.config.BlackBoxConfig
 import com.blackboxpro.common.runtime.dispatcher.RuntimeCommandDispatcher
 import com.blackboxpro.forge.dispatcher.ActionRegistry
 import com.blackboxpro.forge.dispatcher.CommandDispatcher
@@ -50,7 +49,6 @@ object BlackBoxProForge {
         })
 
         // 1. 加载配置
-        BlackBoxConfig.load()
 
         // 2. 注册所有行为执行器
         ActionRegistry.registerAll()

@@ -1,8 +1,8 @@
 package com.blackboxpro.fabric.action.composite
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 
 import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
-import com.blackboxpro.fabric.config.BlackBoxConfig
 import com.blackboxpro.fabric.dispatcher.ActionRegistry
 import com.blackboxpro.fabric.util.requireInt
 import com.google.gson.JsonObject
@@ -77,7 +77,7 @@ class BreakBlockAction : ActionExecutor {
      * @return tick 数，-1 表示不可破坏
      */
     private fun calculateBreakTicks(client: MinecraftClient, x: Int, y: Int, z: Int): Int {
-        val defaultTicks = BlackBoxConfig.current.execution.defaultBreakTicks
+        val defaultTicks = RuntimeBlackBoxConfig.current.execution.defaultBreakTicks
         val world = client.world ?: return defaultTicks
         val player = client.player ?: return defaultTicks
         val pos = BlockPos(x, y, z)

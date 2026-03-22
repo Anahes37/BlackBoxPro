@@ -1,7 +1,6 @@
 package com.blackboxpro.fabric
 
 import com.blackboxpro.fabric.action.composite.TickScheduler
-import com.blackboxpro.fabric.config.BlackBoxConfig
 import com.blackboxpro.fabric.dispatcher.ActionRegistry
 import com.blackboxpro.fabric.dispatcher.CommandDispatcher
 import com.blackboxpro.fabric.http.ModHttpServer
@@ -20,7 +19,6 @@ object BlackBoxProFabric : ClientModInitializer {
 
     override fun onInitializeClient() {
         // 1. 加载配置
-        BlackBoxConfig.load()
 
         // 2. 绑定运行时桥接
         RuntimeScreenshotBridge.bind(FabricRuntimeScreenshotProvider)
