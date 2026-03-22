@@ -2,18 +2,10 @@ package com.blackboxpro.fabric.util
 
 import net.minecraft.client.input.Input
 import net.minecraft.client.network.ClientPlayerEntity
-import net.minecraft.util.PlayerInput
-import net.minecraft.util.math.Vec2f
 
 /**
  * 自定义 Input 子类，用于注入模拟键盘输入。
- * 替换 KeyboardInput 后，每 tick 的 tick() 会从注入的 [playerInput] 计算 movementVector，
- * 而不是从真实按键状态读取。
- *
- * 使用方式：
- * 1. [install] 安装到玩家，保存原始 Input
- * 2. 每 tick 通过 [forward]/[sprint]/[jump] 等属性设置期望输入
- * 3. 移动完成后调用 [uninstall] 恢复原始 KeyboardInput
+ * 替换 KeyboardInput 后，每 tick 会从注入的布尔值更新到 Minecraft 的输入字段。
  */
 class InjectedInput : Input() {
 
@@ -27,18 +19,14 @@ class InjectedInput : Input() {
     var backward: Boolean = false
     var left: Boolean = false
     var right: Boolean = false
-    var jumping: Boolean = false
-    var sneaking: Boolean = false
     var sprinting: Boolean = false
 
-    override fun tick() {
-        // 从注入的布尔值构建 PlayerInput
-        playerInput = PlayerInput(forward, backward, left, right, jumping, sneaking, sprinting)
-
-        // 计算 movementVector（与 KeyboardInput.tick() 逻辑一致）
-        val forwardValue = getMovementMultiplier(forward, backward)
-        val sidewaysValue = getMovementMultiplier(left, right)
-        movementVector = Vec2f(sidewaysValue, forwardValue).normalize()
+    override fun tick(slowDown: Boolean, slowDownFactor: Float) {
+        pressingForward = forward
+        pressingBack = backward
+        pressingLeft = left
+        pressingRight = right
+        super.tick(slowDown, slowDownFactor)
     }
 
     /** 安装到玩家，替换原始 Input */
@@ -69,10 +57,5 @@ class InjectedInput : Input() {
         jumping = false
         sneaking = false
         sprinting = false
-    }
-
-    companion object {
-        private fun getMovementMultiplier(positive: Boolean, negative: Boolean): Float =
-            if (positive == negative) 0.0f else if (positive) 1.0f else -1.0f
     }
 }

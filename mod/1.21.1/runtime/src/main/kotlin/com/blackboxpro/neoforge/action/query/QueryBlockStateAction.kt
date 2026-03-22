@@ -42,7 +42,7 @@ class QueryBlockStateAction : ActionExecutor {
             addProperty("skyLight", world.getBrightness(LightLayer.SKY, pos))
 
             val biome = world.getBiome(pos)
-            addProperty("biome", biome.unwrapKey().map { it.identifier().toString() }.orElse("unknown"))
+            addProperty("biome", biome.unwrapKey().map { it.location().toString() }.orElse("unknown"))
 
             addProperty("hardness", state.getDestroySpeed(world, pos))
             addProperty("x", x)

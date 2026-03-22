@@ -5,20 +5,13 @@ import com.blackboxpro.neoforge.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket
-import net.minecraft.world.entity.player.Input
 
 class SneakStartAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
-        val client = Minecraft.getInstance()
-        val networkHandler = client.connection
+        val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
 
-        // 1.21.11: sneak 不再通过 PlayerCommand 控制，改用 PlayerInput
-        networkHandler.send(
-            ServerboundPlayerInputPacket(
-                Input(false, false, false, false, false, true, false)
-            )
-        )
+        networkHandler.send(ServerboundPlayerInputPacket(0.0f, 0.0f, false, true))
         return ActionResult.ok("Started sneaking")
     }
 }

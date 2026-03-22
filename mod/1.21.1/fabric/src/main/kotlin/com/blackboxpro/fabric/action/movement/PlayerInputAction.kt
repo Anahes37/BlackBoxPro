@@ -6,7 +6,6 @@ import com.blackboxpro.fabric.util.getBooleanOrDefault
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
 import net.minecraft.network.packet.c2s.play.PlayerInputC2SPacket
-import net.minecraft.util.PlayerInput
 
 class PlayerInputAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -16,14 +15,22 @@ class PlayerInputAction : ActionExecutor {
         val right = params.getBooleanOrDefault("right", false)
         val jump = params.getBooleanOrDefault("jump", false)
         val sneak = params.getBooleanOrDefault("sneak", false)
-        val sprint = params.getBooleanOrDefault("sprint", false)
 
         val networkHandler = MinecraftClient.getInstance().networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.sendPacket(
-            PlayerInputC2SPacket(PlayerInput(forward, backward, left, right, jump, sneak, sprint))
-        )
+        val sideways = when {
+            left == right -> 0.0f
+            left -> -1.0f
+            else -> 1.0f
+        }
+        val forwardSpeed = when {
+            forward == backward -> 0.0f
+            forward -> 1.0f
+            else -> -1.0f
+        }
+
+        networkHandler.sendPacket(PlayerInputC2SPacket(sideways, forwardSpeed, jump, sneak))
         return ActionResult.ok()
     }
 }

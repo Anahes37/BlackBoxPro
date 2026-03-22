@@ -22,7 +22,7 @@ class PlayerLookAction : ActionExecutor {
 
         player.yaw = yaw
         player.pitch = pitch
-        networkHandler.sendPacket(PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, onGround, false))
+        networkHandler.sendPacket(PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, onGround))
         return ActionResult.ok()
     }
 }

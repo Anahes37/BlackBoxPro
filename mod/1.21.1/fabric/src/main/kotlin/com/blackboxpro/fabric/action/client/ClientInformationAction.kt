@@ -10,7 +10,6 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.network.message.ChatVisibility
 import net.minecraft.network.packet.c2s.common.ClientOptionsC2SPacket
 import net.minecraft.network.packet.c2s.common.SyncedClientOptions
-import net.minecraft.particle.ParticlesMode
 
 class ClientInformationAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -48,8 +47,7 @@ class ClientInformationAction : ActionExecutor {
             skinParts,
             arm,
             textFiltering,
-            allowServerListings,
-            ParticlesMode.ALL
+            allowServerListings
         )
         networkHandler.sendPacket(ClientOptionsC2SPacket(syncedOptions))
 

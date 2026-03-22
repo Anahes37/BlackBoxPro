@@ -6,20 +6,16 @@ import com.blackboxpro.fabric.util.getBooleanOrDefault
 import com.blackboxpro.fabric.util.requireInt
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
-import net.minecraft.network.packet.c2s.play.PickItemFromBlockC2SPacket
-import net.minecraft.util.math.BlockPos
+import net.minecraft.network.packet.c2s.play.PickFromInventoryC2SPacket
 
 class PickItemAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
-        val x = params.requireInt("x")
-        val y = params.requireInt("y")
-        val z = params.requireInt("z")
-        val includeData = params.getBooleanOrDefault("includeData", false)
-
-        val handler = MinecraftClient.getInstance().networkHandler
+        val client = MinecraftClient.getInstance()
+        val player = client.player ?: return ActionResult.fail("Player not available")
+        val handler = client.networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        handler.sendPacket(PickItemFromBlockC2SPacket(BlockPos(x, y, z), includeData))
-        return ActionResult.ok("Pick item at ($x, $y, $z)")
+        handler.sendPacket(PickFromInventoryC2SPacket(player.inventory.selectedSlot))
+        return ActionResult.ok("Pick item using the selected hotbar slot")
     }
 }

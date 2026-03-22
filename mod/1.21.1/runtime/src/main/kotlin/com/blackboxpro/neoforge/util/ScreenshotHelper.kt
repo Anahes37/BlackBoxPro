@@ -1,5 +1,6 @@
 package com.blackboxpro.neoforge.util
 
+import com.mojang.blaze3d.platform.NativeImage
 import net.minecraft.client.Minecraft
 import net.minecraft.client.Screenshot
 import org.slf4j.LoggerFactory
@@ -9,7 +10,6 @@ import java.util.function.Consumer
 
 /**
  * 截图工具类。
- * 帧缓冲读取必须在渲染线程（主线程）调用。
  */
 object ScreenshotHelper {
 
@@ -25,27 +25,24 @@ object ScreenshotHelper {
     )
 
     /**
-     * 异步捕获当前帧缓冲并保存为 PNG。
-     * 必须在主线程调用。结果通过回调返回，避免阻塞主线程。
+     * 捕获当前帧缓冲并保存为 PNG。必须在主线程调用。
      */
     fun captureAsync(directory: Path, fileName: String, callback: Consumer<Result<ScreenshotResult>>) {
-        val framebuffer = Minecraft.getInstance().mainRenderTarget
-
-        Screenshot.takeScreenshot(framebuffer) { image ->
-            try {
-                Files.createDirectories(directory)
+        try {
+            Files.createDirectories(directory)
+            val framebuffer = Minecraft.getInstance().mainRenderTarget
+            val image: NativeImage = Screenshot.takeScreenshot(framebuffer)
+            image.use { nativeImage ->
                 val filePath = directory.resolve("$fileName.png")
-                image.writeToFile(filePath)
+                nativeImage.writeToFile(filePath)
                 val fileSize = Files.size(filePath)
-                val w = image.getWidth()
-                val h = image.getHeight()
-                logger.info("Screenshot saved: {} ({}x{}, {} bytes)", filePath, w, h, fileSize)
-                callback.accept(Result.success(ScreenshotResult(filePath, w, h, fileSize)))
-            } catch (e: Exception) {
-                callback.accept(Result.failure(e))
-            } finally {
-                image.close()
+                val width = nativeImage.getWidth()
+                val height = nativeImage.getHeight()
+                logger.info("Screenshot saved: {} ({}x{}, {} bytes)", filePath, width, height, fileSize)
+                callback.accept(Result.success(ScreenshotResult(filePath, width, height, fileSize)))
             }
+        } catch (e: Exception) {
+            callback.accept(Result.failure(e))
         }
     }
 

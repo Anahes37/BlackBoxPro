@@ -71,7 +71,7 @@ class PathfindToAction : ActionExecutor {
 
         player.setPos(newX, newY, newZ)
         networkHandler.send(
-            ServerboundMovePlayerPacket.Pos(newX, newY, newZ, player.onGround(), false)
+            ServerboundMovePlayerPacket.Pos(newX, newY, newZ, player.onGround())
         )
 
         RuntimeTickScheduler.schedule(1) {

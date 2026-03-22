@@ -15,6 +15,7 @@ class QueryScreenStateAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val client = MinecraftClient.getInstance()
         val screen = client.currentScreen
+        val disconnected = screen?.javaClass?.simpleName == "DisconnectedScreen"
 
         val data = JsonObject().apply {
             addProperty("open", screen != null)
@@ -33,7 +34,13 @@ class QueryScreenStateAction : ActionExecutor {
             }
 
             // 屏幕类型分类
-            addProperty("screenType", classifyScreen(screen))
+            addProperty("screenType", if (disconnected) "disconnected" else classifyScreen(screen))
+
+            // 断线屏幕：兼容不同命名和映射，尽量导出 reason/details
+            if (disconnected) {
+                readTextField(screen, listOf("reason", "f_96306_"))?.let { addProperty("reason", it) }
+                readTextField(screen, listOf("details", "info", "f_96307_"))?.let { addProperty("details", it) }
+            }
         }
 
         return ActionResult.ok("Screen state queried", data)
@@ -66,5 +73,29 @@ class QueryScreenStateAction : ActionExecutor {
         is BookEditScreen -> "book_edit"
         is HandledScreen<*> -> "container_unknown"
         else -> "other"
+    }
+
+    private fun readTextField(target: Any?, fieldNames: List<String>): String? {
+        val instance = target ?: return null
+        for (fieldName in fieldNames) {
+            val value = runCatching {
+                val field = instance.javaClass.getDeclaredField(fieldName)
+                field.isAccessible = true
+                field.get(instance)?.toString()
+            }.getOrNull()
+            if (!value.isNullOrBlank()) return value
+        }
+
+        return runCatching {
+            instance.javaClass.declaredFields.firstNotNullOfOrNull { field ->
+                field.isAccessible = true
+                val value = field.get(instance)
+                if (value != null && value.javaClass.name.contains("Component", ignoreCase = true)) {
+                    value.toString()
+                } else {
+                    null
+                }
+            }
+        }.getOrNull()
     }
 }

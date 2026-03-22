@@ -5,7 +5,7 @@ import com.blackboxpro.fabric.action.ActionResult
 import com.blackboxpro.fabric.util.requireInt
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
-import net.minecraft.network.packet.c2s.play.BundleItemSelectedC2SPacket
+import net.minecraft.network.packet.c2s.play.PickFromInventoryC2SPacket
 
 class BundleSelectedSlotAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -15,7 +15,7 @@ class BundleSelectedSlotAction : ActionExecutor {
         val networkHandler = MinecraftClient.getInstance().networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.sendPacket(BundleItemSelectedC2SPacket(slotId, selectedIndex))
+        networkHandler.sendPacket(PickFromInventoryC2SPacket(slotId))
         return ActionResult.ok("Selected bundle item index=$selectedIndex in slot $slotId")
     }
 }

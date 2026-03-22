@@ -2,12 +2,15 @@ package com.blackboxpro.neoforge.action.advanced
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.util.*
+import com.blackboxpro.neoforge.util.getIntOrDefault
+import com.blackboxpro.neoforge.util.getStringOrNull
+import com.blackboxpro.neoforge.util.requireInt
+import com.blackboxpro.neoforge.util.requireString
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.core.BlockPos
 import net.minecraft.network.protocol.game.ServerboundSetJigsawBlockPacket
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.entity.JigsawBlockEntity
 
 class UpdateJigsawBlockAction : ActionExecutor {
@@ -34,11 +37,11 @@ class UpdateJigsawBlockAction : ActionExecutor {
         val jointType = JOINT_MAP[jointTypeStr.lowercase()]
             ?: return ActionResult.fail("Unknown joint type: $jointTypeStr (valid: ${JOINT_MAP.keys})")
 
-        val nameId = Identifier.tryParse(name)
+        val nameId = ResourceLocation.tryParse(name)
             ?: return ActionResult.fail("Invalid identifier for name: $name")
-        val targetId = Identifier.tryParse(target)
+        val targetId = ResourceLocation.tryParse(target)
             ?: return ActionResult.fail("Invalid identifier for target: $target")
-        val poolId = Identifier.tryParse(pool)
+        val poolId = ResourceLocation.tryParse(pool)
             ?: return ActionResult.fail("Invalid identifier for pool: $pool")
 
         val handler = Minecraft.getInstance().connection

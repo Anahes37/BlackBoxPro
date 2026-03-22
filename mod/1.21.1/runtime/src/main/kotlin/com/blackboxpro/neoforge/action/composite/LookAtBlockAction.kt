@@ -39,7 +39,7 @@ class LookAtBlockAction : ActionExecutor {
         player.xRot = pitch
 
         connection.send(
-            ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround(), player.horizontalCollision)
+            ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround())
         )
 
         val data = JsonObject().apply {

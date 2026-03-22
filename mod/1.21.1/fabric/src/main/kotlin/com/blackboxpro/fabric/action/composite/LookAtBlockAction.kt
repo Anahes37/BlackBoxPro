@@ -39,7 +39,7 @@ class LookAtBlockAction : ActionExecutor {
         player.pitch = pitch
 
         networkHandler.sendPacket(
-            PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround, player.horizontalCollision)
+            PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround)
         )
 
         val data = JsonObject().apply {

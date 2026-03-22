@@ -95,7 +95,7 @@ object ItemStackSerializer {
                 arr
             }
             else -> {
-                val str = element.asString().orElse(element.toString())
+                val str = element.asString()
                 str.toIntOrNull()?.let { return com.google.gson.JsonPrimitive(it) }
                 str.toLongOrNull()?.let { return com.google.gson.JsonPrimitive(it) }
                 str.toDoubleOrNull()?.let { return com.google.gson.JsonPrimitive(it) }

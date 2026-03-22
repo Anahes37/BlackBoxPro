@@ -82,7 +82,7 @@ class UpdateStructureBlockAction : ActionExecutor {
         val ignoreEntities = (flags and IGNORE_ENTITIES_FLAG) != 0
         val showAir = (flags and SHOW_AIR_FLAG) != 0
         val showBoundingBox = (flags and SHOW_BOUNDING_BOX_FLAG) != 0
-        val strict = (flags and STRICT_FLAG) != 0
+        // 1.21.1 的结构方块包不再单独携带 strict 标志
 
         val handler = MinecraftClient.getInstance().networkHandler
             ?: return ActionResult.fail("Not connected to server")
@@ -99,7 +99,6 @@ class UpdateStructureBlockAction : ActionExecutor {
                 rotation,
                 metadata,
                 ignoreEntities,
-                strict,
                 showAir,
                 showBoundingBox,
                 integrity,

@@ -6,9 +6,9 @@ import com.blackboxpro.fabric.util.requireInt
 import com.google.gson.JsonObject
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.client.MinecraftClient
+import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket
 import net.minecraft.screen.slot.SlotActionType
-import net.minecraft.screen.sync.ItemStackHash
 
 class ClickSlotAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -29,18 +29,20 @@ class ClickSlotAction : ActionExecutor {
             else -> return ActionResult.fail("Invalid slot action mode: $mode")
         }
 
-        val handler = MinecraftClient.getInstance().networkHandler
+        val client = MinecraftClient.getInstance()
+        val player = client.player ?: return ActionResult.fail("Player not available")
+        val handler = client.networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
         handler.sendPacket(
             ClickSlotC2SPacket(
                 windowId,
                 stateId,
-                slot.toShort(),
-                button.toByte(),
+                slot,
+                button,
                 actionType,
-                Int2ObjectOpenHashMap(),
-                ItemStackHash.EMPTY
+                player.currentScreenHandler.cursorStack,
+                Int2ObjectOpenHashMap<ItemStack>()
             )
         )
         return ActionResult.ok("Clicked slot $slot in window $windowId (mode=$actionType)")

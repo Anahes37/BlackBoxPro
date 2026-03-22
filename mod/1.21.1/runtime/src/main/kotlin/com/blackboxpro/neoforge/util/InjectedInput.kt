@@ -1,54 +1,46 @@
 package com.blackboxpro.neoforge.util
 
-import net.minecraft.client.player.ClientInput
+import net.minecraft.client.player.Input
 import net.minecraft.client.player.LocalPlayer
-import net.minecraft.world.entity.player.Input
-import net.minecraft.world.phys.Vec2
 
 /**
- * 自定义 ClientInput 子类，用于注入模拟键盘输入。
- * 替换 KeyboardInput 后，每 tick 的 tick() 会从注入的 [keyPresses] 计算 moveVector，
- * 而不是从真实按键状态读取。
- *
- * 使用方式：
- * 1. [install] 安装到玩家，保存原始 ClientInput
- * 2. 每 tick 通过 [forward]/[sprint]/[jump] 等属性设置期望输入
- * 3. 移动完成后调用 [uninstall] 恢复原始 KeyboardInput
+ * 自定义 Input 子类，用于注入模拟键盘输入。
  */
-class InjectedInput : ClientInput() {
+class InjectedInput : Input() {
 
-    /** 原始 ClientInput（通常是 KeyboardInput），卸载时恢复 */
-    private var original: ClientInput? = null
-
-    /** 安装时的 player 引用，用于卸载时恢复 */
+    private var original: Input? = null
     private var installedPlayer: LocalPlayer? = null
 
     var forward: Boolean = false
     var backward: Boolean = false
-    var left: Boolean = false
-    var right: Boolean = false
+    var leftPressed: Boolean = false
+    var rightPressed: Boolean = false
     var jump: Boolean = false
     var shift: Boolean = false
     var sprinting: Boolean = false
 
-    override fun tick() {
-        // 从注入的布尔值构建 Input (Mojang 映射)
-        keyPresses = Input(forward, backward, left, right, jump, shift, sprinting)
+    override fun tick(isSneaking: Boolean, sneakingSpeedMultiplier: Float) {
+        up = forward
+        down = backward
+        left = leftPressed
+        right = rightPressed
+        jumping = jump
+        shiftKeyDown = shift
 
-        // 计算 moveVector（与 KeyboardInput.tick() 逻辑一致）
-        val forwardValue = getMovementMultiplier(forward, backward)
-        val sidewaysValue = getMovementMultiplier(left, right)
-        moveVector = Vec2(sidewaysValue, forwardValue).normalized()
+        forwardImpulse = getMovementMultiplier(forward, backward)
+        leftImpulse = getMovementMultiplier(this.left, this.right)
+        if (isSneaking) {
+            forwardImpulse *= sneakingSpeedMultiplier
+            leftImpulse *= sneakingSpeedMultiplier
+        }
     }
 
-    /** 安装到玩家，替换原始 ClientInput */
     fun install(player: LocalPlayer) {
         original = player.input
         installedPlayer = player
         player.input = this
     }
 
-    /** 卸载，恢复原始 ClientInput。优先使用安装时保存的 player 引用。 */
     fun uninstall(player: LocalPlayer? = null) {
         val target = player ?: installedPlayer
         original?.let { orig ->
@@ -60,7 +52,6 @@ class InjectedInput : ClientInput() {
         installedPlayer = null
     }
 
-    /** 重置所有输入为默认值 */
     fun reset() {
         forward = false
         backward = false

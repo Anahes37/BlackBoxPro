@@ -21,7 +21,13 @@ class MoveVehicleAction : ActionExecutor {
         val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.send(ServerboundMoveVehiclePacket(Vec3(x, y, z), yaw, pitch, onGround))
+        val vehicle = Minecraft.getInstance().player?.vehicle
+            ?: return ActionResult.fail("Player is not riding a vehicle")
+
+        vehicle.setPos(x, y, z)
+        vehicle.setYRot(yaw)
+        vehicle.setXRot(pitch)
+        networkHandler.send(ServerboundMoveVehiclePacket(vehicle))
         return ActionResult.ok()
     }
 }

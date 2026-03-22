@@ -7,7 +7,7 @@ import com.blackboxpro.neoforge.util.requireString
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 
 class AdvancementTabAction : ActionExecutor {
 
@@ -17,22 +17,22 @@ class AdvancementTabAction : ActionExecutor {
         val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
 
-        when (actionStr.lowercase()) {
+        return when (actionStr.lowercase()) {
             "open" -> {
                 val tabId = params.getStringOrNull("tabId")
                     ?: return ActionResult.fail("Missing required field: tabId (for open action)")
-                val resourceLocation = Identifier.tryParse(tabId)
+                val resourceLocation = ResourceLocation.tryParse(tabId)
                     ?: return ActionResult.fail("Invalid resource location: $tabId")
                 val advancement = networkHandler.advancements.get(resourceLocation)
                     ?: return ActionResult.fail("Advancement not found: $tabId")
                 networkHandler.send(ServerboundSeenAdvancementsPacket.openedTab(advancement))
-                return ActionResult.ok("Opened advancement tab: $tabId")
+                ActionResult.ok("Opened advancement tab: $tabId")
             }
             "close" -> {
                 networkHandler.send(ServerboundSeenAdvancementsPacket.closedScreen())
-                return ActionResult.ok("Closed advancement tab")
+                ActionResult.ok("Closed advancement tab")
             }
-            else -> return ActionResult.fail("Unknown action: $actionStr (valid: open, close)")
+            else -> ActionResult.fail("Unknown action: $actionStr (valid: open, close)")
         }
     }
 }

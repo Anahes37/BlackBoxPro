@@ -27,17 +27,16 @@ class QueryPlayerStateAction : ActionExecutor {
             addProperty("maxHealth", player.maxHealth)
             addProperty("food", player.foodData.foodLevel)
             addProperty("saturation", player.foodData.saturationLevel)
-            addProperty("gameMode", client.gameMode?.playerMode?.getName() ?: "unknown")
+            addProperty("gameMode", client.gameMode?.playerMode?.name ?: "unknown")
             addProperty("onGround", player.onGround())
             addProperty("sneaking", player.isShiftKeyDown)
             addProperty("sprinting", player.isSprinting)
             addProperty("flying", player.abilities.flying)
             addProperty("dead", player.isDeadOrDying)
-            addProperty("selectedSlot", player.inventory.getSelectedSlot())
+            addProperty("selectedSlot", player.inventory.selected)
             addProperty("experienceLevel", player.experienceLevel)
             addProperty("experienceProgress", player.experienceProgress)
 
-            // v1.3.0 新增字段
             addProperty("absorption", player.absorptionAmount)
             addProperty("armorValue", player.armorValue)
             addProperty("airSupply", player.airSupply)
@@ -47,12 +46,15 @@ class QueryPlayerStateAction : ActionExecutor {
             addProperty("isFallFlying", player.isFallFlying)
             addProperty("fallDistance", player.fallDistance)
             addProperty("vehicleId", player.vehicle?.id ?: -1)
-            addProperty("dimension", player.level().dimension().identifier().toString())
-            addProperty("biome", player.level().getBiome(player.blockPosition()).unwrapKey()
-                .map { it.identifier().toString() }.orElse("unknown"))
+            addProperty("dimension", player.level().dimension().location().toString())
+            addProperty(
+                "biome",
+                player.level().getBiome(player.blockPosition()).unwrapKey()
+                    .map { it.location().toString() }
+                    .orElse("unknown")
+            )
             val mainItem = player.mainHandItem
-            addProperty("mainHandItem", if (mainItem.isEmpty) "empty"
-                else BuiltInRegistries.ITEM.getKey(mainItem.item).toString())
+            addProperty("mainHandItem", if (mainItem.isEmpty) "empty" else BuiltInRegistries.ITEM.getKey(mainItem.item).toString())
         }
 
         return ActionResult.ok("Player state queried", data)

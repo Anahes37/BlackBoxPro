@@ -2,25 +2,8 @@ package com.blackboxpro.neoforge.action.container
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.neoforge.util.getBooleanOrDefault
-import com.blackboxpro.neoforge.util.requireInt
 import com.google.gson.JsonObject
-import net.minecraft.client.Minecraft
-import net.minecraft.network.protocol.game.ServerboundPickItemFromBlockPacket
-import net.minecraft.core.BlockPos
 
 class PickItemAction : ActionExecutor {
-    override fun execute(params: JsonObject): ActionResult {
-        val x = params.requireInt("x")
-        val y = params.requireInt("y")
-        val z = params.requireInt("z")
-        val includeData = params.getBooleanOrDefault("includeData", false)
-
-        val client = Minecraft.getInstance()
-        val handler = client.connection
-            ?: return ActionResult.fail("Not connected to server")
-
-        handler.send(ServerboundPickItemFromBlockPacket(BlockPos(x, y, z), includeData))
-        return ActionResult.ok("Pick item at ($x, $y, $z)")
-    }
+    override fun execute(params: JsonObject): ActionResult = ActionResult.fail("Pick item action is not supported in 1.21.1 runtime")
 }

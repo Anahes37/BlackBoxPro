@@ -47,7 +47,7 @@ class CreateWorldAction : ActionExecutor {
             timeoutMs = 90_000L,
             timeoutMessage = "Timed out waiting for world creation: $requestedWorldName",
             startAction = {
-                CreateWorldScreen.show(client) {}
+                CreateWorldScreen.create(client, client.currentScreen)
                 client.execute {
                     try {
                         val screen = client.currentScreen as? CreateWorldScreen

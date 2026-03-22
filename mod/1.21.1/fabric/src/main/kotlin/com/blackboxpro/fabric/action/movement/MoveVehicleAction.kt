@@ -7,7 +7,6 @@ import com.blackboxpro.fabric.util.requireDouble
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
 import net.minecraft.network.packet.c2s.play.VehicleMoveC2SPacket
-import net.minecraft.util.math.Vec3d
 
 class MoveVehicleAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -18,10 +17,15 @@ class MoveVehicleAction : ActionExecutor {
         val pitch = params.requireDouble("pitch").toFloat()
         val onGround = params.getBooleanOrDefault("onGround", true)
 
-        val networkHandler = MinecraftClient.getInstance().networkHandler
+        val client = MinecraftClient.getInstance()
+        val vehicle = client.player?.vehicle ?: return ActionResult.fail("Vehicle not available")
+        val networkHandler = client.networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.sendPacket(VehicleMoveC2SPacket(Vec3d(x, y, z), yaw, pitch, onGround))
+        vehicle.setPos(x, y, z)
+        vehicle.yaw = yaw
+        vehicle.pitch = pitch
+        networkHandler.sendPacket(VehicleMoveC2SPacket(vehicle))
         return ActionResult.ok()
     }
 }

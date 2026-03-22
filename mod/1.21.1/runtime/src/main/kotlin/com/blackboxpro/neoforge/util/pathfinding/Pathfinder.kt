@@ -44,7 +44,6 @@ object Pathfinder {
             if (closedSet.contains(currentKey)) continue
             closedSet.add(currentKey)
 
-            // 到达判定：曼哈顿距离 <= 1
             if (abs(current.x - goal.x) + abs(current.y - goal.y) + abs(current.z - goal.z) <= 1) {
                 val path = reconstructPath(current)
                 if (path.size <= config.maxPathLength) {
@@ -78,13 +77,8 @@ object Pathfinder {
 
         if (closedSet.contains(key)) return
 
-        if (isJump) {
-            if (!isPassable(world, current.x, current.y + 2, current.z)) return
-        }
-
-        if (dy == -1) {
-            if (!isPassable(world, current.x + dx, current.y, current.z + dz)) return
-        }
+        if (isJump && !isPassable(world, current.x, current.y + 2, current.z)) return
+        if (dy == -1 && !isPassable(world, current.x + dx, current.y, current.z + dz)) return
 
         if (!isSolid(world, nx, ny - 1, nz)) return
         if (!isPassable(world, nx, ny, nz)) return
@@ -104,13 +98,13 @@ object Pathfinder {
     private fun isPassable(world: ClientLevel, x: Int, y: Int, z: Int): Boolean {
         mutablePos.set(x, y, z)
         val state = world.getBlockState(mutablePos)
-        return !state.isSolidRender()
+        return !state.isSolidRender(world, mutablePos)
     }
 
     private fun isSolid(world: ClientLevel, x: Int, y: Int, z: Int): Boolean {
         mutablePos.set(x, y, z)
         val state = world.getBlockState(mutablePos)
-        return state.isSolidRender()
+        return state.isSolidRender(world, mutablePos)
     }
 
     private fun heuristic(x: Int, y: Int, z: Int, goal: BlockPos): Double =

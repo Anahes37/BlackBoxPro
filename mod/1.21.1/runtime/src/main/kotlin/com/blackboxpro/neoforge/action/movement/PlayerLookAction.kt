@@ -22,7 +22,7 @@ class PlayerLookAction : ActionExecutor {
 
         player.yRot = yaw
         player.xRot = pitch
-        connection.send(ServerboundMovePlayerPacket.Rot(yaw, pitch, onGround, false))
+        connection.send(ServerboundMovePlayerPacket.Rot(yaw, pitch, onGround))
         return ActionResult.ok()
     }
 }

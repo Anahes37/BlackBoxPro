@@ -30,7 +30,7 @@ class QueryTabListAction : ActionExecutor {
                 addProperty("name", entry.profile.name)
                 addProperty("uuid", entry.profile.id.toString())
                 addProperty("latency", entry.latency)
-                addProperty("gameMode", entry.gameMode?.getId() ?: "unknown")
+                addProperty("gameMode", entry.gameMode?.name ?: "unknown")
                 entry.displayName?.let { addProperty("displayName", it.string) }
                 entry.scoreboardTeam?.let { addProperty("team", it.name) }
             })

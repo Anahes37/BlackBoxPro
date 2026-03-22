@@ -24,12 +24,11 @@ object ItemStackSerializer {
         json.addProperty("count", stack.count)
 
         val components = JsonObject()
-        val registryAccess = Minecraft.getInstance().level?.registryAccess()
-        serializeComponents(stack, components, registryAccess)
+        serializeComponents(stack, components)
         json.add("components", components)
 
-        // SNBT fallback via Codec
         try {
+            val registryAccess = Minecraft.getInstance().level?.registryAccess()
             if (registryAccess != null) {
                 val nbtOps = net.minecraft.nbt.NbtOps.INSTANCE
                 val result = ItemStack.CODEC.encodeStart(registryAccess.createSerializationContext(nbtOps), stack)
@@ -37,7 +36,8 @@ object ItemStackSerializer {
                     json.addProperty("nbt", nbtTag.toString())
                 }
             }
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
 
         return json
     }
@@ -49,30 +49,30 @@ object ItemStackSerializer {
         json.addProperty("itemId", BuiltInRegistries.ITEM.getKey(stack.item).toString())
         json.addProperty("count", stack.count)
         val components = JsonObject()
-        serializeComponents(stack, components, Minecraft.getInstance().level?.registryAccess())
+        serializeComponents(stack, components)
         json.add("components", components)
         return json
     }
 
-    private fun serializeComponents(stack: ItemStack, out: JsonObject, registryAccess: net.minecraft.core.RegistryAccess?) {
+    private fun serializeComponents(stack: ItemStack, out: JsonObject) {
         stack.get(DataComponents.CUSTOM_DATA)?.let { customData ->
-            out.add("minecraft:custom_data", nbtToJson(customData.copyTag()))
+            out.add("minecraft:custom_data", nbtToJson(customData.getUnsafe()))
         }
 
         stack.get(DataComponents.CUSTOM_NAME)?.let { name ->
-            out.addProperty("minecraft:custom_name", name.string)
+            out.addProperty("minecraft:custom_name", name.getString())
         }
 
         stack.get(DataComponents.LORE)?.let { lore ->
             val arr = JsonArray()
-            lore.lines.forEach { line -> arr.add(line.string) }
+            lore.lines.forEach { line -> arr.add(line.getString()) }
             out.add("minecraft:lore", arr)
         }
 
         stack.get(DataComponents.ENCHANTMENTS)?.let { enchants ->
             val obj = JsonObject()
             enchants.entrySet().forEach { entry ->
-                val key = entry.key.unwrapKey().map { it.identifier().toString() }.orElse("unknown")
+                val key = entry.key.unwrapKey().map { it.location().toString() }.orElse("unknown")
                 obj.addProperty(key, entry.intValue)
             }
             out.add("minecraft:enchantments", obj)
@@ -84,7 +84,7 @@ object ItemStackSerializer {
 
     private fun nbtToJson(nbt: CompoundTag): JsonObject {
         val obj = JsonObject()
-        for (key in nbt.keySet()) {
+        for (key in nbt.getAllKeys()) {
             obj.add(key, nbtElementToJson(nbt.get(key)))
         }
         return obj
@@ -100,7 +100,7 @@ object ItemStackSerializer {
                 arr
             }
             else -> {
-                val str = element.asString().orElse(element.toString())
+                val str = element.asString
                 str.toIntOrNull()?.let { return com.google.gson.JsonPrimitive(it) }
                 str.toLongOrNull()?.let { return com.google.gson.JsonPrimitive(it) }
                 str.toDoubleOrNull()?.let { return com.google.gson.JsonPrimitive(it) }

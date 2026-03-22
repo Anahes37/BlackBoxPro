@@ -20,7 +20,7 @@ class QueryInventorySlotAction : ActionExecutor {
 
         val inventory = player.inventory
         val slot = params.getIntOrDefault("slot", -1).let {
-            if (it == -1) inventory.getSelectedSlot() else it
+            if (it == -1) inventory.selected else it
         }
 
         if (slot < 0 || slot > 40) {

@@ -21,10 +21,10 @@ class QueryWorldStateAction : ActionExecutor {
             addProperty("worldTime", world.gameTime)
             addProperty("raining", world.isRaining)
             addProperty("thundering", world.isThundering)
-            addProperty("dimension", world.dimension().identifier().toString())
+            addProperty("dimension", world.dimension().location().toString())
             addProperty("hasSkyLight", world.dimensionType().hasSkyLight())
             addProperty("hasCeiling", world.dimensionType().hasCeiling())
-            addProperty("difficulty", world.difficulty.key)
+            addProperty("difficulty", world.levelData.difficulty.key)
             addProperty("seaLevel", world.seaLevel)
         }
 

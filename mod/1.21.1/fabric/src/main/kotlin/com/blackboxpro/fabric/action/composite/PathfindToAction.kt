@@ -70,7 +70,7 @@ class PathfindToAction : ActionExecutor {
 
         player.setPosition(newX, newY, newZ)
         networkHandler.sendPacket(
-            PlayerMoveC2SPacket.PositionAndOnGround(newX, newY, newZ, player.isOnGround, false)
+            PlayerMoveC2SPacket.PositionAndOnGround(newX, newY, newZ, player.isOnGround)
         )
 
         TickScheduler.schedule(1) {

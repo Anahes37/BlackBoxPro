@@ -1,20 +1,27 @@
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
+import java.util.Properties
 
 plugins {
     id("net.neoforged.moddev") version "2.0.140"
     id("org.jetbrains.kotlin.jvm") version "2.2.0"
 }
 
+val localProps = Properties().apply {
+    projectDir.parentFile.resolve("gradle.properties").reader().use(::load)
+}
+fun localProp(key: String) = localProps.getProperty(key)
+    ?: error("Missing property '$key' in mod/1.21.1/gradle.properties")
+
 evaluationDependsOn(":common")
-evaluationDependsOn(":1.21.11:runtime")
+evaluationDependsOn(":1.21.1:runtime")
 
 val commonSourceSet = project(":common").extensions.getByType(SourceSetContainer::class.java).getByName("main")
-val runtimeSourceSet = project(":1.21.11:runtime").extensions.getByType(SourceSetContainer::class.java).getByName("main")
+val runtimeSourceSet = project(":1.21.1:runtime").extensions.getByType(SourceSetContainer::class.java).getByName("main")
 val localSourceSet = extensions.getByType(SourceSetContainer::class.java).getByName("main")
 
 base {
-    archivesName.set("BlackBoxPro-neoforge-1.21.1")
+    archivesName.set("BlackBoxPro-neoforge-${localProp("minecraft_version")}")
 }
 
 repositories {
@@ -23,7 +30,7 @@ repositories {
 }
 
 neoForge {
-    version = property("neoforge_version").toString()
+    version = localProp("neoforge_version")
 
     runs {
         configureEach {
@@ -37,8 +44,8 @@ neoForge {
 
 dependencies {
     implementation(project(":common"))
-    implementation(project(":1.21.11:runtime"))
-    implementation("thedarkcolour:kotlinforforge-neoforge:${property("kotlin_for_forge_version")}")
+    implementation(project(":1.21.1:runtime"))
+    implementation("thedarkcolour:kotlinforforge-neoforge:${localProp("kotlin_for_forge_version")}")
 }
 
 tasks.processResources {

@@ -2,13 +2,12 @@ package com.blackboxpro.neoforge.action.debug
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
-import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.neoforge.util.requireString
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import org.slf4j.LoggerFactory
 import java.util.Base64
 
@@ -16,17 +15,9 @@ class CustomPayloadAction : ActionExecutor {
 
     companion object {
         private val logger = LoggerFactory.getLogger("BlackBoxPro-CustomPayload")
-
-        /**
-         * 缓存已成功注册的 channel，避免重复注册。
-         * 所有调用限定在主线程（由 CommandDispatcher 保证），无需 ConcurrentHashMap。
-         */
         private val registeredChannels = HashMap<String, CustomPacketPayload.Type<DynamicPayload>>()
     }
 
-    /**
-     * 通用动态 Payload，携带任意二进制数据。
-     */
     private class DynamicPayload(
         val payloadType: CustomPacketPayload.Type<DynamicPayload>,
         val data: ByteArray
@@ -53,7 +44,7 @@ class CustomPayloadAction : ActionExecutor {
             return ActionResult.fail("Payload too large: ${data.size} > $maxSize")
         }
 
-        val identifier = Identifier.tryParse(channel)
+        val identifier = ResourceLocation.tryParse(channel)
             ?: return ActionResult.fail("Invalid channel identifier: $channel")
 
         val payloadType = registeredChannels.getOrPut(channel) {
@@ -64,13 +55,12 @@ class CustomPayloadAction : ActionExecutor {
 
         val payload = DynamicPayload(payloadType, data)
 
-        try {
+        return try {
             handler.send(ServerboundCustomPayloadPacket(payload))
+            ActionResult.ok("Sent custom payload to $channel (${data.size} bytes)")
         } catch (e: Exception) {
             logger.warn("Failed to send custom payload to {}: {}", channel, e.message)
-            return ActionResult.fail("Failed to send custom payload: ${e.message}")
+            ActionResult.fail("Failed to send custom payload: ${e.message}")
         }
-
-        return ActionResult.ok("Sent custom payload to $channel (${data.size} bytes)")
     }
 }

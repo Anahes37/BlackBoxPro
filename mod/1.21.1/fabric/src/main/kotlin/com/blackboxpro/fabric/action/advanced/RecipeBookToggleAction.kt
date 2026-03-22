@@ -7,16 +7,16 @@ import com.blackboxpro.fabric.util.requireString
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
 import net.minecraft.network.packet.c2s.play.RecipeCategoryOptionsC2SPacket
-import net.minecraft.recipe.book.RecipeBookType
+import net.minecraft.recipe.book.RecipeBookCategory
 
 class RecipeBookToggleAction : ActionExecutor {
 
     companion object {
         private val CATEGORY_MAP = mapOf(
-            "crafting" to RecipeBookType.CRAFTING,
-            "furnace" to RecipeBookType.FURNACE,
-            "blast_furnace" to RecipeBookType.BLAST_FURNACE,
-            "smoker" to RecipeBookType.SMOKER
+            "crafting" to RecipeBookCategory.CRAFTING,
+            "furnace" to RecipeBookCategory.FURNACE,
+            "blast_furnace" to RecipeBookCategory.BLAST_FURNACE,
+            "smoker" to RecipeBookCategory.SMOKER
         )
     }
 

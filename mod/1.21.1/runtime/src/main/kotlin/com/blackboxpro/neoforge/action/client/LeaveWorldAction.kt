@@ -5,9 +5,7 @@ import com.blackboxpro.neoforge.action.ActionResult
 import com.blackboxpro.runtime.action.AsyncClientActionSupport
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.screens.GenericMessageScreen
 import net.minecraft.client.gui.screens.TitleScreen
-import net.minecraft.network.chat.Component
 
 class LeaveWorldAction : ActionExecutor {
 
@@ -30,8 +28,8 @@ class LeaveWorldAction : ActionExecutor {
             timeoutMessage = "Timed out waiting to leave the current world",
             startAction = {
                 if (client.level != null) {
-                    client.level!!.disconnect(Component.translatable("menu.savingLevel"))
-                    client.disconnect(GenericMessageScreen(Component.translatable("menu.savingLevel")), false)
+                    client.level!!.disconnect()
+                    client.disconnect()
                 }
                 client.setScreen(TitleScreen())
             },

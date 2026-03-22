@@ -34,7 +34,7 @@ class LookAtEntityAction : ActionExecutor {
         player.xRot = pitch
 
         networkHandler.send(
-            ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround(), player.horizontalCollision)
+            ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround())
         )
 
         return ActionResult.ok("Looking at entity $entityId yaw=$yaw pitch=$pitch")

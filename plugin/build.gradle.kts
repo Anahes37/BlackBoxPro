@@ -46,7 +46,7 @@ dependencies {
     compileOnly(files(commonJar))
     embeddedCommon(files(commonJar))
     compileOnly(kotlin("stdlib"))
-    compileOnly("com.google.code.gson:gson:2.11.0")
+    compileOnly("com.google.code.gson:gson:2.10.1")
     compileOnly("ink.ptms.core:v12105:12105:mapped")
     compileOnly("ink.ptms.core:v12105:12105:universal")
 }

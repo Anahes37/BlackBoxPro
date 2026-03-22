@@ -29,8 +29,7 @@ class LeaveWorldAction : ActionExecutor {
             timeoutMessage = "Timed out waiting to leave the current world",
             startAction = {
                 if (client.world != null) {
-                    client.world!!.disconnect(Text.translatable("menu.savingLevel"))
-                    client.disconnectWithSavingScreen()
+                    client.networkHandler?.unloadWorld()
                 }
                 client.setScreen(TitleScreen())
             },

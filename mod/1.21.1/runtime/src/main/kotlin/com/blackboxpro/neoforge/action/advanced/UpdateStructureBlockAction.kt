@@ -98,7 +98,6 @@ class UpdateStructureBlockAction : ActionExecutor {
                 rotation,
                 metadata,
                 ignoreEntities,
-                strict,
                 showAir,
                 showBoundingBox,
                 integrity,

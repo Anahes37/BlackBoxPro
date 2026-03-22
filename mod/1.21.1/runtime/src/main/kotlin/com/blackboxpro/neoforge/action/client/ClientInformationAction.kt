@@ -27,7 +27,7 @@ class ClientInformationAction : ActionExecutor {
 
         // 显式映射 mainHand，不依赖 enum ordinal
         val arm = when (mainHand) {
-            0 -> net.minecraft.world.entity.HumanoidArm.LEFT
+            0 ->             net.minecraft.world.entity.HumanoidArm.LEFT
             1 -> net.minecraft.world.entity.HumanoidArm.RIGHT
             else -> return ActionResult.fail("Invalid mainHand: $mainHand (expected 0=left, 1=right)")
         }
@@ -47,9 +47,9 @@ class ClientInformationAction : ActionExecutor {
             skinParts,
             arm,
             textFiltering,
-            allowServerListings,
-            net.minecraft.server.level.ParticleStatus.ALL
+            allowServerListings
         )
+
         networkHandler.send(ServerboundClientInformationPacket(syncedOptions))
 
         return ActionResult.ok("Client information sent")

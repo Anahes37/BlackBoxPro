@@ -5,7 +5,6 @@ import com.blackboxpro.fabric.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
 import net.minecraft.network.packet.c2s.play.PlayerInputC2SPacket
-import net.minecraft.util.PlayerInput
 
 class SneakStopAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -13,10 +12,7 @@ class SneakStopAction : ActionExecutor {
         val networkHandler = client.networkHandler
             ?: return ActionResult.fail("Not connected to server")
 
-        // 1.21.11: sneak 不再通过 ClientCommandC2SPacket 控制，改用 PlayerInput
-        networkHandler.sendPacket(
-            PlayerInputC2SPacket(PlayerInput.DEFAULT)
-        )
+        networkHandler.sendPacket(PlayerInputC2SPacket(0.0f, 0.0f, false, false))
         return ActionResult.ok("Stopped sneaking")
     }
 }

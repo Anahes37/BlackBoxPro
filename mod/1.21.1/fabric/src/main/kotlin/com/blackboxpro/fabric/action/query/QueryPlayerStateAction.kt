@@ -27,7 +27,7 @@ class QueryPlayerStateAction : ActionExecutor {
             addProperty("maxHealth", player.maxHealth)
             addProperty("food", player.hungerManager.foodLevel)
             addProperty("saturation", player.hungerManager.saturationLevel)
-            addProperty("gameMode", client.interactionManager?.currentGameMode?.getId() ?: "unknown")
+            addProperty("gameMode", client.interactionManager?.currentGameMode?.name ?: "unknown")
             addProperty("onGround", player.isOnGround)
             addProperty("sneaking", player.isSneaking)
             addProperty("sprinting", player.isSprinting)
@@ -44,7 +44,7 @@ class QueryPlayerStateAction : ActionExecutor {
             addProperty("maxAirSupply", player.maxAir)
             addProperty("isSwimming", player.isSwimming)
             addProperty("isUsingItem", player.isUsingItem)
-            addProperty("isFallFlying", player.isGliding)
+            addProperty("isFallFlying", player.isFallFlying)
             addProperty("fallDistance", player.fallDistance)
             addProperty("vehicleId", player.vehicle?.id ?: -1)
             val world = client.world

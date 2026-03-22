@@ -19,27 +19,14 @@ plugins {
 
 rootProject.name = "BlackBoxPro-mod"
 
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô£ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½ kotlin ï¿½æ±¾ï¿½ï¿½fabric-language-kotlin ï¿½È£ï¿½
+// ï¿½ï¿½ï¿½æ±¾Ä£ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ gradle.properties ï¿½ï¿½ï¿½ï¿½ minecraft_version ï¿½È°æ±¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 val sharedProps = Properties().apply {
     file("gradle.properties").reader().use(::load)
 }
 
-// °æ±¾ÌØ¶¨ÊôÐÔ£ºÃ¿¸ö×Ó°æ±¾¿ÉÓÐ×Ô¼ºµÄ gradle.properties ¸²¸Ç¹²ÏíÊôÐÔ
-val versionProps = mutableMapOf<String, Properties>()
-listOf("1.21.1").forEach { ver ->
-    val propsFile = file("/gradle.properties")
-    if (propsFile.exists()) {
-        val p = Properties().apply { propsFile.reader().use(::load) }
-        listOf(":", "::runtime", "::fabric", "::neoforge").forEach { path ->
-            versionProps[path] = p
-        }
-    }
-}
-
 gradle.beforeProject {
     sharedProps.forEach { key, value ->
-        extensions.extraProperties[key.toString()] = value
-    }
-    versionProps[path]?.forEach { key, value ->
         extensions.extraProperties[key.toString()] = value
     }
 }
@@ -50,6 +37,7 @@ include("1.21.11:fabric")
 include("1.21.11:neoforge")
 include("1.21.1:runtime")
 include("1.21.1:fabric")
+include("1.21.1:neoforge")
 
 project(":common").projectDir = file("../common")
 project(":1.21.11").projectDir = file("1.21.11")
@@ -59,3 +47,4 @@ project(":1.21.11:neoforge").projectDir = file("1.21.11/neoforge")
 project(":1.21.1").projectDir = file("1.21.1")
 project(":1.21.1:runtime").projectDir = file("1.21.1/runtime")
 project(":1.21.1:fabric").projectDir = file("1.21.1/fabric")
+project(":1.21.1:neoforge").projectDir = file("1.21.1/neoforge")
