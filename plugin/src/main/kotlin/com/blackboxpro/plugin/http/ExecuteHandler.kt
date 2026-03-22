@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import org.bukkit.Bukkit
+import taboolib.common.platform.function.submit
 import taboolib.common.platform.function.warning
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -44,7 +45,7 @@ object ExecuteHandler : HttpHandler {
             return handleRunTest(command)
         }
         if (command.action == "stop_server") {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop")
+            submit { Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop") }
             return gson.toJson(ResponseMessage(command.id, "success", "Server stop initiated"))
         }
 
