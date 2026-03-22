@@ -1,5 +1,5 @@
-import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.compile.JavaCompile
 import java.util.Properties
 
@@ -46,21 +46,19 @@ val clean1122 = tasks.register("clean1122", Exec::class.java) {
     isIgnoreExitValue = true
 }
 
-val collectJars = tasks.register("collectJars", Copy::class.java) {
+val collectJars = tasks.register("collectJars", Sync::class.java) {
     group = "build"
-    description = "收集 common/runtime/fabric/neoforge/1.12.2 的 jar 到 mod/build/libs"
+    description = "收集客户端 mod jar 到 mod/build/libs"
     dependsOn(build1122)
     into(layout.buildDirectory.dir("libs"))
-    from(project(":common").layout.buildDirectory.dir("libs"))
-    from(project(":1.21.11:runtime").layout.buildDirectory.dir("libs"))
     from(project(":1.21.11:fabric").layout.buildDirectory.dir("libs"))
     from(project(":1.21.11:neoforge").layout.buildDirectory.dir("libs"))
-    from(file("1.12.2/build/libs"))
+    from(file("1.12.2/forge/build/libs"))
 }
 
 tasks.register("buildAll") {
     group = "build"
-    description = "构建 common、runtime、fabric、neoforge、1.12.2 并收集 jar"
-    dependsOn(":common:build", ":1.21.11:runtime:build", ":1.21.11:fabric:build", ":1.21.11:neoforge:build", build1122)
+    description = "构建客户端 mod 所需模块并收集客户端 mod jar"
+    dependsOn(":1.21.11:runtime:build", ":1.21.11:fabric:build", ":1.21.11:neoforge:build", build1122)
     finalizedBy(collectJars)
 }

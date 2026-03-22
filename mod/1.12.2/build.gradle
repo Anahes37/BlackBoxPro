@@ -5,8 +5,12 @@ plugins {
 def modProps = new Properties()
 file("${rootDir}/../gradle.properties").withReader('UTF-8') { modProps.load(it) }
 
+def rootProps = new Properties()
+file("${rootDir}/../../gradle.properties").withReader('UTF-8') { rootProps.load(it) }
+
 def sharedVersion = modProps.getProperty('version', '0.0.0')
-ext.commonJar = file("${rootDir}/../../common/build/libs/blackboxpro-common-${sharedVersion}.jar")
+def commonVersion = rootProps.getProperty('version', sharedVersion)
+ext.commonJar = file("${rootDir}/../../common/build/libs/blackboxpro-common-${commonVersion}.jar")
 
 allprojects {
     group = 'com.blackboxpro'
@@ -50,10 +54,9 @@ tasks.register('jar') {
     dependsOn(':forge:jar')
 }
 
-tasks.register('collectJars', Copy) {
+tasks.register('collectJars', Sync) {
     group = 'build'
-    description = '收集 1.12.2 runtime/forge 的 jar 到 mod/1.12.2/build/libs'
+    description = '收集 1.12.2 forge 客户端 mod 的 jar 到 mod/1.12.2/build/libs'
     into(layout.buildDirectory.dir('libs'))
-    from(project(':runtime').layout.buildDirectory.dir('libs'))
     from(project(':forge').layout.buildDirectory.dir('libs'))
 }

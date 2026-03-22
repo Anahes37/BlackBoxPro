@@ -37,17 +37,17 @@ for ((name, project) in standaloneProjects) {
     }
 }
 
-val collectJars = tasks.register<Copy>("collectJars") {
+val collectJars = tasks.register<Sync>("collectJars") {
     group = "build"
-    description = "收集所有模块的 jar 到根 build/libs"
+    description = "收集客户端 mod 与服务端插件的 jar 到根 build/libs"
     into(layout.buildDirectory.dir("libs"))
-    from(file("mod/build/libs"))
-    from(file("plugin/build/libs"))
+    from(fileTree("mod/build/libs") { include("*.jar") })
+    from(fileTree("plugin/build/libs") { include("*.jar") })
 }
 
 tasks.register("buildAll") {
     group = "build"
-    description = "构建所有模块并收集 jar 到根 build/libs"
+    description = "构建客户端 mod 与服务端插件并收集 jar 到根 build/libs"
     dependsOn("mod_buildAll", "plugin_build")
     finalizedBy(collectJars)
 }
