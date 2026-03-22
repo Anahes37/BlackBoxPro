@@ -3,7 +3,7 @@ package com.blackboxpro.forge.action.movement
 import com.blackboxpro.forge.action.ActionExecutor
 import com.blackboxpro.forge.action.ActionResult
 import com.blackboxpro.forge.action.composite.TickScheduler
-import com.blackboxpro.forge.config.BlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.forge.util.InjectedMovementInput
 import com.blackboxpro.forge.util.getDoubleOrDefault
 import com.blackboxpro.forge.util.getIntOrDefault
@@ -30,7 +30,7 @@ class PlayerMoveAction : ActionExecutor {
         val player = mc.player
             ?: return ActionResult.fail("Player not available")
 
-        val pathConfig = BlackBoxConfig.current.pathfinding
+        val pathConfig = RuntimeBlackBoxConfig.current.pathfinding
         val dx = x - player.posX
         val dy = y - player.posY
         val dz = z - player.posZ
@@ -63,7 +63,7 @@ class PlayerMoveAction : ActionExecutor {
                 injected.uninstall()
                 return
             }
-            val threshold = BlackBoxConfig.current.pathfinding.arrivalThreshold
+            val threshold = RuntimeBlackBoxConfig.current.pathfinding.arrivalThreshold
 
             ticksElapsed++
 

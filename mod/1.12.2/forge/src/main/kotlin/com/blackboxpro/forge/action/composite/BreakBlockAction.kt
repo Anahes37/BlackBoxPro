@@ -2,7 +2,7 @@ package com.blackboxpro.forge.action.composite
 
 import com.blackboxpro.forge.action.ActionExecutor
 import com.blackboxpro.forge.action.ActionResult
-import com.blackboxpro.forge.config.BlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.forge.dispatcher.ActionRegistry
 import com.blackboxpro.forge.util.requireInt
 import com.google.gson.JsonObject
@@ -65,7 +65,7 @@ class BreakBlockAction : ActionExecutor {
     }
 
     private fun calculateBreakTicks(mc: Minecraft, x: Int, y: Int, z: Int): Int {
-        val defaultTicks = BlackBoxConfig.current.execution.defaultBreakTicks
+        val defaultTicks = RuntimeBlackBoxConfig.current.execution.defaultBreakTicks
         val world = mc.world ?: return defaultTicks
         val player = mc.player ?: return defaultTicks
         val pos = BlockPos(x, y, z)

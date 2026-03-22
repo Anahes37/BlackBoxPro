@@ -1,6 +1,6 @@
 package com.blackboxpro.forge.dispatcher
 
-import com.blackboxpro.forge.config.BlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.forge.http.ResponseFutureRegistry
 import com.google.gson.Gson
 import net.minecraft.client.Minecraft
@@ -53,7 +53,7 @@ object CommandDispatcher {
         }
 
         if (message.delay > 0) {
-            val maxDelay = BlackBoxConfig.current.execution.maxDelayTicks
+            val maxDelay = RuntimeBlackBoxConfig.current.execution.maxDelayTicks
             val ticks = (message.delay / 50).toInt().coerceAtLeast(1).coerceAtMost(maxDelay)
             logger.debug("Delaying action {} for {} ticks", message.action, ticks)
             Minecraft.getMinecraft().addScheduledTask {
@@ -94,7 +94,7 @@ object CommandDispatcher {
     }
 
     private fun isActionAllowed(actionId: String): Boolean {
-        val config = BlackBoxConfig.current.safety
+        val config = RuntimeBlackBoxConfig.current.safety
         if (!config.enabled) return true
         if (actionId in config.blockedActions) return false
         if (config.allowedActions.isEmpty()) return true

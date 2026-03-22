@@ -2,7 +2,7 @@ package com.blackboxpro.forge.action.composite
 
 import com.blackboxpro.forge.action.ActionExecutor
 import com.blackboxpro.forge.action.ActionResult
-import com.blackboxpro.forge.config.BlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.forge.util.getDoubleOrDefault
 import com.blackboxpro.forge.util.requireDouble
 import com.google.gson.JsonObject
@@ -22,7 +22,7 @@ class PathfindToAction : ActionExecutor {
         val player = mc.player
             ?: return ActionResult.fail("Player not available")
 
-        val pathConfig = BlackBoxConfig.current.pathfinding
+        val pathConfig = RuntimeBlackBoxConfig.current.pathfinding
         val dx = targetX - player.posX
         val dy = targetY - player.posY
         val dz = targetZ - player.posZ
@@ -51,7 +51,7 @@ class PathfindToAction : ActionExecutor {
         val player = mc.player ?: return
         val connection = mc.connection ?: return
 
-        val pathConfig = BlackBoxConfig.current.pathfinding
+        val pathConfig = RuntimeBlackBoxConfig.current.pathfinding
         val stepSize = pathConfig.stepSize * speed
 
         val dx = targetX - player.posX

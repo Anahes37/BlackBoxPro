@@ -2,7 +2,7 @@ package com.blackboxpro.forge.action.composite
 
 import com.blackboxpro.forge.action.ActionExecutor
 import com.blackboxpro.forge.action.ActionResult
-import com.blackboxpro.forge.config.BlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.forge.util.getBooleanOrDefault
 import com.blackboxpro.forge.util.getDoubleOrDefault
 import com.blackboxpro.forge.util.getIntOrDefault
@@ -22,7 +22,7 @@ class NavigateToAction : ActionExecutor {
         val targetY = params.requireDouble("y")
         val targetZ = params.requireDouble("z")
         val speed = params.getDoubleOrDefault("speed", 1.0)
-        val navConfig = BlackBoxConfig.current.navigation
+        val navConfig = RuntimeBlackBoxConfig.current.navigation
         val timeout = params.getIntOrDefault("timeout", navConfig.defaultTimeout)
         val allowJump = params.getBooleanOrDefault("allowJump", true)
 

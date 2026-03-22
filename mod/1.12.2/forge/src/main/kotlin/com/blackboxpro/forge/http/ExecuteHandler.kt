@@ -2,7 +2,7 @@ package com.blackboxpro.forge.http
 
 import com.blackboxpro.common.protocol.CommandMessage
 import com.blackboxpro.common.protocol.ResponseMessage
-import com.blackboxpro.forge.config.BlackBoxConfig
+import com.blackboxpro.common.runtime.config.RuntimeBlackBoxConfig
 import com.blackboxpro.forge.dispatcher.CommandDispatcher
 import com.google.gson.Gson
 import com.sun.net.httpserver.HttpExchange
@@ -39,7 +39,7 @@ object ExecuteHandler : HttpHandler {
             return gson.toJson(ResponseMessage("", "failure", "Parse error: ${e.message}"))
         }
 
-        val timeoutMs = BlackBoxConfig.current.network.responseTimeoutMs
+        val timeoutMs = RuntimeBlackBoxConfig.current.network.responseTimeoutMs
         val future = ResponseFutureRegistry.register(command.id)
 
         return try {
