@@ -1,5 +1,5 @@
 ---
-name: deploying-blackbox
+name: blackboxpro-test
 description: 部署并测试 BlackBoxPro 黑盒测试环境。两种模式：客户端自测（单人世界 HTTP 直达 mod:38081）和服务端联调（plugin:38080 转发 mod:38081）。覆盖构建、部署、启动、测试、截图视觉分析。
 ---
 
