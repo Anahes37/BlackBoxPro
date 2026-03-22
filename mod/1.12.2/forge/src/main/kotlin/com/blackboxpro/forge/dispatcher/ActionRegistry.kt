@@ -101,6 +101,7 @@ object ActionRegistry {
         register("resource_pack_response", ResourcePackResponseAction())
         register("screenshot", ScreenshotAction())
         register("connect_to_server", ConnectToServerAction())
+        register("close_screen", CloseScreenAction())
 
         // === 进阶交互 ===
         register("edit_book", EditBookAction())

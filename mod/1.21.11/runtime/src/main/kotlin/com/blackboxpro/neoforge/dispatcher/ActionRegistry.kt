@@ -101,6 +101,7 @@ object ActionRegistry {
         register("create_world", CreateWorldAction())
         register("join_world", JoinWorldAction())
         register("leave_world", LeaveWorldAction())
+        register("close_screen", CloseScreenAction())
 
         // === 进阶交互 ===
         register("edit_book", EditBookAction())
