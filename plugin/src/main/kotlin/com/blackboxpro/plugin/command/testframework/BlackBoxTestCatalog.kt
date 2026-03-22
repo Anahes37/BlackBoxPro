@@ -78,9 +78,7 @@ object BlackBoxTestCatalog {
         "leave_world",
         "custom_payload",
         "tab_complete",
-        "pong",
         "debug_sample_subscription",
-        "chunk_batch_received",
         "look_at_entity",
         "break_block",
         "place_block_at",
@@ -243,10 +241,10 @@ object BlackBoxTestCatalog {
         "client_information" -> JsonObject().apply {
             addProperty("locale", "zh_cn")
             addProperty("viewDistance", 8)
-            addProperty("chatMode", "full")
+            addProperty("chatMode", 0)
             addProperty("chatColors", true)
             addProperty("skinParts", 127)
-            addProperty("mainHand", "right")
+            addProperty("mainHand", 1)
             addProperty("textFiltering", false)
             addProperty("allowServerListings", true)
         }
@@ -266,6 +264,8 @@ object BlackBoxTestCatalog {
             addProperty("worldName", "blackbox_test_world")
         }
         "keep_alive" -> JsonObject().apply { addProperty("id", 1L) }
+        "pong" -> JsonObject().apply { addProperty("parameter", 0) }
+        "chunk_batch_received" -> JsonObject()
         "look_at" -> JsonObject().apply {
             val target = ctx.fixtureManager.relative(0.0, 1.0, 4.0)
             addProperty("x", target.x)

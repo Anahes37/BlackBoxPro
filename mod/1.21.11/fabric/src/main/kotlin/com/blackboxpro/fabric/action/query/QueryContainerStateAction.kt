@@ -26,7 +26,7 @@ class QueryContainerStateAction : ActionExecutor {
             addProperty("open", !isInventoryOnly)
             addProperty("windowId", handler.syncId)
             addProperty("stateId", handler.revision)
-            addProperty("type", handler.type?.let { Registries.SCREEN_HANDLER.getId(it)?.toString() } ?: "unknown")
+            addProperty("type", try { handler.type?.let { Registries.SCREEN_HANDLER.getId(it)?.toString() } ?: "unknown" } catch (_: Throwable) { "unknown" })
             addProperty("slotCount", handler.slots.size)
 
             // 容器标题

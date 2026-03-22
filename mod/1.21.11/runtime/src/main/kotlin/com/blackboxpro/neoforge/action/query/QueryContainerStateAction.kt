@@ -26,7 +26,7 @@ class QueryContainerStateAction : ActionExecutor {
             addProperty("open", !isInventoryOnly)
             addProperty("windowId", handler.containerId)
             addProperty("stateId", handler.stateId)
-            addProperty("type", handler.type?.let { BuiltInRegistries.MENU.getKey(it)?.toString() } ?: "unknown")
+            addProperty("type", try { handler.type?.let { BuiltInRegistries.MENU.getKey(it)?.toString() } ?: "unknown" } catch (_: Throwable) { "unknown" })
             addProperty("slotCount", handler.slots.size)
 
             val screen = client.screen

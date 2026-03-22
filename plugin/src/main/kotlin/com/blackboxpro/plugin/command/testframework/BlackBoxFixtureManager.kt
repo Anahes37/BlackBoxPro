@@ -28,6 +28,12 @@ class BlackBoxFixtureManager(
             yaw = 0f
         }
 
+        // 确保出生点脚下有实体方块，避免玩家悬空导致 jump/sneak 等测试失败
+        val floorLoc = origin.clone().add(0.0, -1.0, 0.0)
+        if (floorLoc.block.type == Material.AIR || floorLoc.block.type.isTransparent) {
+            ensureBlock(0, -1, 0, "STONE")
+        }
+
         player.closeInventory()
         player.teleport(origin)
         player.gameMode = GameMode.SURVIVAL
