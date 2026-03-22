@@ -102,6 +102,9 @@ object ActionRegistry {
         register("screenshot", ScreenshotAction())
         register("connect_to_server", ConnectToServerAction())
         register("close_screen", CloseScreenAction())
+        register("create_world", CreateWorldAction())
+        register("join_world", JoinWorldAction())
+        register("leave_world", LeaveWorldAction())
 
         // === 进阶交互 ===
         register("edit_book", EditBookAction())

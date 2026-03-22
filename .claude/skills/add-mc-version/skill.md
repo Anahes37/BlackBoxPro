@@ -38,7 +38,7 @@ description: 为 BlackBoxPro 新增一个 Minecraft 版本的测试支持。自�
 ### 阶段 0：前置检查
 
 1. 停止当前服务端（若有）：
-   `curl -s POST http://localhost:8080/execute {"action":"stop_server"}`
+   `curl -s POST http://localhost:38080/execute {"action":"stop_server"}`
 2. 检查端口 25565 无占用
 3. 确认 mod/{mc_version} 是否已存在（存在则跳过代码生成）
 
@@ -129,7 +129,7 @@ echo "eula=true" > "${SERVER_DIR}/eula.txt"
 cd /f/minecraft/server/paper-{mc_version}
 "/c/Program Files/Java/jdk-21/bin/java.exe" -Xms2G -Xmx2G -jar {jar} nogui
 # 等待 Done 后立即停服
-curl -X POST http://localhost:8080/execute -d '{"id":"s","action":"stop_server"}'
+curl -X POST http://localhost:38080/execute -d '{"id":"s","action":"stop_server"}'
 
 # 关闭在线验证
 powershell -NoProfile -Command "
@@ -183,12 +183,12 @@ cd /f/minecraft/server/paper-{mc_version}
 cd /f/minecraft/mod/BlackBoxPro/mod
 JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:runClient --no-daemon
 ```
-轮询 `netstat :8081 LISTENING`（每 2s，最多 120s）。
+轮询 `netstat :38081 LISTENING`（每 2s，最多 120s）。
 记录日志中 `Setting user: PlayerXXX` 的玩家名。
 
 **Step 3：连接服务器**
 ```bash
-curl -s --max-time 35 -X POST http://localhost:8081/execute \
+curl -s --max-time 35 -X POST http://localhost:38081/execute \
   -H "Content-Type: application/json" \
   -d '{"id":"c1","action":"connect_to_server","params":{"ip":"127.0.0.1","port":25565}}'
 ```
@@ -197,7 +197,7 @@ curl -s --max-time 35 -X POST http://localhost:8081/execute \
 
 **Step 4：运行全量测试**
 ```bash
-curl -s -X POST http://localhost:8080/execute \
+curl -s -X POST http://localhost:38080/execute \
   -H "Content-Type: application/json" \
   -d "{\"id\":\"run\",\"action\":\"run_test\",\"params\":{\"player\":\"{PLAYER}\",\"scope\":\"full\"}}" \
   -o result_{mc_version}.json
@@ -206,7 +206,7 @@ curl -s -X POST http://localhost:8080/execute \
 
 **Step 5：停服停客户端**
 ```bash
-curl -s -X POST http://localhost:8080/execute -d '{"id":"stop","action":"stop_server"}'
+curl -s -X POST http://localhost:38080/execute -d '{"id":"stop","action":"stop_server"}'
 # Terminal 2: Ctrl-C
 ```
 
@@ -299,7 +299,7 @@ git push
 ### Q: 玩家名动态获取
 
 连接后查 tab 列表：
-curl -X POST http://localhost:8081/execute -H Content-Type:application/json -d action=query_tab_list
+curl -X POST http://localhost:38081/execute -H Content-Type:application/json -d action=query_tab_list
 
 ---
 

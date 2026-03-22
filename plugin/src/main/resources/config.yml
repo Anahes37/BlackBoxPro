@@ -9,7 +9,7 @@ debug: false
 response-timeout-ms: 10000
 
 # BlackBoxPro HTTP 服务端口（测试脚本通过此端口发送指令）
-http-port: 8080
+http-port: 38080
 
 # 测试模式
 # server_only: 纯服务端，Plugin HTTP Server 不转发给 Mod
@@ -17,4 +17,4 @@ http-port: 8080
 test-mode: dual
 
 # Mod HTTP Server 地址（dual 模式下 Plugin 转发指令的目标地址）
-mod-http-address: "http://localhost:8081"
+mod-http-address: "http://localhost:38081"

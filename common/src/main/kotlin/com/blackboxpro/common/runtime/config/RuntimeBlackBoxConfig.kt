@@ -8,7 +8,7 @@ data class RuntimeLoggingConfig(
 )
 
 data class RuntimeNetworkConfig(
-    val httpPort: Int = 8081,
+    val httpPort: Int = 38081,
     val responseTimeoutMs: Long = 10000L
 )
 

@@ -13,10 +13,7 @@ object BlackBoxTestCatalog {
     private val unsupportedOn1122 = setOf(
         "bundle_selected_slot",
         "chunk_batch_received",
-        "create_world",
         "debug_sample_subscription",
-        "join_world",
-        "leave_world",
         "pick_entity",
         "pick_item_from_block",
         "pick_item_from_entity",

@@ -13,9 +13,9 @@ object BlackBoxSettings {
 
     val responseTimeoutMs: Long get() = conf.getLong("response-timeout-ms", 10000L)
 
-    val httpPort: Int get() = conf.getInt("http-port", 8080)
+    val httpPort: Int get() = conf.getInt("http-port", 38080)
 
     val testMode: String get() = conf.getString("test-mode", "dual") ?: "dual"
 
-    val modHttpAddress: String get() = conf.getString("mod-http-address", "http://localhost:8081") ?: "http://localhost:8081"
+    val modHttpAddress: String get() = conf.getString("mod-http-address", "http://localhost:38081") ?: "http://localhost:38081"
 }
