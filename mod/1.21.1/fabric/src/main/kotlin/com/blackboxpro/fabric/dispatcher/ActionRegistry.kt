@@ -16,7 +16,7 @@ import com.blackboxpro.fabric.action.composite.*
 import com.blackboxpro.fabric.action.query.*
 import com.blackboxpro.runtime.bindings.FabricBindings
 import com.blackboxpro.runtime.bindings.SharedSlf4jLoggerSupplier
-import com.blackboxpro.runtime.dispatcher.RuntimeActionRegistry
+import com.blackboxpro.common.runtime.dispatcher.RuntimeActionRegistry
 
 object ActionRegistry {
 

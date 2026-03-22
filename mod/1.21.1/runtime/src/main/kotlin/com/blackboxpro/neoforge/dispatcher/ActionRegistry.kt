@@ -16,7 +16,7 @@ import com.blackboxpro.neoforge.action.composite.*
 import com.blackboxpro.neoforge.action.query.*
 import com.blackboxpro.runtime.bindings.LoggerSupplierBinding
 import com.blackboxpro.runtime.bindings.SharedSlf4jLoggerSupplier
-import com.blackboxpro.runtime.dispatcher.RuntimeActionRegistry
+import com.blackboxpro.common.runtime.dispatcher.RuntimeActionRegistry
 
 object ActionRegistry {
 

@@ -1,6 +1,7 @@
 package com.blackboxpro.forge.dispatcher
 
 import com.blackboxpro.common.action.composite.BatchAction
+import com.blackboxpro.common.runtime.dispatcher.RuntimeActionRegistry
 import com.blackboxpro.forge.action.ActionExecutor
 import com.blackboxpro.forge.action.movement.*
 import com.blackboxpro.forge.action.block.*
@@ -14,30 +15,29 @@ import com.blackboxpro.forge.action.debug.*
 import com.blackboxpro.forge.action.composite.*
 import com.blackboxpro.forge.action.query.*
 import com.blackboxpro.runtime.bindings.ForgeBindings
-import org.apache.logging.log4j.LogManager
 
 object ActionRegistry {
 
-    private val logger = LogManager.getLogger("BlackBoxPro-Registry")
-    private val mutableExecutors = mutableMapOf<String, ActionExecutor>()
-    private var executors: Map<String, ActionExecutor> = emptyMap()
-    private var frozen = false
+    private val registry = RuntimeActionRegistry(ForgeBindings.getLogger("BlackBoxPro-Registry"))
 
     fun register(actionId: String, executor: ActionExecutor) {
-        check(!frozen) { "ActionRegistry is frozen, cannot register new actions" }
-        if (mutableExecutors.containsKey(actionId)) {
-            logger.warn("Overriding executor for action: {}", actionId)
-        }
-        mutableExecutors[actionId] = executor
-        logger.debug("Registered action: {}", actionId)
+        registry.register(actionId, executor)
     }
 
-    fun find(actionId: String): ActionExecutor? = executors[actionId]
+    fun find(actionId: String): ActionExecutor? = registry.find(actionId)
 
-    fun size(): Int = executors.size
+    fun size(): Int = registry.size()
+
+    /**
+     * 第三方 mod 注册自定义 Action 的公开 API。
+     * 可在 BBP 初始化完成后调用，注册后立即生效。
+     */
+    fun registerExternal(actionId: String, executor: ActionExecutor) {
+        registry.registerExternal(actionId, executor)
+    }
 
     fun registerAll() {
-        check(!frozen) { "ActionRegistry already initialized" }
+        registry.ensureNotInitialized()
 
         // Bind common actions that need platform-specific dependencies
         val boundBatchAction = BatchAction().also { it.bind(ForgeBindings) }
@@ -161,8 +161,6 @@ object ActionRegistry {
         register("query_screen_state", QueryScreenStateAction())
         register("query_boss_bar", QueryBossBarAction())
 
-        executors = mutableExecutors.toMap()
-        frozen = true
-        logger.info("All actions registered. Total: {}", executors.size)
+        registry.freeze()
     }
 }

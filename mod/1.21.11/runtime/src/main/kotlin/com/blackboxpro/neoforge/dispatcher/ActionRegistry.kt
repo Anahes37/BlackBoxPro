@@ -16,7 +16,7 @@ import com.blackboxpro.neoforge.action.composite.*
 import com.blackboxpro.neoforge.action.query.*
 import com.blackboxpro.runtime.bindings.LoggerSupplierBinding
 import com.blackboxpro.runtime.bindings.SharedSlf4jLoggerSupplier
-import com.blackboxpro.runtime.dispatcher.RuntimeActionRegistry
+import com.blackboxpro.common.runtime.dispatcher.RuntimeActionRegistry
 
 object ActionRegistry {
 
@@ -29,6 +29,14 @@ object ActionRegistry {
     fun find(actionId: String): ActionExecutor? = registry.find(actionId)
 
     fun size(): Int = registry.size()
+
+    /**
+     * 第三方 mod 注册自定义 Action 的公开 API。
+     * 可在 BBP 初始化完成后调用，注册后立即生效。
+     */
+    fun registerExternal(actionId: String, executor: ActionExecutor) {
+        registry.registerExternal(actionId, executor)
+    }
 
     fun registerAll() {
         registry.ensureNotInitialized()

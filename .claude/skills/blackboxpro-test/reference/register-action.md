@@ -1,68 +1,144 @@
-# 注册第三方测试 Action
+# 第三方 Mod 注册自定义测试 Action
 
-新增一个自定义 Action 需要修改 4 个位置。以下以添加 `my_custom_action` 为例。
+本文档面向**第三方 mod 开发者**：你的 mod 以 BlackBoxPro 为前置依赖，希望将自己的业务 Action 注册到 BBP 的执行引擎中，通过 HTTP API 调用。
 
-## 标准流程
+## 架构概览
 
-### 1. common — ActionCatalog 注册元数据
+```
+BlackBoxPro (前置 mod)
+├── common                    ← ActionExecutor 接口 + RuntimeActionRegistry 实现
+├── mod/{version}/{loader}    ← 各平台 ActionRegistry.registerExternal() 公开 API
+└── HTTP Server (:38081)      ← 自动路由到已注册的 action
 
-文件：`common/src/main/kotlin/com/blackboxpro/common/action/ActionCatalog.kt`
-
-在 `init` 块对应分类位置添加：
-
-```kotlin
-// Custom
-register("my_custom_action", "param1", "param2", "optionalParam")
+你的 Mod (依赖 BBP)
+├── 实现 ActionExecutor
+└── 在初始化时调用 ActionRegistry.registerExternal("your_action", YourAction())
 ```
 
-- 第一个参数是 action ID（全局唯一，snake_case）
-- 后续参数是该 action 接受的参数名（顺序即 Tab 补全顺序）
-- 无参数的 action 只写 `register("my_custom_action")`
+核心：`registerExternal()` 绕过 BBP 的 frozen 保护，允许第三方在 BBP 初始化完成后追加 action。
 
-> ActionParamRegistry（plugin 模块）直接委托给 ActionCatalog，无需额外注册。
+## 快速开始
 
-### 2. mod — 实现 ActionExecutor 并注册
+### 1. 声明前置依赖
 
-#### 2.1 创建 Action 类
+**Fabric (fabric.mod.json)**：
+```json
+{
+  "depends": {
+    "blackboxpro": "*"
+  }
+}
+```
 
-文件：`mod/{version}/{loader}/src/main/kotlin/com/blackboxpro/{loader}/action/{category}/MyCustomAction.kt`
+**NeoForge (mods.toml)**：
+```toml
+[[dependencies.yourmod]]
+modId = "blackboxpro"
+mandatory = true
+```
+
+**Forge 1.12.2 (@Mod)**：
+```kotlin
+@Mod(modid = "yourmod", dependencies = "required-after:blackboxpro")
+```
+
+> 声明 `required-after` / `depends` 确保 BBP 先于你的 mod 初始化。
+
+### 2. 实现 ActionExecutor
 
 ```kotlin
-package com.blackboxpro.fabric.action.client  // 按分类选包
+package com.example.yourmod.action
 
-import com.blackboxpro.fabric.action.ActionExecutor
-import com.blackboxpro.fabric.action.ActionResult
+import com.blackboxpro.common.runtime.action.ActionExecutor
+import com.blackboxpro.common.runtime.action.ActionResult
 import com.google.gson.JsonObject
 
-class MyCustomAction : ActionExecutor {
+class MyBusinessAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
-        // 读取参数
-        val param1 = params.get("param1")?.asString
-            ?: return ActionResult.fail("Missing required field: param1")
+        val target = params.get("target")?.asString
+            ?: return ActionResult.fail("Missing required field: target")
 
-        // 执行逻辑
-        // ...
+        // 你的业务逻辑
+        val result = doSomething(target)
 
-        // 返回结果
         return ActionResult.ok(
-            message = "Custom action completed",
+            message = "Business action completed",
             data = JsonObject().apply {
-                addProperty("result", "some_value")
+                addProperty("result", result)
             }
         )
     }
 }
 ```
 
-**关键接口**：
+### 3. 注册到 BBP
+
+在你的 mod 初始化时调用 `registerExternal`：
+
+**Fabric**：
+```kotlin
+import com.blackboxpro.fabric.dispatcher.ActionRegistry
+
+object YourMod : ClientModInitializer {
+    override fun onInitializeClient() {
+        // BBP 已先于你的 mod 初始化（fabric.mod.json depends 保证）
+        ActionRegistry.registerExternal("my_business_action", MyBusinessAction())
+        ActionRegistry.registerExternal("my_query_action", MyQueryAction())
+    }
+}
+```
+
+**NeoForge**：
+```kotlin
+import com.blackboxpro.neoforge.dispatcher.ActionRegistry
+
+@Mod("yourmod")
+class YourMod {
+    init {
+        ActionRegistry.registerExternal("my_business_action", MyBusinessAction())
+    }
+}
+```
+
+**Forge 1.12.2**：
+```kotlin
+import com.blackboxpro.forge.dispatcher.ActionRegistry
+
+@Mod(modid = "yourmod", dependencies = "required-after:blackboxpro")
+object YourMod {
+    @Mod.EventHandler
+    fun init(event: FMLInitializationEvent) {
+        ActionRegistry.registerExternal("my_business_action", MyBusinessAction())
+    }
+}
+```
+
+### 4. 通过 HTTP 调用
+
+注册后立即可用：
+
+```bash
+curl -s --max-time 8 -X POST http://localhost:38081/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"biz1","action":"my_business_action","params":{"target":"hello"}}'
+```
+
+## API 参考
+
+### ActionExecutor 接口
 
 ```kotlin
+// 位于 common 模块：com.blackboxpro.common.runtime.action
 interface ActionExecutor {
     fun execute(params: JsonObject): ActionResult
-    // 异步 action 重写此方法，返回 ActionResult.async()
+    // 异步版本（可选重写）
     fun execute(params: JsonObject, commandId: String): ActionResult = execute(params)
 }
+```
 
+### ActionResult
+
+```kotlin
 data class ActionResult(
     val success: Boolean,
     val message: String? = null,
@@ -72,140 +148,69 @@ data class ActionResult(
     companion object {
         fun ok(message: String? = null, data: JsonObject? = null): ActionResult
         fun fail(message: String): ActionResult
-        fun async(): ActionResult  // 异步 action 自行通过 RuntimeResponseSender 发送响应
+        fun async(): ActionResult  // 异步模式，需自行通过 RuntimeResponseSender 发送响应
     }
 }
 ```
 
-**参数读取工具**（`com.blackboxpro.{loader}.util.JsonUtil`）：
+### registerExternal
 
 ```kotlin
-params.requireString("key")           // 必填 String，缺失抛异常
-params.getStringOrNull("key")         // 可选 String
-params.getIntOrDefault("key", 0)      // 可选 Int，带默认值
+// 各平台 ActionRegistry 均提供，内部委托给 common 的 RuntimeActionRegistry
+fun registerExternal(actionId: String, executor: ActionExecutor)
+```
+
+- 可在 BBP frozen 后调用（即你的 mod 初始化时）
+- 注册后立即生效，HTTP 请求可路由到你的 action
+- actionId 冲突时会覆盖已有 executor（日志会 warn）
+
+### 参数读取工具
+
+BBP 各平台模块提供了 JsonObject 扩展函数（包路径 `com.blackboxpro.{loader}.util`）：
+
+```kotlin
+params.requireString("key")              // 必填，缺失抛异常
+params.getStringOrNull("key")            // 可选
+params.getIntOrDefault("key", 0)         // 带默认值
 params.getBooleanOrDefault("key", false)
 params.getDoubleOrDefault("key", 0.0)
 ```
 
-#### 2.2 注册到 ActionRegistry
+## 异步 Action
 
-文件：`mod/{version}/{loader}/src/.../dispatcher/ActionRegistry.kt`
-
-在 `registerAll()` 中添加：
+长耗时操作使用异步模式，BBP 不自动发响应，由你的代码控制：
 
 ```kotlin
-// === 自定义 Action ===
-register("my_custom_action", MyCustomAction())
-```
+import com.blackboxpro.common.runtime.dispatcher.RuntimeResponseSender
 
-#### 2.3 三端同步
-
-需要在所有目标平台注册：
-
-| 平台 | ActionRegistry 路径 |
-|------|---------------------|
-| 1.21.11 Fabric | `mod/1.21.11/fabric/.../dispatcher/ActionRegistry.kt` |
-| 1.21.11 NeoForge | `mod/1.21.11/neoforge/.../dispatcher/ActionRegistry.kt` 或 `runtime/` |
-| 1.12.2 Forge | `mod/1.12.2/forge/.../dispatcher/ActionRegistry.kt` |
-
-> 1.12.2 API 不同时需适配（参见 CLAUDE.md 三端映射差异表）。
-> 若 1.12.2 不支持该 action，跳过注册并在步骤 3 加入豁免列表。
-
-### 3. plugin — BlackBoxTestCatalog 配置测试
-
-文件：`plugin/src/.../command/testframework/BlackBoxTestCatalog.kt`
-
-根据 action 特征配置：
-
-**a) 若 1.12.2 不支持**：加入 `unsupportedOn1122`
-
-```kotlin
-private val unsupportedOn1122 = setOf(
-    // ...existing...
-    "my_custom_action",
-)
-```
-
-**b) 若需要前置夹具**：加入 `pendingFixtureActions` 并在 `prepareFixture()` 添加分支
-
-```kotlin
-private val pendingFixtureActions = setOf(
-    // ...existing...
-    "my_custom_action",
-)
-
-// 在 prepareFixture() 的 when 中：
-"my_custom_action" ->
-    CompletableFuture.completedFuture(BlackBoxPrepareResult("需要特定前置条件"))
-```
-
-**c) 若为长耗时 action**：加入 `longRunningActions`
-
-```kotlin
-private val longRunningActions = setOf(
-    // ...existing...
-    "my_custom_action",
-)
-```
-
-**d) 添加默认测试参数**：在 `defaultParams()` 的 `when` 中
-
-```kotlin
-"my_custom_action" -> JsonObject().apply {
-    addProperty("param1", "test_value")
-    addProperty("param2", 42)
-}
-```
-
-**e) 添加结果验证**（可选）：在 `verify()` 的 `when` 中
-
-```kotlin
-"my_custom_action" -> if (data?.has("result") == true) null else "缺少 result 字段"
-```
-
-**f) 分类归属**：在 `categoryOf()` 的 `when` 中
-
-```kotlin
-actionId in setOf("my_custom_action", ...) -> "custom"
-```
-
-## 快速检查清单
-
-- [ ] `ActionCatalog.kt` — 注册 action ID + 参数名
-- [ ] `MyCustomAction.kt` — 实现 `ActionExecutor`
-- [ ] `ActionRegistry.kt` — 在 `registerAll()` 中注册（每个目标平台）
-- [ ] `BlackBoxTestCatalog.kt` — 配置测试（默认参数 / 夹具 / 豁免 / 验证）
-- [ ] 构建通过：`./gradlew mod_buildAll plugin_build --no-daemon`
-
-## 异步 Action 模式
-
-长耗时操作（如世界创建）使用异步模式：
-
-```kotlin
 class MyAsyncAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult =
         ActionResult.fail("Requires commandId")
 
     override fun execute(params: JsonObject, commandId: String): ActionResult {
-        // 启动异步操作...
-        // 完成后通过 RuntimeResponseSender 回报：
-        RuntimeResponseSender.sendResponse(
-            id = commandId,
-            status = "success",
-            message = "Done",
-            data = JsonObject()
-        )
-        return ActionResult.async()  // 告诉 dispatcher 不要自动发响应
+        Thread {
+            val result = longRunningTask()
+            RuntimeResponseSender.sendResponse(
+                id = commandId,
+                status = if (result) "success" else "failure",
+                message = "Async task done"
+            )
+        }.start()
+        return ActionResult.async()
     }
 }
 ```
 
-## 调用方式
+## 线程安全
 
-注册后即可通过 HTTP 调用：
+- `execute()` 在 BBP 的 HTTP 线程池中被调用
+- 操作 Minecraft 状态必须调度到客户端主线程：
+  - Fabric: `MinecraftClient.getInstance().execute { }`
+  - NeoForge: `Minecraft.getInstance().execute { }`
+  - Forge 1.12.2: `Minecraft.getMinecraft().addScheduledTask { }`
 
-```bash
-curl -s --max-time 8 -X POST http://localhost:38081/execute \
-  -H "Content-Type: application/json" \
-  -d '{"id":"c1","action":"my_custom_action","params":{"param1":"hello","param2":42}}'
-```
+## 注意事项
+
+- action ID 建议使用 `yourmod_` 前缀避免冲突（如 `mymod_check_quest`）
+- 不要在 action 中崩溃——异常会导致 HTTP 500，不会影响 BBP 其他功能
+- 你的 action 不会出现在 BBP 内置的 `run_test` 全量测试中（仅通过 HTTP 手动调用）
