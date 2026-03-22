@@ -171,40 +171,80 @@ object BlackBoxTestCatalog {
             },
             execute = { ctx ->
                 val params = defaultParams(actionId, ctx)
-                if (params.has("__needEntityId")) {
-                    // 先查询附近实体，取第一个 entityId
-                    ctx.sendAction("query_nearby_entities", JsonObject().apply {
-                        addProperty("radius", 8.0)
-                        addProperty("limit", 5)
-                    }).thenCompose { queryResp ->
-                    val entityId = queryResp.data
-                        ?.takeIf { it.has("entities") }
-                        ?.getAsJsonArray("entities")
-                        ?.takeIf { it.size() > 0 }
-                        ?.get(0)?.asJsonObject
-                        ?.get("entityId")?.asInt
-                        if (entityId == null) {
-                            CompletableFuture.completedFuture(
-                                ResponseMessage(ctx.testId, "failure", "No entities found nearby for $actionId", null)
-                            )
-                        } else {
-                            val actionParams = JsonObject().apply {
-                                addProperty("entityId", entityId)
-                                // interact_entity_at 需要额外的 target 坐标，使用实体位置近似
-                                if (actionId == "interact_entity_at") {
-                                    val entity = queryResp.data
-                                        ?.getAsJsonArray("entities")?.get(0)?.asJsonObject
-                                    addProperty("targetX", entity?.get("x")?.asDouble ?: 0.0)
-                                    addProperty("targetY", entity?.get("y")?.asDouble ?: 1.0)
-                                    addProperty("targetZ", entity?.get("z")?.asDouble ?: 0.0)
-                                    addProperty("hand", "main_hand")
+                when {
+                    params.has("__needEntityId") -> {
+                        // 先查询附近实体，取第一个 entityId
+                        ctx.sendAction("query_nearby_entities", JsonObject().apply {
+                            addProperty("radius", 8.0)
+                            addProperty("limit", 5)
+                        }).thenCompose { queryResp ->
+                            val entityId = queryResp.data
+                                ?.takeIf { it.has("entities") }
+                                ?.getAsJsonArray("entities")
+                                ?.takeIf { it.size() > 0 }
+                                ?.get(0)?.asJsonObject
+                                ?.get("entityId")?.asInt
+                            if (entityId == null) {
+                                CompletableFuture.completedFuture(
+                                    ResponseMessage(ctx.testId, "failure", "No entities found nearby for $actionId", null)
+                                )
+                            } else {
+                                val actionParams = JsonObject().apply {
+                                    addProperty("entityId", entityId)
+                                    if (actionId == "interact_entity_at") {
+                                        val entity = queryResp.data
+                                            ?.getAsJsonArray("entities")?.get(0)?.asJsonObject
+                                        addProperty("targetX", entity?.get("x")?.asDouble ?: 0.0)
+                                        addProperty("targetY", entity?.get("y")?.asDouble ?: 1.0)
+                                        addProperty("targetZ", entity?.get("z")?.asDouble ?: 0.0)
+                                        addProperty("hand", "main_hand")
+                                    }
                                 }
+                                ctx.sendAction(actionId, actionParams, timeoutMs = 5000L)
                             }
-                            ctx.sendAction(actionId, actionParams, timeoutMs = 5000L)
                         }
                     }
-                } else {
-                    ctx.sendAction(actionId, params, timeoutMs = if (actionId in setOf("player_move", "player_move_look")) 15000L else if (actionId == "screenshot") 20000L else if (actionId in setOf("break_block", "navigate_to", "pathfind_to")) 20000L else 5000L)
+                    params.has("__needWindowId") -> {
+                        // 先查询容器状态，取当前 windowId 和 stateId
+                        ctx.sendAction("query_container_state", JsonObject()).thenCompose { queryResp ->
+                            val data = queryResp.data
+                            val windowId = data?.get("windowId")?.asInt ?: 0
+                            val stateId = data?.get("stateId")?.asInt ?: 0
+                            val isOpen = data?.get("open")?.asBoolean ?: false
+                            if (!isOpen) {
+                                CompletableFuture.completedFuture(
+                                    ResponseMessage(ctx.testId, "failure", "No container open for $actionId", null)
+                                )
+                            } else {
+                                val actionParams = JsonObject().apply {
+                                    addProperty("windowId", windowId)
+                                    addProperty("stateId", stateId)
+                                    when (actionId) {
+                                        "click_slot" -> {
+                                            addProperty("slot", 0)
+                                            addProperty("button", 0)
+                                            addProperty("mode", 0)
+                                        }
+                                        "close_container" -> { /* windowId 已加入 */ }
+                                        "drop_inventory" -> {
+                                            addProperty("slot", 0)
+                                            addProperty("dropStack", false)
+                                        }
+                                    }
+                                }
+                                ctx.sendAction(actionId, actionParams, timeoutMs = 5000L)
+                            }
+                        }
+                    }
+                    else -> {
+                        val timeout = when (actionId) {
+                            "player_move", "player_move_look" -> 15000L
+                            "screenshot" -> 20000L
+                            "break_block", "navigate_to", "pathfind_to" -> 20000L
+                            else -> 5000L
+                        }
+                        ctx.sendAction(actionId, params, timeoutMs = timeout)
+                    }
                 }
             },
             verify = { _, response -> verify(actionId, response) }
@@ -233,9 +273,9 @@ object BlackBoxTestCatalog {
             "pick_item" ->
                 CompletableFuture.completedFuture(BlackBoxPrepareResult("需要世界中存在物品实体"))
 
-            // edit_book：背包有 WRITABLE_BOOK（resetBaseline 已放 slot1）
-            "edit_book" ->
-                CompletableFuture.completedFuture(BlackBoxPrepareResult())
+            // edit_book/sign_book 在 1.21.11 导致后续断线，待排查（书写状态 GUI 与 reset 冲突）
+            "edit_book", "sign_book" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("书操作后 reset 导致断线，待排查"))
 
             // ===== FX-BLOCK：前方有方块 =====
             "dig_start", "dig_cancel", "dig_finish",
@@ -248,16 +288,28 @@ object BlackBoxTestCatalog {
                 }.thenApply { BlackBoxPrepareResult() }
             }
 
-            // ===== FX-ENTITY：需要动态 entityId，暂时跳过待排查断线问题 =====
+            // ===== FX-ENTITY：攻击盔甲架在 Paper 1.21.11 触发断线，待进一步排查 =====
+            // 可能是 Paper 1.21.11 对 invulnerable/Peaceful 模式下的攻击有更严格的校验
             "attack_entity", "interact_entity", "interact_entity_at",
             "attack", "use", "look_at_entity" ->
-                CompletableFuture.completedFuture(BlackBoxPrepareResult("FX-ENTITY 待排查断线问题"))
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("FX-ENTITY 待排查：攻击盔甲架导致客户端断线"))
 
             // ===== FX-GUI：需要打开容器 =====
-            "click_slot", "click_button", "close_container",
-            "open_container", "container_transfer", "drop_inventory",
+            // ===== FX-GUI：打开箱子容器 =====
+            "click_slot", "close_container" -> {
+                ctx.mainThread {
+                    fm.openChestInventory()
+                }.thenCompose {
+                    ctx.delay(2000L)  // 等待客户端区块加载并收到 open_window 包（网络延迟充裕）
+                }.thenApply { BlackBoxPrepareResult() }
+            }
+            // drop_inventory 不需要容器，只需背包有物品（resetBaseline 已放 STONE）
+            "drop_inventory" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult())
+            // 以下需要特殊 GUI（铁砧/信标/村民等），暂跳过
+            "click_button", "open_container", "container_transfer",
             "rename_item", "select_trade", "set_beacon_effect", "craft_recipe" ->
-                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要打开容器 GUI（FX-GUI 未实现）"))
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要特殊容器 GUI（铁砧/信标/村民等）"))
 
             // ===== 需要特殊游戏状态 =====
             "leave_bed" ->
@@ -442,15 +494,15 @@ object BlackBoxTestCatalog {
         "advancement_tab" -> JsonObject().apply {
             addProperty("action", "close")
         }
-        // FX-ITEM：book 类
+        // FX-ITEM：book 类（prepare 时已移到 slot0）
         "edit_book" -> JsonObject().apply {
-            addProperty("slot", 1)
+            addProperty("slot", 0)
             add("pages", JsonArray().apply { add("BlackBox Test Page") })
             addProperty("title", "")
             addProperty("signing", false)
         }
         "sign_book" -> JsonObject().apply {
-            addProperty("slot", 1)
+            addProperty("slot", 0)
             add("pages", JsonArray().apply { add("BlackBox Test Page") })
             addProperty("title", "BlackBox Test")
             addProperty("signing", true)
@@ -503,10 +555,18 @@ object BlackBoxTestCatalog {
                 add("BlackBox"); add("Test"); add(""); add("")
             })
         }
+        // FX-GUI：需要动态 windowId，execute 时先 query_container_state
+        "click_slot", "close_container" -> JsonObject().apply {
+            addProperty("__needWindowId", true)
+        }
+        // drop_inventory：从背包指定 slot 丢一个
+        "drop_inventory" -> JsonObject().apply {
+            addProperty("slot", 0)  // slot0 有 STONE（resetBaseline 放的）
+        }
         // FX-ENTITY 类：需要动态 entityId，execute 时先 query_nearby_entities 取第一个实体
         "attack_entity", "interact_entity", "interact_entity_at",
         "attack", "use", "look_at_entity" -> JsonObject().apply {
-            addProperty("__needEntityId", true)  // 标记，execute 时动态解析
+            addProperty("__needEntityId", true)
         }
         else -> JsonObject()
     }

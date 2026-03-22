@@ -22,7 +22,15 @@ class BlackBoxFixtureManager(
     private var origin = player.location.clone()
 
     fun resetBaseline(): String? {
-        cleanupTracked()
+        // 先清理实体（在 resetBaseline 主线程里删，避免在测试执行中触发客户端断线）
+        trackedEntities.mapNotNull { Bukkit.getEntity(it) }.forEach { entity ->
+            runCatching { entity.remove() }
+        }
+        trackedEntities.clear()
+        trackedBlocks.entries.forEach { (location, originalType) ->
+            runCatching { location.block.type = originalType }
+        }
+        trackedBlocks.clear()
         origin = player.location.clone().apply {
             pitch = 0f
             yaw = 0f
@@ -116,11 +124,9 @@ class BlackBoxFixtureManager(
     }
 
     fun cleanupTracked() {
-        trackedEntities.mapNotNull { Bukkit.getEntity(it) }.forEach { entity ->
-            runCatching { entity.remove() }
-        }
+        // 只清空追踪列表，不立即删实体
+        // 实体将在下次 resetBaseline 时统一删除，避免在测试执行中删实体触发客户端断线
         trackedEntities.clear()
-
         trackedBlocks.entries.forEach { (location, originalType) ->
             runCatching { location.block.type = originalType }
         }
