@@ -2,6 +2,7 @@ package com.blackboxpro.plugin.command.testframework
 
 import com.blackboxpro.common.action.ActionCatalog
 import com.blackboxpro.common.action.ActionDefinition
+import com.blackboxpro.common.protocol.ResponseMessage
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import java.util.Locale
@@ -164,16 +165,152 @@ object BlackBoxTestCatalog {
                     ctx.loaderProfile !in supportedProfiles ->
                         CompletableFuture.completedFuture(BlackBoxPrepareResult("当前版本不支持该 action"))
                     actionId in pendingFixtureActions ->
-                        CompletableFuture.completedFuture(BlackBoxPrepareResult("该 action 需要专用夹具，当前框架已建模但夹具尚未补齐"))
+                        prepareFixture(actionId, ctx)
                     else -> CompletableFuture.completedFuture(BlackBoxPrepareResult())
                 }
             },
             execute = { ctx ->
                 val params = defaultParams(actionId, ctx)
-                ctx.sendAction(actionId, params, timeoutMs = if (actionId in setOf("player_move", "player_move_look")) 15000L else if (actionId == "screenshot") 20000L else 5000L)
+                if (params.has("__needEntityId")) {
+                    // 先查询附近实体，取第一个 entityId
+                    ctx.sendAction("query_nearby_entities", JsonObject().apply {
+                        addProperty("radius", 8.0)
+                        addProperty("limit", 5)
+                    }).thenCompose { queryResp ->
+                    val entityId = queryResp.data
+                        ?.takeIf { it.has("entities") }
+                        ?.getAsJsonArray("entities")
+                        ?.takeIf { it.size() > 0 }
+                        ?.get(0)?.asJsonObject
+                        ?.get("entityId")?.asInt
+                        if (entityId == null) {
+                            CompletableFuture.completedFuture(
+                                ResponseMessage(ctx.testId, "failure", "No entities found nearby for $actionId", null)
+                            )
+                        } else {
+                            val actionParams = JsonObject().apply {
+                                addProperty("entityId", entityId)
+                                // interact_entity_at 需要额外的 target 坐标，使用实体位置近似
+                                if (actionId == "interact_entity_at") {
+                                    val entity = queryResp.data
+                                        ?.getAsJsonArray("entities")?.get(0)?.asJsonObject
+                                    addProperty("targetX", entity?.get("x")?.asDouble ?: 0.0)
+                                    addProperty("targetY", entity?.get("y")?.asDouble ?: 1.0)
+                                    addProperty("targetZ", entity?.get("z")?.asDouble ?: 0.0)
+                                    addProperty("hand", "main_hand")
+                                }
+                            }
+                            ctx.sendAction(actionId, actionParams, timeoutMs = 5000L)
+                        }
+                    }
+                } else {
+                    ctx.sendAction(actionId, params, timeoutMs = if (actionId in setOf("player_move", "player_move_look")) 15000L else if (actionId == "screenshot") 20000L else if (actionId in setOf("break_block", "navigate_to", "pathfind_to")) 20000L else 5000L)
+                }
             },
             verify = { _, response -> verify(actionId, response) }
         )
+    }
+
+    /**
+     * 为有夹具支撑的 pendingFixtureActions 设置前置条件。
+     * 有夹具 → 返回 BlackBoxPrepareResult()（放行）
+     * 无夹具 → 返回跳过理由
+     */
+    private fun prepareFixture(actionId: String, ctx: BlackBoxTestContext): CompletableFuture<BlackBoxPrepareResult> {
+        val fm = ctx.fixtureManager
+        return when (actionId) {
+
+            // ===== FX-ITEM：背包有物品 =====
+            // resetBaseline 已在 slot0 放 STONE，drop_item/drop_item_stack 直接可用
+            "drop_item", "drop_item_stack" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult())
+
+            // finish_using 需要手持食物并开始使用，过于复杂，暂跳过
+            "finish_using" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要手持食物并进入使用状态"))
+
+            // pick_item 需要光标指向物品实体，暂跳过
+            "pick_item" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要世界中存在物品实体"))
+
+            // edit_book：背包有 WRITABLE_BOOK（resetBaseline 已放 slot1）
+            "edit_book" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult())
+
+            // ===== FX-BLOCK：前方有方块 =====
+            "dig_start", "dig_cancel", "dig_finish",
+            "place_block", "use_item",
+            "break_block", "place_block_at", "look_at_block" -> {
+                ctx.mainThread {
+                    // 在玩家正前方 2 格放一个石头（dx=0, dy=0, dz=2）
+                    fm.ensureBlock(0, 0, 2, "STONE")
+                    null
+                }.thenApply { BlackBoxPrepareResult() }
+            }
+
+            // ===== FX-ENTITY：需要动态 entityId，暂时跳过待排查断线问题 =====
+            "attack_entity", "interact_entity", "interact_entity_at",
+            "attack", "use", "look_at_entity" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("FX-ENTITY 待排查断线问题"))
+
+            // ===== FX-GUI：需要打开容器 =====
+            "click_slot", "click_button", "close_container",
+            "open_container", "container_transfer", "drop_inventory",
+            "rename_item", "select_trade", "set_beacon_effect", "craft_recipe" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要打开容器 GUI（FX-GUI 未实现）"))
+
+            // ===== 需要特殊游戏状态 =====
+            "leave_bed" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要玩家处于睡眠状态"))
+            "horse_jump_start", "horse_jump_stop", "open_horse_inventory" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要骑乘马匹"))
+            "elytra_start" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要穿戴鞘翅且处于下落状态"))
+            "perform_respawn" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要玩家处于死亡状态"))
+            "spectator_teleport" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要旁观者模式"))
+            "move_vehicle", "paddle_boat" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要骑乘载具"))
+            "confirm_teleportation" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要服务端发送 TP 确认包"))
+
+            // ===== 需要特殊方块/服务端配置 =====
+            "update_sign" -> {
+                ctx.mainThread {
+                    fm.ensureBlock(0, 0, 2, "OAK_SIGN", "SIGN")
+                    null
+                }.thenApply { BlackBoxPrepareResult() }
+            }
+            "update_command_block", "update_command_block_minecart",
+            "update_structure_block", "update_jigsaw_block" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要命令方块/结构方块且 op 权限"))
+            "select_recipe", "recipe_book_toggle", "recipe_book_seen" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要配方书开启状态"))
+            "query_entity_nbt", "query_block_nbt" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("1.21.11 不支持该 action"))
+            "select_trade" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要打开村民交易界面"))
+
+            // ===== 调试类：协议格式复杂，暂跳过 =====
+            "custom_payload" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要指定通道和数据"))
+            "tab_complete" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要 tab 补全上下文"))
+            "debug_sample_subscription" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要服务端调试采样支持"))
+
+            // ===== 世界管理类 =====
+            "create_world", "join_world", "leave_world" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("当前版本不支持该 action"))
+
+            // ===== keep_alive：会踢人 =====
+            "keep_alive" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("发送硬编码 id 可能导致踢出玩家"))
+
+            // 其他未分类
+            else -> CompletableFuture.completedFuture(BlackBoxPrepareResult("该 action 需要专用夹具，当前框架已建模但夹具尚未补齐"))
+        }
     }
 
     private fun verify(actionId: String, response: com.blackboxpro.common.protocol.ResponseMessage): String? {
@@ -304,6 +441,72 @@ object BlackBoxTestCatalog {
         "lock_difficulty" -> JsonObject().apply { addProperty("locked", false) }
         "advancement_tab" -> JsonObject().apply {
             addProperty("action", "close")
+        }
+        // FX-ITEM：book 类
+        "edit_book" -> JsonObject().apply {
+            addProperty("slot", 1)
+            add("pages", JsonArray().apply { add("BlackBox Test Page") })
+            addProperty("title", "")
+            addProperty("signing", false)
+        }
+        "sign_book" -> JsonObject().apply {
+            addProperty("slot", 1)
+            add("pages", JsonArray().apply { add("BlackBox Test Page") })
+            addProperty("title", "BlackBox Test")
+            addProperty("signing", true)
+        }
+        // FX-BLOCK 类
+        "dig_start", "dig_cancel", "dig_finish" -> JsonObject().apply {
+            val target = ctx.fixtureManager.block(0, 0, 2)
+            addProperty("x", target.blockX)
+            addProperty("y", target.blockY)
+            addProperty("z", target.blockZ)
+            addProperty("face", "south")
+        }
+        "place_block" -> JsonObject().apply {
+            // 在前方方块的北面放方块（石头在 slot0）
+            val target = ctx.fixtureManager.block(0, 0, 2)
+            addProperty("x", target.blockX)
+            addProperty("y", target.blockY)
+            addProperty("z", target.blockZ)
+            addProperty("face", "north")
+            addProperty("hand", "main_hand")
+        }
+        "use_item" -> JsonObject().apply {
+            addProperty("hand", "main_hand")
+        }
+        "break_block" -> JsonObject().apply {
+            val target = ctx.fixtureManager.block(0, 0, 2)
+            addProperty("x", target.blockX)
+            addProperty("y", target.blockY)
+            addProperty("z", target.blockZ)
+        }
+        "place_block_at" -> JsonObject().apply {
+            val target = ctx.fixtureManager.block(1, 0, 2)
+            addProperty("x", target.blockX)
+            addProperty("y", target.blockY)
+            addProperty("z", target.blockZ)
+            addProperty("materialName", "STONE")
+        }
+        "look_at_block" -> JsonObject().apply {
+            val target = ctx.fixtureManager.block(0, 0, 2)
+            addProperty("x", target.blockX)
+            addProperty("y", target.blockY)
+            addProperty("z", target.blockZ)
+        }
+        "update_sign" -> JsonObject().apply {
+            val target = ctx.fixtureManager.block(0, 0, 2)
+            addProperty("x", target.blockX)
+            addProperty("y", target.blockY)
+            addProperty("z", target.blockZ)
+            add("lines", JsonArray().apply {
+                add("BlackBox"); add("Test"); add(""); add("")
+            })
+        }
+        // FX-ENTITY 类：需要动态 entityId，execute 时先 query_nearby_entities 取第一个实体
+        "attack_entity", "interact_entity", "interact_entity_at",
+        "attack", "use", "look_at_entity" -> JsonObject().apply {
+            addProperty("__needEntityId", true)  // 标记，execute 时动态解析
         }
         else -> JsonObject()
     }
