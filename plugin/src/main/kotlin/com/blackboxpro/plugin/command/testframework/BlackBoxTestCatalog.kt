@@ -221,9 +221,18 @@ object BlackBoxTestCatalog {
                                     addProperty("stateId", stateId)
                                     when (actionId) {
                                         "click_slot" -> {
-                                            addProperty("slot", 0)
-                                            addProperty("button", 0)
-                                            addProperty("mode", 0)
+                                            if (ctx.loaderProfile == BlackBoxLoaderProfile.MC_1122) {
+                                                // 1.12.2 参数格式
+                                                addProperty("slotId", 0)
+                                                addProperty("mouseButton", 0)
+                                                addProperty("actionNumber", 1)
+                                                addProperty("clickType", "PICKUP")
+                                            } else {
+                                                // 1.21.11 参数格式
+                                                addProperty("slot", 0)
+                                                addProperty("button", 0)
+                                                addProperty("mode", 0)
+                                            }
                                         }
                                         "close_container" -> { /* windowId 已加入 */ }
                                         "drop_inventory" -> {
