@@ -13,6 +13,7 @@ BlackBoxPro 自动化测试部署技能。根据用户指定的版本和模式�
 |------|------|---------|
 | `reference/action-catalog.md` | 全部 106 个 Action 的 ID、参数、分类 | 用户问"有哪些 action"、需要查参数、按分类筛选时 |
 | `reference/http-api.md` | HTTP 端点格式（请求/响应 JSON 结构） | 需要确认 API 调用格式时 |
+| `reference/register-action.md` | 注册第三方自定义 Action 的完整流程 | 用户要添加新 action、扩展测试能力时 |
 
 示例场景：
 - 用户："查询类的 action 有哪些？" → Read `reference/action-catalog.md`，定位"查询行为"章节
