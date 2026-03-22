@@ -3,8 +3,8 @@ import org.gradle.jvm.tasks.Jar
 import java.util.Properties
 
 plugins {
-    id("net.neoforged.moddev") version "2.0.140"
-    id("org.jetbrains.kotlin.jvm") version "2.2.0"
+    id("net.neoforged.moddev")
+    id("org.jetbrains.kotlin.jvm")
 }
 
 val localProps = Properties().apply {

@@ -1,7 +1,7 @@
 plugins {
     `java-library`
-    id("org.jetbrains.kotlin.jvm") version "2.2.0"
-    id("net.neoforged.moddev") version "2.0.140"
+    id("org.jetbrains.kotlin.jvm")
+    id("net.neoforged.moddev")
 }
 
 base {

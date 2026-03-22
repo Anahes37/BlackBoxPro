@@ -2,8 +2,8 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 
 plugins {
-    id("fabric-loom") version "1.14-SNAPSHOT"
-    id("org.jetbrains.kotlin.jvm") version "2.2.0"
+    id("fabric-loom")
+    id("org.jetbrains.kotlin.jvm")
 }
 
 evaluationDependsOn(":1.21.11:runtime")

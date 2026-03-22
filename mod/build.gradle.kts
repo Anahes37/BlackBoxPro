@@ -1,11 +1,19 @@
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.compile.JavaCompile
 import java.util.Properties
+
+plugins {
+    id("fabric-loom") version "1.14-SNAPSHOT" apply false
+    id("net.neoforged.moddev") version "2.0.140" apply false
+    id("org.jetbrains.kotlin.jvm") version "2.2.0" apply false
+}
 
 val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
 val gradlew1122 = if (isWindows) file("1.12.2/gradlew.bat") else file("1.12.2/gradlew")
 
-val sharedProps = Properties().apply {
-    file("gradle.properties").reader().use(::load)
-}
+val sharedProps = Properties()
+file("gradle.properties").inputStream().use { sharedProps.load(it) }
 
 allprojects {
     group = "com.blackboxpro"
@@ -17,12 +25,12 @@ subprojects {
         mavenCentral()
     }
 
-    tasks.withType<JavaCompile> {
+    tasks.withType(JavaCompile::class.java).configureEach {
         options.encoding = "UTF-8"
     }
 }
 
-val build1122 = tasks.register<Exec>("build1122") {
+val build1122 = tasks.register("build1122", Exec::class.java) {
     group = "build"
     description = "使用 1.12.2 独立 Gradle 构建 runtime 与 forge"
     dependsOn(":common:jar")
@@ -30,7 +38,7 @@ val build1122 = tasks.register<Exec>("build1122") {
     commandLine(gradlew1122.absolutePath, "--no-daemon", "build")
 }
 
-val clean1122 = tasks.register<Exec>("clean1122") {
+val clean1122 = tasks.register("clean1122", Exec::class.java) {
     group = "build"
     description = "清理 1.12.2 独立 Gradle 构建产物"
     workingDir = file("1.12.2")
@@ -38,7 +46,7 @@ val clean1122 = tasks.register<Exec>("clean1122") {
     isIgnoreExitValue = true
 }
 
-val collectJars = tasks.register<Copy>("collectJars") {
+val collectJars = tasks.register("collectJars", Copy::class.java) {
     group = "build"
     description = "收集 common/runtime/fabric/neoforge/1.12.2 的 jar 到 mod/build/libs"
     dependsOn(build1122)

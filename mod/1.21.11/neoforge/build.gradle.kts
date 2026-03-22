@@ -2,8 +2,8 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 
 plugins {
-    id("net.neoforged.moddev") version "2.0.140"
-    id("org.jetbrains.kotlin.jvm") version "2.2.0"
+    id("net.neoforged.moddev")
+    id("org.jetbrains.kotlin.jvm")
 }
 
 evaluationDependsOn(":common")

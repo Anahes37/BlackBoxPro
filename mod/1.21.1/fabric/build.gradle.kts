@@ -3,11 +3,11 @@ import org.gradle.jvm.tasks.Jar
 import java.util.Properties
 
 plugins {
-    id("fabric-loom") version "1.14-SNAPSHOT"
-    id("org.jetbrains.kotlin.jvm") version "2.2.0"
+    id("fabric-loom")
+    id("org.jetbrains.kotlin.jvm")
 }
 
-// 直接从本版本目录读取独立的版本属性，不依赖父项目注入
+// 直锟接从憋拷锟芥本目录锟斤拷取锟斤拷锟斤拷锟侥版本锟斤拷锟皆ｏ拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷目注锟斤拷
 val localProps = Properties().apply {
     projectDir.parentFile.resolve("gradle.properties").reader().use(::load)
 }
