@@ -4,6 +4,7 @@ import com.blackboxpro.forge.action.ActionExecutor
 import com.blackboxpro.forge.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiDisconnected
 import net.minecraft.client.gui.inventory.*
 
 class QueryScreenStateAction : ActionExecutor {
@@ -32,6 +33,34 @@ class QueryScreenStateAction : ActionExecutor {
             }
 
             addProperty("screenType", classifyScreen(screen))
+
+            // GuiDisconnected：补充断线原因
+            if (screen is GuiDisconnected) {
+                // 1.12.2 ForgeGradle 映射下字段可能是 reason 或 SRG 名，尝试多个
+                val fieldNames = listOf("reason", "field_96306_", "message", "cause")
+                for (name in fieldNames) {
+                    val found = runCatching {
+                        val f = screen.javaClass.getDeclaredField(name)
+                        f.isAccessible = true
+                        val v = f.get(screen)
+                        if (v != null) { addProperty("reason", v.toString()); true } else false
+                    }.getOrNull() ?: false
+                    if (found) break
+                }
+                // 尝试从所有字段里找 ITextComponent 类型的
+                if (!has("reason")) {
+                    runCatching {
+                        screen.javaClass.declaredFields.forEach { f ->
+                            f.isAccessible = true
+                            val v = f.get(screen)
+                            if (v != null && v.javaClass.name.contains("TextComponent", ignoreCase = true)) {
+                                addProperty("reason", v.toString())
+                                return@forEach
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         return ActionResult.ok("Screen state queried", data)
@@ -48,6 +77,7 @@ class QueryScreenStateAction : ActionExecutor {
         is GuiBrewingStand -> "brewing_stand"
         is GuiBeacon -> "beacon"
         is GuiScreenHorseInventory -> "horse"
+        is GuiDisconnected -> "disconnected"
         is GuiContainer -> "container_unknown"
         else -> "other"
     }

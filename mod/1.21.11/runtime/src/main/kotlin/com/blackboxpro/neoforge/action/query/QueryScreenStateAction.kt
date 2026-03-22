@@ -4,6 +4,7 @@ import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.screens.DisconnectedScreen
 import net.minecraft.client.gui.screens.inventory.*
 
 /**
@@ -33,6 +34,22 @@ class QueryScreenStateAction : ActionExecutor {
             }
 
             addProperty("screenType", classifyScreen(screen))
+
+            // DisconnectedScreen：补充断线原因和详情
+            if (screen is DisconnectedScreen) {
+                runCatching {
+                    val f = DisconnectedScreen::class.java.getDeclaredField("reason")
+                    f.isAccessible = true
+                    val v = f.get(screen)
+                    if (v != null) addProperty("reason", v.toString())
+                }
+                runCatching {
+                    val f = DisconnectedScreen::class.java.getDeclaredField("info")
+                    f.isAccessible = true
+                    val v = f.get(screen)
+                    if (v != null) addProperty("info", v.toString())
+                }
+            }
         }
 
         return ActionResult.ok("Screen state queried", data)
@@ -63,6 +80,7 @@ class QueryScreenStateAction : ActionExecutor {
         is HorseInventoryScreen -> "horse"
         is BookViewScreen -> "book"
         is BookEditScreen -> "book_edit"
+        is DisconnectedScreen -> "disconnected"
         is AbstractContainerScreen<*> -> "container_unknown"
         else -> "other"
     }

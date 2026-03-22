@@ -4,6 +4,7 @@ import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.screen.DisconnectedScreen
 import net.minecraft.client.gui.screen.ingame.*
 
 /**
@@ -32,8 +33,23 @@ class QueryScreenStateAction : ActionExecutor {
                 addProperty("isContainer", false)
             }
 
-            // 屏幕类型分类
             addProperty("screenType", classifyScreen(screen))
+
+            // DisconnectedScreen：补充断线原因和详情
+            if (screen is DisconnectedScreen) {
+                runCatching {
+                    val f = DisconnectedScreen::class.java.getDeclaredField("reason")
+                    f.isAccessible = true
+                    val v = f.get(screen)
+                    if (v != null) addProperty("reason", v.toString())
+                }
+                runCatching {
+                    val f = DisconnectedScreen::class.java.getDeclaredField("info")
+                    f.isAccessible = true
+                    val v = f.get(screen)
+                    if (v != null) addProperty("info", v.toString())
+                }
+            }
         }
 
         return ActionResult.ok("Screen state queried", data)
@@ -64,6 +80,7 @@ class QueryScreenStateAction : ActionExecutor {
         is HorseScreen -> "horse"
         is BookScreen -> "book"
         is BookEditScreen -> "book_edit"
+        is DisconnectedScreen -> "disconnected"
         is HandledScreen<*> -> "container_unknown"
         else -> "other"
     }
