@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+import org.gradle.jvm.tasks.Jar
 import io.izzel.taboolib.gradle.Basic
 import io.izzel.taboolib.gradle.Bukkit
 import io.izzel.taboolib.gradle.BukkitUtil
@@ -19,6 +20,9 @@ val rootProps = Properties().apply {
     load(file("${rootDir}/../gradle.properties").reader())
 }
 version = rootProps.getProperty("version", "0.0.0")
+val commonVersion = rootProps.getProperty("version", "0.0.0")
+val embeddedCommon by configurations.creating
+val commonJar = file("${rootDir}/../common/build/libs/blackboxpro-common-$commonVersion.jar")
 
 taboolib {
     env {
@@ -39,8 +43,10 @@ repositories {
 }
 
 dependencies {
+    compileOnly(files(commonJar))
+    embeddedCommon(files(commonJar))
     compileOnly(kotlin("stdlib"))
-    compileOnly("com.google.code.gson:gson:2.11.0")
+    compileOnly("com.google.code.gson:gson:2.10.1")
     compileOnly("ink.ptms.core:v12105:12105:mapped")
     compileOnly("ink.ptms.core:v12105:12105:universal")
 }
@@ -50,15 +56,28 @@ tasks.withType<JavaCompile> {
 }
 
 tasks.withType<KotlinCompile> {
+    dependsOn(gradle.includedBuild("common").task(":jar"))
     compilerOptions {
         jvmTarget.set(JVM_1_8)
         freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
 
+tasks.withType<JavaCompile> {
+    dependsOn(gradle.includedBuild("common").task(":jar"))
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+tasks.named<Jar>("jar") {
+    dependsOn(gradle.includedBuild("common").task(":jar"))
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from({
+        embeddedCommon.map { zipTree(it) }
+    })
 }
 
 // ======================== 发布配置 ========================

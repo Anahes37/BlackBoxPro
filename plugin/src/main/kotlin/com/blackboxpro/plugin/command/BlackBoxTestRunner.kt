@@ -1,8 +1,17 @@
 package com.blackboxpro.plugin.command
 
 import com.blackboxpro.plugin.api.action.*
-import com.blackboxpro.plugin.channel.ResponseMessage
+import com.blackboxpro.common.protocol.ResponseMessage
+import com.blackboxpro.plugin.command.testframework.BlackBoxActionTestCase
+import com.blackboxpro.plugin.command.testframework.BlackBoxActionTestResult
+import com.blackboxpro.plugin.command.testframework.BlackBoxTestCatalog
+import com.blackboxpro.plugin.command.testframework.BlackBoxTestContext
+import com.blackboxpro.plugin.command.testframework.BlackBoxTestProfile
+import com.blackboxpro.plugin.command.testframework.BlackBoxTestStatus
+import com.blackboxpro.plugin.command.testframework.BlackBoxLoaderProfile
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import taboolib.common.platform.function.submit
@@ -11,12 +20,9 @@ import java.util.concurrent.CompletableFuture
 /**
  * 集成测试运行器。
  *
- * 每个测试用例经历三个截图阶段：
- * - before：动作执行前的画面
- * - during：动作执行中的画面（持续性动作在中间态截图，瞬时动作在执行后立即截图）
- * - after / FAILED：动作完成后的画面
- *
- * 截图通过 [screenshot] 方法串入 Future 链，确保每张截图写入完成后再继续。
+ * 框架层不自动截图。截图完全由测试用例自身决定：
+ * - 需要视觉验证的用例在 execute() 或 verify() 里主动调用 screenshot action。
+ * - screenshot action 本身的测试用例会验证截图是否落盘。
  */
 object BlackBoxTestRunner {
 
@@ -36,13 +42,13 @@ object BlackBoxTestRunner {
         val testId = "integration_${System.currentTimeMillis() / 1000}"
 
         sender.sendMessage("§6[BlackBoxPro Test] §f开始执行 ${cases.size} 个测试用例...")
+        sender.sendMessage("§7  模式: smoke")
         sender.sendMessage("§7  截图会话: $testId")
         sender.sendMessage("")
 
         val results = mutableListOf<Triple<String, Boolean, String?>>()
         val startTime = System.currentTimeMillis()
 
-        // 测试开始截图
         var chain = screenshot(player, testId, "00_test_start")
 
         cases.forEachIndexed { index, case ->
@@ -51,18 +57,14 @@ object BlackBoxTestRunner {
                 val tag = "${num}_${case.id}"
                 val t0 = System.currentTimeMillis()
 
-                // 阶段 1: before
                 screenshot(player, testId, "${tag}_1_before").thenCompose {
-                    // 阶段 2: 执行 start
                     case.start(player)
                 }.thenCompose { startResponse ->
                     if (!startResponse.isSuccess) {
-                        // 失败：截 during + FAILED
                         screenshot(player, testId, "${tag}_2_during").thenCompose {
                             screenshot(player, testId, "${tag}_3_FAILED")
                         }.thenApply { startResponse }
                     } else if (case.finish != null) {
-                        // 持续性动作：截 during → 执行 finish → 截 after
                         screenshot(player, testId, "${tag}_2_during").thenCompose {
                             case.finish.invoke(player)
                         }.thenCompose { finishResponse ->
@@ -70,7 +72,6 @@ object BlackBoxTestRunner {
                             screenshot(player, testId, "${tag}_${suffix}").thenApply { finishResponse }
                         }
                     } else {
-                        // 瞬时动作：截 during + after
                         screenshot(player, testId, "${tag}_2_during").thenCompose {
                             screenshot(player, testId, "${tag}_3_after")
                         }.thenApply { startResponse }
@@ -105,10 +106,160 @@ object BlackBoxTestRunner {
                 }
             }
         }.exceptionally { ex ->
-            // 异常时尝试截图（fire-and-forget）
             ScreenshotActions.screenshot(player, testId, "99_test_exception", player.name).exceptionally { null }
             sender.sendMessage("§c[BlackBoxPro Test] 测试异常中断: ${ex.message}")
             null
+        }
+    }
+
+    fun runFull(player: Player, sender: CommandSender): CompletableFuture<JsonObject> =
+        runCatalog(player, sender, BlackBoxTestProfile.FULL)
+
+    fun runSmoke(player: Player, sender: CommandSender): CompletableFuture<JsonObject> =
+        runCatalog(player, sender, BlackBoxTestProfile.SMOKE)
+
+    fun runCategory(player: Player, sender: CommandSender, category: String) {
+        runCatalog(player, sender, BlackBoxTestProfile.FULL, category = category)
+    }
+
+    fun runAction(player: Player, sender: CommandSender, actionId: String) {
+        runCatalog(player, sender, BlackBoxTestProfile.FULL, actionId = actionId)
+    }
+
+    fun categories(): List<String> = BlackBoxTestCatalog.getCategories()
+
+    private fun runCatalog(
+        player: Player,
+        sender: CommandSender,
+        profile: BlackBoxTestProfile,
+        category: String? = null,
+        actionId: String? = null
+    ): CompletableFuture<JsonObject> {
+        val loaderProfile = BlackBoxLoaderProfile.detect(Bukkit.getBukkitVersion())
+        val cases = when {
+            actionId != null -> listOfNotNull(BlackBoxTestCatalog.findAction(actionId))
+            else -> BlackBoxTestCatalog.cases(profile, category)
+        }
+
+        if (cases.isEmpty()) {
+            sender.sendMessage("§c[BlackBoxPro Test] 没有找到匹配的测试项。")
+            return CompletableFuture.completedFuture(JsonObject().apply { addProperty("error", "No matching cases") })
+        }
+
+        val testId = buildString {
+            append("integration_")
+            append(profile.name.lowercase())
+            if (category != null) append("_${category.lowercase()}")
+            if (actionId != null) append("_${actionId.lowercase()}")
+            append("_")
+            append(System.currentTimeMillis() / 1000)
+        }
+        val ctx = BlackBoxTestContext(player, sender, testId, loaderProfile)
+        val results = mutableListOf<BlackBoxActionTestResult>()
+        val startTime = System.currentTimeMillis()
+
+        sender.sendMessage("§6[BlackBoxPro Test] §f开始执行 ${cases.size} 个测试用例...")
+        sender.sendMessage("§7  模式: ${profile.name.lowercase()}")
+        sender.sendMessage("§7  客户端档位: ${loaderProfile.name.lowercase()}")
+        if (category != null) sender.sendMessage("§7  分类: $category")
+        if (actionId != null) sender.sendMessage("§7  Action: $actionId")
+        sender.sendMessage("§7  截图会话: $testId")
+        sender.sendMessage("")
+
+        var chain = CompletableFuture.completedFuture(Unit)
+        cases.forEachIndexed { index, case ->
+            chain = chain.thenCompose {
+                executeCatalogCase(ctx, case, index, results)
+            }
+        }
+
+        return chain.thenCompose {
+            ctx.delay(300L)
+        }.thenApply {
+            val totalTime = System.currentTimeMillis() - startTime
+            val passed = results.count { it.status == BlackBoxTestStatus.PASSED }
+            val failed = results.count { it.status == BlackBoxTestStatus.FAILED }
+            val skipped = results.count { it.status == BlackBoxTestStatus.SKIPPED }
+            sender.sendMessage("")
+            sender.sendMessage("§6[BlackBoxPro Test] §f完成: §a$passed 通过§f, §c$failed 失败§f, §e$skipped 跳过 §7(总耗时 ${totalTime}ms)")
+            if (failed > 0) {
+                results.filter { it.status == BlackBoxTestStatus.FAILED }.forEach { result ->
+                    sender.sendMessage("§c  ✗ ${result.case.displayName}: ${result.message}")
+                }
+            }
+            if (skipped > 0) {
+                sender.sendMessage("§e[BlackBoxPro Test] 跳过项已记录，可用 /blackbox test <player> action <id> 单独调试。")
+            }
+            JsonObject().apply {
+                addProperty("passed", passed)
+                addProperty("failed", failed)
+                addProperty("skipped", skipped)
+                addProperty("total", results.size)
+                addProperty("totalMs", totalTime)
+                add("results", JsonArray().apply {
+                    results.forEach { r ->
+                        add(JsonObject().apply {
+                            addProperty("action", r.case.actionId)
+                            addProperty("status", r.status.name.lowercase())
+                            addProperty("message", r.message)
+                            r.response?.data?.let { add("data", it) }
+                        })
+                    }
+                })
+            }
+        }.exceptionally { ex ->
+            sender.sendMessage("§c[BlackBoxPro Test] 测试异常中断: ${ex.message}")
+            JsonObject().apply { addProperty("error", ex.message) }
+        }
+    }
+
+    private fun executeCatalogCase(
+        ctx: BlackBoxTestContext,
+        case: BlackBoxActionTestCase,
+        index: Int,
+        results: MutableList<BlackBoxActionTestResult>
+    ): CompletableFuture<Unit> {
+        val t0 = System.currentTimeMillis()
+
+        return ctx.mainThread { ctx.fixtureManager.resetBaseline() }.thenCompose {
+            ctx.sendAction("close_screen").thenApply { }.exceptionally { }
+        }.thenCompose {
+            ctx.delay(300L)
+        }.thenCompose {
+            case.prepare(ctx)
+        }.thenCompose { prepareResult ->
+            if (prepareResult.skipReason != null) {
+                case.cleanup(ctx).thenApply {
+                    val elapsed = System.currentTimeMillis() - t0
+                    results += BlackBoxActionTestResult(case, BlackBoxTestStatus.SKIPPED, prepareResult.skipReason)
+                    ctx.sender.sendMessage("§e[BlackBoxPro Test] §e↷ §f#${index + 1} ${case.displayName} §e- ${prepareResult.skipReason} §7(${elapsed}ms)")
+                }
+            } else {
+                case.execute(ctx).handle { response, throwable -> response to throwable }.thenCompose { (response, throwable) ->
+                    if (throwable != null || response == null) {
+                        val reason = throwable?.message ?: "Unknown execution error"
+                        case.cleanup(ctx).thenApply {
+                            val elapsed = System.currentTimeMillis() - t0
+                            results += BlackBoxActionTestResult(case, BlackBoxTestStatus.FAILED, reason)
+                            ctx.sender.sendMessage("§c[BlackBoxPro Test] §c✗ §f#${index + 1} ${case.displayName} §c- $reason §7(${elapsed}ms)")
+                        }
+                    } else {
+                        val verifyMessage = case.verify(ctx, response)
+                        val status = if (verifyMessage == null) BlackBoxTestStatus.PASSED else BlackBoxTestStatus.FAILED
+                        case.cleanup(ctx).thenApply {
+                            val elapsed = System.currentTimeMillis() - t0
+                            results += BlackBoxActionTestResult(case, status, verifyMessage ?: (response.message ?: response.status), response)
+                            when (status) {
+                                BlackBoxTestStatus.PASSED ->
+                                    ctx.sender.sendMessage("§a[BlackBoxPro Test] §a✓ §f#${index + 1} ${case.displayName} §7(${elapsed}ms)")
+                                BlackBoxTestStatus.FAILED ->
+                                    ctx.sender.sendMessage("§c[BlackBoxPro Test] §c✗ §f#${index + 1} ${case.displayName} §c- $verifyMessage §7(${elapsed}ms)")
+                                BlackBoxTestStatus.SKIPPED -> Unit
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

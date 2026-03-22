@@ -1,0 +1,95 @@
+package com.blackboxpro.neoforge.action.query
+
+import com.blackboxpro.neoforge.action.ActionExecutor
+import com.blackboxpro.neoforge.action.ActionResult
+import com.google.gson.JsonObject
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.screens.inventory.*
+
+/**
+ * 查询当前打开的屏幕/GUI 状态。
+ * Action ID: "query_screen_state"
+ */
+class QueryScreenStateAction : ActionExecutor {
+
+    override fun execute(params: JsonObject): ActionResult {
+        val client = Minecraft.getInstance()
+        val screen = client.screen
+
+        val data = JsonObject().apply {
+            addProperty("open", screen != null)
+            addProperty("screenClass", screen?.javaClass?.simpleName ?: "none")
+            addProperty("title", screen?.title?.string ?: "")
+
+            if (screen is AbstractContainerScreen<*>) {
+                addProperty("isContainer", true)
+                val handler = client.player?.containerMenu
+                if (handler != null) {
+                    addProperty("windowId", handler.containerId)
+                    addProperty("slotCount", handler.slots.size)
+                }
+            } else {
+                addProperty("isContainer", false)
+            }
+
+            val screenType = if (screen?.javaClass?.simpleName == "DisconnectedScreen") "disconnected"
+                             else classifyScreen(screen)
+            addProperty("screenType", screenType)
+
+            // DisconnectedScreen：补充断线原因和详情（用类名匹配兼容不同版本）
+            if (screen != null && screen.javaClass.simpleName == "DisconnectedScreen") {
+                val reasonNames = listOf("reason", "f_96306_")
+                for (name in reasonNames) {
+                    val found = runCatching {
+                        val f = screen.javaClass.getDeclaredField(name)
+                        f.isAccessible = true
+                        val v = f.get(screen)
+                        if (v != null) { addProperty("reason", v.toString()); true } else false
+                    }.getOrNull() ?: false
+                    if (found) break
+                }
+                val detailNames = listOf("details", "info", "f_96307_")
+                for (name in detailNames) {
+                    val found = runCatching {
+                        val f = screen.javaClass.getDeclaredField(name)
+                        f.isAccessible = true
+                        val v = f.get(screen)
+                        if (v != null) { addProperty("details", v.toString()); true } else false
+                    }.getOrNull() ?: false
+                    if (found) break
+                }
+            }
+        }
+
+        return ActionResult.ok("Screen state queried", data)
+    }
+
+    private fun classifyScreen(screen: net.minecraft.client.gui.screens.Screen?): String = when (screen) {
+        null -> "none"
+        is InventoryScreen -> "player_inventory"
+        is CreativeModeInventoryScreen -> "creative_inventory"
+        is ContainerScreen -> "generic_container"
+        is DispenserScreen -> "generic_3x3"
+        is ShulkerBoxScreen -> "shulker_box"
+        is CraftingScreen -> "crafting_table"
+        is FurnaceScreen -> "furnace"
+        is SmokerScreen -> "smoker"
+        is BlastFurnaceScreen -> "blast_furnace"
+        is BrewingStandScreen -> "brewing_stand"
+        is AnvilScreen -> "anvil"
+        is EnchantmentScreen -> "enchanting_table"
+        is GrindstoneScreen -> "grindstone"
+        is LoomScreen -> "loom"
+        is CartographyTableScreen -> "cartography_table"
+        is StonecutterScreen -> "stonecutter"
+        is SmithingScreen -> "smithing_table"
+        is MerchantScreen -> "villager_trade"
+        is HopperScreen -> "hopper"
+        is BeaconScreen -> "beacon"
+        is HorseInventoryScreen -> "horse"
+        is BookViewScreen -> "book"
+        is BookEditScreen -> "book_edit"
+        is AbstractContainerScreen<*> -> "container_unknown"
+        else -> "other"
+    }
+}

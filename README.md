@@ -1,47 +1,69 @@
 # BlackBoxPro
 
-Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服务端插件向客户端 Mod 下发 JSON 指令，Mod 在客户端模拟真实玩家行为（移动、交互、GUI 操作、战斗等），用于对服务端插件逻辑进行自动化功能测试。
+Minecraft 自动化黑盒测试框架。服务端插件通过 Plugin Message Channel 向客户端 Mod 下发 JSON 指令，客户端模拟真实玩家行为并回传结果，用于服务端插件功能测试。
 
 ## 架构
 
-```
+```text
 ┌─────────────────────┐     blackbox:command      ┌──────────────────────┐
-│   Bukkit Server     │ ────────────────────────▶  │  Fabric / NeoForge   │
-│   (plugin 模块)     │                            │  / Forge 客户端 Mod  │
-│                     │ ◀────────────────────────  │                     │
-│                     │     blackbox:response      │                     │
-└─────────────────────┘                            └──────────────────────┘
+│   Bukkit Server     │ ────────────────────────▶ │  Fabric / NeoForge   │
+│   (plugin 模块)     │                           │  / Forge 客户端 Mod  │
+│                     │ ◀──────────────────────── │                      │
+│                     │     blackbox:response     │                      │
+└─────────────────────┘                           └──────────────────────┘
 ```
-
-服务端插件通过 `blackbox:command` 通道发送 JSON 指令，客户端 Mod 执行后通过 `blackbox:response` 通道回报结果。
 
 ## 模块
 
 | 模块 | 角色 | 框架 | JVM |
 |------|------|------|-----|
-| `fabric-1.21.11` | 客户端 Mod | Fabric 1.21.11 + fabric-language-kotlin | 21 |
-| `neoforge-1.21.11` | 客户端 Mod | NeoForge 21.11.x + KotlinForForge | 21 |
-| `forge-1.12.2` | 客户端 Mod | Forge 1.12.2 | 8 |
+| `common` | 无 MC 依赖的共享协议层 | Kotlin + Gson | 8 |
+| `mod:1.21.11:runtime` | 1.21.11 公共运行时核心 | NeoForm + Kotlin | 21 |
+| `mod:1.21.11:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.11 | 21 |
+| `mod:1.21.11:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.11.x | 21 |
+| `mod:1.21.1:runtime` | 1.21.1 公共运行时核心 | NeoForm + Kotlin | 21 |
+| `mod:1.21.1:fabric` | Fabric wrapper + 平台实现 | Fabric 1.21.1 | 21 |
+| `mod:1.21.1:neoforge` | NeoForge wrapper + 平台实现 | NeoForge 21.1.x | 21 |
+| `mod/1.12.2` | Forge 1.12.2 客户端 Mod（独立构建根，含 `runtime` / `forge`） | Forge 1.12.2 | 8 |
 | `plugin` | 服务端插件 | Paper/Spigot + TabooLib 6.2 | 21 |
 
-`fabric-1.21.11` 和 `neoforge-1.21.11` 由根项目统一管理；`forge-1.12.2` 和 `plugin` 为独立 Gradle 项目。
+## 仓库结构
 
-## 测试模式
+```text
+BlackBoxPro/
+├── common/                    # 共享协议层 / runtime 抽象
+├── plugin/                    # 服务端插件
+├── mod/                       # 客户端多版本工程
+│   ├── 1.21.11/
+│   │   ├── runtime/
+│   │   ├── fabric/
+│   │   └── neoforge/
+│   ├── 1.21.1/
+│   │   ├── runtime/
+│   │   ├── fabric/
+│   │   └── neoforge/
+│   └── 1.12.2/
+│       ├── runtime/
+│       └── forge/
+├── docs/
+│   ├── design/                # 需求 / 开发设计文档
+│   ├── testing/               # 测试计划 / 用例说明
+│   └── reports/               # 测试报告 / 汇总
+├── artifacts/
+│   └── test-results/          # 本地测试结果 JSON（默认忽略）
+├── build.gradle.kts           # 根聚合入口
+└── settings.gradle.kts
+```
 
-测试模式现已拆分为两类：
+说明：
+- 根项目负责聚合构建。
+- `mod` 是客户端聚合入口，统一管理 `1.21.11`、`1.21.1` 与 `1.12.2`。
+- `mod/1.12.2` 是独立 Gradle 构建根，用于隔离 Kotlin 1.9.25 + RFG 工具链。
+- `runtime` 承载跨 loader 共享 bridge/core，以及逐步沉淀的共享 Action。
+- `docs/` 存放设计、测试和报告文档；根目录仅保留核心入口文件。
+- `artifacts/test-results/` 存放本地黑盒测试结果，不再散落在根目录。
 
-- `plugin + 客户端联合测试`：面向 `1.21.11`、`1.12.2`，验证服务端 `plugin`、Plugin Message 和客户端执行链路
-- `纯客户端测试`：当前面向 `neoforge-1.21.1`，通过 `runClient + 本地 HTTP API` 验证客户端本地 Action 和单机世界管理
-
-纯客户端里的世界管理 Action 采用原子完成语义：
-
-- `create_world` 只有真正进入世界后才返回成功
-- `join_world` 只有真正进入已有世界后才返回成功；不存在或坏掉的本地存档会直接失败，不再弹原版加载失败流程
-- `leave_world` 只有真正回到主菜单后才返回成功
-
-详细约定见 [测试模式说明.md](./测试模式说明.md)。
-
-## 支持的行为 (86+)
+## 支持的行为
 
 | 分类 | 示例 | 数量 |
 |------|------|------|
@@ -61,7 +83,7 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 
 消息格式：JSON over Plugin Message Channel（VarInt length + UTF-8 bytes）。
 
-指令 (Server → Client)：
+指令：
 ```json
 {
   "id": "uuid",
@@ -71,7 +93,7 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 }
 ```
 
-响应 (Client → Server)：
+响应：
 ```json
 {
   "id": "uuid",
@@ -81,55 +103,41 @@ Minecraft 自动化黑盒测试框架。通过 Plugin Message Channel 实现服�
 }
 ```
 
-## 服务端 API
-
-`BlackBoxApi` 提供三种调用模式：
-
-```kotlin
-// Fire-and-forget
-BlackBoxApi.send(player, "chat_message", params)
-
-// 回调
-BlackBoxApi.send(player, "click_slot", params) { response ->
-    // 处理响应
-}
-
-// CompletableFuture（推荐）
-BlackBoxApi.sendAsync(player, "pathfind_to", params).thenAccept { response ->
-    // 处理响应
-}
-```
-
-同时提供高级封装 `HighLevelActions`，简化常见操作的参数构建。
-
 ## 构建
 
-```bash
-# Fabric + NeoForge（根项目）
-./gradlew :fabric-1.21.11:build :neoforge-1.21.11:build
+在仓库根目录执行：
 
-# Forge 1.12.2（独立项目，需 JDK 8）
-cd forge-1.12.2 && ./gradlew build
+```powershell
+# 构建 1.21.x mod（按根任务定义）
+.\gradlew mod_buildAll
 
-# 服务端插件（独立项目）
-cd plugin && ./gradlew jar
+# 构建 plugin
+.\gradlew plugin_build
 
-# 全量构建 + 收集产物到 build/libs
-./gradlew buildAll collectJars
+# 构建 forge 1.12.2
+.\gradlew forge1122_build
+
+# 全量构建并收集产物到根 build\libs
+.\gradlew buildAll
 ```
 
-产物路径：
-- `fabric-1.21.11/build/libs/blackboxpro-fabric-*.jar`
-- `neoforge-1.21.11/build/libs/blackboxpro-neoforge-*.jar`
-- `forge-1.12.2/build/libs/blackboxpro-forge-*.jar`
+## 产物路径
+
+- `common/build/libs/blackboxpro-common-*.jar`
+- `mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-*.jar`
+- `mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-*.jar`
+- `mod/1.21.1/fabric/build/libs/BlackBoxPro-fabric-1.21.1-*.jar`
+- `mod/1.21.1/neoforge/build/libs/BlackBoxPro-neoforge-1.21.1-*.jar`
 - `plugin/build/libs/BlackBoxPro-Plugin-*.jar`
+- `mod/1.12.2/build/libs/BlackBoxPro-forge-1.12.2-*.jar`
+- `build/libs/` 为根聚合收集目录
 
 ## 技术栈
 
-- Kotlin, JVM 21 / JVM 8 (forge-1.12.2)
-- Gradle (Kotlin DSL)
+- Kotlin
+- Gradle Kotlin DSL
 - Fabric API / NeoForge / Forge
-- TabooLib 6.2 (plugin)
+- TabooLib 6.2（plugin）
 - Gson
 
 ## 许可证

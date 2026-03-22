@@ -39,7 +39,14 @@ plugin/gradle/
 plugin/gradlew
 plugin/gradlew.bat
 
-# forge-1.12.2 子项目（独立 Gradle wrapper，需要 Gradle 4.9）
-forge-1.12.2/.gradle/
+# mod/1.12.2 独立构建的 Gradle 缓存
+mod/1.12.2/.gradle/
 
-docs/
+# 文档目录纳入版本控制
+
+# 测试结果与运行产物
+artifacts/test-results/
+logs/
+META-INF/
+*.log
+*.log.gz

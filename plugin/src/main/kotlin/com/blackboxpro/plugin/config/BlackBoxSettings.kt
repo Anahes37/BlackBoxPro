@@ -3,9 +3,6 @@ package com.blackboxpro.plugin.config
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
 
-/**
- * BlackBoxPro 服务端插件配置。
- */
 object BlackBoxSettings {
 
     @Config("config.yml")
@@ -14,7 +11,11 @@ object BlackBoxSettings {
 
     val debug: Boolean get() = conf.getBoolean("debug", false)
 
-    val responseTimeoutMs: Long get() = conf.getLong("response-timeout-ms", 5000L)
+    val responseTimeoutMs: Long get() = conf.getLong("response-timeout-ms", 10000L)
 
-    val maxPayloadSize: Int get() = conf.getInt("max-payload-size", 32767)
+    val httpPort: Int get() = conf.getInt("http-port", 38080)
+
+    val testMode: String get() = conf.getString("test-mode", "dual") ?: "dual"
+
+    val modHttpAddress: String get() = conf.getString("mod-http-address", "http://localhost:38081") ?: "http://localhost:38081"
 }

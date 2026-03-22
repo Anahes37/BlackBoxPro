@@ -1,0 +1,55 @@
+{
+  "$schema": "用于 deploying-blackbox 技能的环境配置。首次使用时请根据注释填写各项。",
+
+  "versions": {
+    "1.21.11": {
+      "client": {
+        "launchMethod": "runClient",
+        "launchCommand": "./gradlew :mod:1.21.11:fabric:runClient --no-daemon",
+        "launchCwd": "",
+        "javaHome": "",
+        "playerName": "Player",
+        "modDir": "",
+        "screenshotDir": "",
+        "logFile": ""
+      },
+      "server": {
+        "directory": "",
+        "jar": "",
+        "javaPath": "",
+        "jvmArgs": "-Xms4G -Xmx4G -XX:+UseG1GC",
+        "pluginDir": ""
+      }
+    },
+    "1.12.2": {
+      "client": {
+        "launchMethod": "runClient",
+        "launchCommand": "./gradlew :forge:runClient --no-daemon",
+        "launchCwd": "mod/1.12.2",
+        "javaHome": "",
+        "playerName": "Developer",
+        "modDir": "",
+        "screenshotDir": "",
+        "logFile": ""
+      },
+      "server": {
+        "directory": "",
+        "jar": "",
+        "javaPath": "",
+        "jvmArgs": "-Xms2G -Xmx4G -XX:+UseG1GC",
+        "pluginDir": ""
+      }
+    }
+  },
+
+  "build": {
+    "javaHome": "",
+    "gradleExtraArgs": "--no-daemon"
+  },
+
+  "ports": {
+    "plugin": 38080,
+    "mod": 38081,
+    "minecraft": 25565
+  }
+}

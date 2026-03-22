@@ -1,6 +1,6 @@
 package com.blackboxpro.plugin.api.action
 
-import com.blackboxpro.plugin.channel.ResponseMessage
+import com.blackboxpro.common.protocol.ResponseMessage
 import org.bukkit.entity.Player
 import java.util.concurrent.CompletableFuture
 import kotlin.math.*

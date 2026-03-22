@@ -1,9 +1,8 @@
 package com.blackboxpro.plugin.command
 
+import com.blackboxpro.common.protocol.ResponseMessage
 import com.blackboxpro.plugin.BlackBoxPro
 import com.blackboxpro.plugin.api.BlackBoxApi
-import com.blackboxpro.plugin.channel.ChannelHandler
-import com.blackboxpro.plugin.channel.ResponseMessage
 import com.blackboxpro.plugin.config.BlackBoxSettings
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -27,7 +26,7 @@ object BlackBoxCommand {
             sender.sendMessage("§6[BlackBoxPro] §fServer Plugin v${BlackBoxPro.VERSION}")
             sender.sendMessage("§7/blackbox send <player> <action> [params_json] §f- 发送指令 (JSON)")
             sender.sendMessage("§7/blackbox exec <player> <action> [key:value ...] §f- 发送指令 (扁平化)")
-            sender.sendMessage("§7/blackbox test <player> §f- 执行集成测试")
+            sender.sendMessage("§7/blackbox test <player> [full|category <分类>|action <id>] §f- 执行黑盒测试")
             sender.sendMessage("§7/blackbox status §f- 查看状态")
             sender.sendMessage("§7/blackbox reload §f- 重载配置")
         }
@@ -138,9 +137,10 @@ object BlackBoxCommand {
      */
     private fun sendResponseFeedback(sender: CommandSender, response: ResponseMessage) {
         sender.sendMessage("§6[BlackBoxPro] 响应: §f${response.status} §7${response.message ?: ""}")
-        if (response.data != null && response.data.size() > 0) {
+        val data = response.data
+        if (data != null && data.size() > 0) {
             if (BlackBoxSettings.debug) {
-                val dataStr = gson.toJson(response.data)
+                val dataStr = gson.toJson(data)
                 if (dataStr.length <= 500) {
                     sender.sendMessage("§6[BlackBoxPro] 数据: §f$dataStr")
                 } else {
@@ -148,7 +148,7 @@ object BlackBoxCommand {
                     sender.sendMessage("§7[BlackBoxPro] 完整数据已输出到控制台日志")
                 }
             } else {
-                sender.sendMessage("§7[BlackBoxPro] 响应包含数据 (${response.data.size()} 字段)，开启 debug 模式查看详情")
+                sender.sendMessage("§7[BlackBoxPro] 响应包含数据 (${data.size()} 字段)，开启 debug 模式查看详情")
             }
         }
     }
@@ -168,6 +168,43 @@ object BlackBoxCommand {
                 }
                 BlackBoxTestRunner.runAll(player, sender)
             }
+            dynamic("mode") {
+                suggestUncheck { listOf("full", "category", "action") }
+                execute<CommandSender> { sender, context, _ ->
+                    val playerName = context["player"]
+                    val player = Bukkit.getPlayerExact(playerName)
+                    if (player == null) {
+                        sender.sendMessage("§c[BlackBoxPro] 玩家 $playerName 不在线。")
+                        return@execute
+                    }
+                    when (context["mode"].lowercase()) {
+                        "full" -> BlackBoxTestRunner.runFull(player, sender)
+                        else -> sender.sendMessage("§c[BlackBoxPro] 用法: /blackbox test <player> [full|category <分类>|action <id>]")
+                    }
+                }
+                dynamic("value") {
+                    suggestUncheck {
+                        when (ctx["mode"].lowercase()) {
+                            "category" -> BlackBoxTestRunner.categories()
+                            "action" -> ActionParamRegistry.getActionIds()
+                            else -> emptyList()
+                        }
+                    }
+                    execute<CommandSender> { sender, context, _ ->
+                        val playerName = context["player"]
+                        val player = Bukkit.getPlayerExact(playerName)
+                        if (player == null) {
+                            sender.sendMessage("§c[BlackBoxPro] 玩家 $playerName 不在线。")
+                            return@execute
+                        }
+                        when (context["mode"].lowercase()) {
+                            "category" -> BlackBoxTestRunner.runCategory(player, sender, context["value"])
+                            "action" -> BlackBoxTestRunner.runAction(player, sender, context["value"])
+                            else -> sender.sendMessage("§c[BlackBoxPro] 用法: /blackbox test <player> [full|category <分类>|action <id>]")
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -177,8 +214,9 @@ object BlackBoxCommand {
             sender.sendMessage("§6[BlackBoxPro] §f状态信息:")
             sender.sendMessage("§7  版本: §f${BlackBoxPro.VERSION}")
             sender.sendMessage("§7  调试模式: §f${BlackBoxSettings.debug}")
+            sender.sendMessage("§7  测试模式: §f${BlackBoxSettings.testMode}")
+            sender.sendMessage("§7  HTTP 端口: §f${BlackBoxSettings.httpPort}")
             sender.sendMessage("§7  响应超时: §f${BlackBoxSettings.responseTimeoutMs}ms")
-            sender.sendMessage("§7  等待响应数: §f${ChannelHandler.pendingCount()}")
             sender.sendMessage("§7  在线玩家数: §f${Bukkit.getOnlinePlayers().size}")
         }
     }
