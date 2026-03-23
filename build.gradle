@@ -1,0 +1,149 @@
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.Sync
+
+ext.isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows()
+ext.rootGradlew = file(isWindows ? 'gradlew.bat' : 'gradlew')
+ext.pluginGradlew = file(isWindows ? 'plugin/gradlew.bat' : 'plugin/gradlew')
+ext.forge1122Gradlew = file(isWindows ? 'mod/1.12.2/gradlew.bat' : 'mod/1.12.2/gradlew')
+ext.jarExecutable = file(System.getProperty('java.home') + (isWindows ? '/bin/jar.exe' : '/bin/jar'))
+ext.commonProjectDir = file('common')
+ext.modProjectDir = file('mod')
+ext.pluginProjectDir = file('plugin')
+ext.forge1122ProjectDir = file('mod/1.12.2')
+
+def rootProps = new Properties()
+file('gradle.properties').withInputStream { rootProps.load(it) }
+ext.projectVersionValue = rootProps.getProperty('version', '0.0.0')
+ext.mod1211NeoForgeJar = file("mod/1.21.1/neoforge/build/libs/BlackBoxPro-neoforge-1.21.1-${projectVersionValue}.jar")
+
+tasks.register('common_build', Exec) {
+    group = 'standalone'
+    description = '构建 common jar'
+    workingDir = rootDir
+    commandLine rootGradlew.absolutePath, '-p', commonProjectDir.absolutePath, '--no-daemon', 'jar'
+}
+
+tasks.register('plugin_build', Exec) {
+    group = 'standalone'
+    description = 'build 独立项目 plugin'
+    workingDir = pluginProjectDir
+    commandLine pluginGradlew.absolutePath, '--no-daemon', 'build'
+}
+
+tasks.register('plugin_clean', Exec) {
+    group = 'standalone'
+    description = 'clean 独立项目 plugin'
+    workingDir = pluginProjectDir
+    commandLine pluginGradlew.absolutePath, '--no-daemon', 'clean'
+    ignoreExitValue = true
+}
+
+tasks.register('forge1122_build', Exec) {
+    group = 'standalone'
+    description = 'build 独立项目 1.12.2'
+    dependsOn 'common_build'
+    workingDir = forge1122ProjectDir
+    commandLine forge1122Gradlew.absolutePath, '--no-daemon', 'build'
+}
+
+tasks.register('forge1122_clean', Exec) {
+    group = 'standalone'
+    description = 'clean 独立项目 1.12.2'
+    workingDir = forge1122ProjectDir
+    commandLine forge1122Gradlew.absolutePath, '--no-daemon', 'clean'
+    ignoreExitValue = true
+}
+
+tasks.register('mod2111_build', Exec) {
+    group = 'standalone'
+    description = '构建 mod 1.21.11 客户端产物'
+    workingDir = rootDir
+    commandLine rootGradlew.absolutePath,
+        '-p', modProjectDir.absolutePath,
+        '--no-daemon',
+        ':1.21.11:runtime:build',
+        ':1.21.11:fabric:build',
+        ':1.21.11:neoforge:build'
+}
+
+tasks.register('mod1211_build', Exec) {
+    group = 'standalone'
+    description = '构建 mod 1.21.1 客户端产物'
+    workingDir = rootDir
+    commandLine rootGradlew.absolutePath,
+        '-p', modProjectDir.absolutePath,
+        '--no-daemon',
+        ':1.21.1:runtime:build',
+        ':1.21.1:fabric:build',
+        ':1.21.1:neoforge:classes',
+        ':1.21.1:neoforge:processResources'
+}
+
+tasks.register('mod1211_pack_neoforge', Exec) {
+    group = 'standalone'
+    description = '打包 mod 1.21.1 NeoForge 客户端 jar'
+    dependsOn 'mod1211_build'
+    doFirst {
+        mod1211NeoForgeJar.parentFile.mkdirs()
+    }
+    workingDir = rootDir
+    commandLine jarExecutable.absolutePath,
+        '--create',
+        '--file', mod1211NeoForgeJar.absolutePath,
+        '-C', file('mod/1.21.1/neoforge/build/classes/kotlin/main').absolutePath, '.',
+        '-C', file('mod/1.21.1/runtime/build/classes/kotlin/main').absolutePath, '.'
+}
+
+tasks.register('collectJars', Sync) {
+    group = 'build'
+    description = '收集客户端 mod 与服务端插件的 jar 到根 build/libs'
+    into layout.buildDirectory.dir('libs')
+    from fileTree('mod/1.21.11/fabric/build/libs')
+    from fileTree('mod/1.21.11/neoforge/build/libs')
+    from fileTree('mod/1.21.1/fabric/build/libs')
+    from fileTree('mod/1.21.1/neoforge/build/libs')
+    from fileTree('mod/1.12.2/forge/build/libs')
+    from fileTree('plugin/build/libs')
+}
+
+tasks.named('mod1211_pack_neoforge') {
+    mustRunAfter 'forge1122_build'
+}
+
+tasks.named('mod2111_build') {
+    mustRunAfter 'mod1211_pack_neoforge', 'forge1122_build'
+}
+
+tasks.named('plugin_build') {
+    mustRunAfter 'mod2111_build', 'mod1211_pack_neoforge', 'forge1122_build'
+}
+
+tasks.register('buildAll') {
+    group = 'build'
+    description = '构建客户端 mod 与服务端插件并收集 jar 到根 build/libs'
+    dependsOn 'mod2111_build', 'mod1211_pack_neoforge', 'forge1122_build', 'plugin_build'
+    finalizedBy 'collectJars'
+}
+
+tasks.register('cleanAll') {
+    group = 'build'
+    description = '清理所有模块的 build 目录（含根 build 目录）'
+    dependsOn 'plugin_clean', 'forge1122_clean'
+    doLast {
+        delete(
+            layout.buildDirectory,
+            file('common/build'),
+            file('plugin/build'),
+            file('mod/build'),
+            file('mod/1.21.11/runtime/build'),
+            file('mod/1.21.11/fabric/build'),
+            file('mod/1.21.11/neoforge/build'),
+            file('mod/1.21.1/runtime/build'),
+            file('mod/1.21.1/fabric/build'),
+            file('mod/1.21.1/neoforge/build'),
+            file('mod/1.12.2/build'),
+            file('mod/1.12.2/runtime/build'),
+            file('mod/1.12.2/forge/build')
+        )
+    }
+}

@@ -5,6 +5,10 @@ plugins {
 
 def commonJar = rootProject.ext.commonJar
 def standaloneCommonBuild = gradle.includedBuilds.find { it.name == 'common' }
+def commonJarFiles = files(commonJar)
+if (standaloneCommonBuild != null) {
+    commonJarFiles.builtBy(standaloneCommonBuild.task(':jar'))
+}
 
 sourceSets {
     main {
@@ -35,8 +39,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly files(commonJar)
-    embeddedCommon files(commonJar)
+    compileOnly commonJarFiles
+    embeddedCommon commonJarFiles
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
     implementation "com.google.code.gson:gson:2.8.9"
 }

@@ -1,0 +1,39 @@
+plugins {
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.0'
+}
+
+def rootProps = new Properties()
+file('../gradle.properties').withReader('UTF-8') { rootProps.load(it) }
+
+group = 'com.blackboxpro'
+version = rootProps.getProperty('version', '0.0.0')
+
+base {
+    archivesName = 'blackboxpro-common'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'com.google.code.gson:gson:2.10.1'
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+        freeCompilerArgs.addAll('-Xjvm-default=all', '-Xmetadata-version=1.9.0')
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+}
+
+kotlin {
+    jvmToolchain(21)
+}

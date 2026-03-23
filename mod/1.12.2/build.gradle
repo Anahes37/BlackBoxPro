@@ -2,14 +2,11 @@ plugins {
     id 'base'
 }
 
-def modProps = new Properties()
-file("${rootDir}/../gradle.properties").withReader('UTF-8') { modProps.load(it) }
-
 def rootProps = new Properties()
 file("${rootDir}/../../gradle.properties").withReader('UTF-8') { rootProps.load(it) }
 
-def sharedVersion = modProps.getProperty('version', '0.0.0')
-def commonVersion = rootProps.getProperty('version', sharedVersion)
+def sharedVersion = rootProps.getProperty('version', '0.0.0')
+def commonVersion = sharedVersion
 ext.commonJar = file("${rootDir}/../../common/build/libs/blackboxpro-common-${commonVersion}.jar")
 
 allprojects {

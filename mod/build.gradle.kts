@@ -12,12 +12,12 @@ plugins {
 val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
 val gradlew1122 = if (isWindows) file("1.12.2/gradlew.bat") else file("1.12.2/gradlew")
 
-val sharedProps = Properties()
-file("gradle.properties").inputStream().use { sharedProps.load(it) }
+val rootProps = Properties()
+file("../gradle.properties").inputStream().use { rootProps.load(it) }
 
 allprojects {
     group = "com.blackboxpro"
-    version = sharedProps.getProperty("version", "0.0.0")
+    version = rootProps.getProperty("version", "0.0.0")
 }
 
 subprojects {
