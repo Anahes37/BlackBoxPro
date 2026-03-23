@@ -2,7 +2,11 @@ package com.blackboxpro.neoforge.util
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
+import com.mojang.serialization.JsonOps
+import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.ComponentSerialization
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentLinkedDeque
 
@@ -25,7 +29,7 @@ object ChatHistoryBuffer {
     private val buffer = ConcurrentLinkedDeque<ChatEntry>()
 
     fun addMessage(message: Component, type: String) {
-        val raw = message.string
+        val raw = serializeMessage(message)
         val plain = message.string
         buffer.addLast(ChatEntry(System.currentTimeMillis(), raw, plain, type))
         while (buffer.size > MAX_SIZE) buffer.pollFirst()
@@ -52,5 +56,20 @@ object ChatHistoryBuffer {
         }
     }
 
+    fun getEntry(index: Int): ChatEntry? {
+        if (index < 0) return null
+        val entries = buffer.toList()
+        val targetIndex = entries.lastIndex - index
+        return entries.getOrNull(targetIndex)
+    }
+
     fun clear() = buffer.clear()
+
+    private fun serializeMessage(message: Component): String = runCatching {
+        val client = Minecraft.getInstance()
+        val ops = client.connection?.registryAccess()?.createSerializationContext(JsonOps.INSTANCE) ?: JsonOps.INSTANCE
+        ComponentSerialization.CODEC.encodeStart(ops, message).result().orElse(JsonPrimitive(message.string)).toString()
+    }.getOrElse {
+        JsonPrimitive(message.string).toString()
+    }
 }

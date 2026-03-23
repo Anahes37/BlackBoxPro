@@ -49,5 +49,12 @@ object ChatHistoryBuffer {
         }
     }
 
+    fun getEntry(index: Int): ChatEntry? {
+        if (index < 0) return null
+        val entries = buffer.toList()
+        val targetIndex = entries.lastIndex - index
+        return entries.getOrNull(targetIndex)
+    }
+
     fun clear() = buffer.clear()
 }

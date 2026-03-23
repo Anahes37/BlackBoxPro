@@ -255,6 +255,36 @@ object HighLevelActions {
         QueryActions.queryChatHistory(player, count, filter)
 
     /**
+     * 点击最新一条包含目标文本的聊天富文本。
+     */
+    fun clickChatText(player: Player, match: String): CompletableFuture<ResponseMessage> =
+        MouseActions.clickChatText(player, match, index = 0, execute = true)
+
+    /**
+     * 查询最新一条包含目标文本的聊天样式。
+     */
+    fun queryChatStyle(player: Player, match: String): CompletableFuture<ResponseMessage> =
+        MouseActions.queryChatStyle(player, match, index = 0)
+
+    /**
+     * 查询当前容器中指定槽位的 Tooltip。
+     */
+    fun querySlotTooltip(player: Player, slot: Int): CompletableFuture<ResponseMessage> =
+        MouseActions.querySlotTooltip(player, slot, advanced = false)
+
+    /**
+     * 先查样式，若存在 ClickEvent 再执行点击。
+     */
+    fun queryAndClickChatText(player: Player, match: String): CompletableFuture<ResponseMessage> =
+        MouseActions.queryChatStyle(player, match).thenCompose { queryResponse ->
+            if (queryResponse.status == "success" && queryResponse.data?.has("clickEvent") == true) {
+                MouseActions.clickChatText(player, match)
+            } else {
+                CompletableFuture.completedFuture(queryResponse)
+            }
+        }
+
+    /**
      * 玩家跳跃。
      */
     fun jump(player: Player): CompletableFuture<ResponseMessage> =

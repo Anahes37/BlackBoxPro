@@ -100,6 +100,7 @@ object ActionRegistry {
         // === 聊天与命令 ===
         register("chat_message", ChatMessageAction())
         register("chat_command", ChatCommandAction())
+        register("click_chat_text", ClickChatTextAction())
 
         // === 客户端设置与信息 ===
         register("client_information", ClientInformationAction())

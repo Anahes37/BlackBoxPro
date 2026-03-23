@@ -1,6 +1,6 @@
 # BlackBoxPro Action 完整目录
 
-按功能分类，共 106 个 Action。每个表格列出 action ID、参数和简要说明。
+按功能分类，共 109 个 Action。每个表格列出 action ID、参数和简要说明。
 
 > 查询方式：按分类标题跳转，或搜索 action ID。
 
@@ -73,12 +73,13 @@
 | `spectator_teleport` | `targetUuid` | 旁观者传送 |
 | `jump` | 无 | 跳跃 |
 
-## 聊天与命令（2）
+## 聊天与命令（3）
 
 | Action | 参数 | 说明 |
 |--------|------|------|
 | `chat_message` | `message` | 发送聊天消息 |
 | `chat_command` | `command` | 执行聊天命令（不含 `/`） |
+| `click_chat_text` | `match`, `index`, `execute` | 从聊天历史中定位包含目标文本的富文本片段，并查询或执行其 ClickEvent |
 
 ## 客户端设置（7）
 
@@ -146,7 +147,7 @@
 | `respawn` | 无 | 重生（含等待） |
 | `craft_recipe` | `windowId`, `recipeIndex`, `makeAll` | 自动合成 |
 
-## 查询行为（14）
+## 查询行为（16）
 
 | Action | 参数 | 说明 |
 |--------|------|------|
@@ -154,9 +155,11 @@
 | `query_held_item` | `hand` | 手持物品详情 |
 | `query_inventory_slot` | `slot` | 指定槽位物品 |
 | `query_chat_history` | `count`, `filter`, `since` | 聊天历史 |
+| `query_chat_style` | `match`, `index` | 从聊天历史中提取匹配文本的样式、ClickEvent 与 HoverEvent 信息 |
 | `query_nearby_entities` | `radius`, `type`, `limit` | 附近实体列表 |
 | `query_container_state` | 无 | 当前容器状态 |
 | `query_container_slots` | `windowId`, `slots` | 容器槽位详情 |
+| `query_slot_tooltip` | `slot`, `advanced` | 查询当前容器指定槽位的 Tooltip 文本、格式化文本与原始 JSON |
 | `query_active_effects` | 无 | 当前药水效果 |
 | `query_block_state` | `x`, `y`, `z` | 方块状态与属性 |
 | `query_world_state` | 无 | 世界时间/天气/难度等 |

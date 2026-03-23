@@ -92,6 +92,7 @@ object ActionRegistry {
         // === 聊天与命令 ===
         register("chat_message", ChatMessageAction())
         register("chat_command", ChatCommandAction())
+        register("click_chat_text", ClickChatTextAction())
 
         // === 客户端设置与信息 ===
         register("client_information", ClientInformationAction())
@@ -162,6 +163,8 @@ object ActionRegistry {
         register("query_scoreboard", QueryScoreboardAction())
         register("query_screen_state", QueryScreenStateAction())
         register("query_boss_bar", QueryBossBarAction())
+        register("query_chat_style", QueryChatStyleAction())
+        register("query_slot_tooltip", QuerySlotTooltipAction())
 
         // === 玩家动作（新增）===
         register("jump", JumpAction())

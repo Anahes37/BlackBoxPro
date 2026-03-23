@@ -90,4 +90,24 @@ object QueryActions {
 
     fun queryBossBar(player: Player): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "query_boss_bar")
+
+    fun queryChatStyle(
+        player: Player,
+        match: String,
+        index: Int = 0
+    ): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_chat_style", JsonObject().apply {
+            addProperty("match", match)
+            addProperty("index", index)
+        })
+
+    fun querySlotTooltip(
+        player: Player,
+        slot: Int,
+        advanced: Boolean = false
+    ): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_slot_tooltip", JsonObject().apply {
+            addProperty("slot", slot)
+            addProperty("advanced", advanced)
+        })
 }

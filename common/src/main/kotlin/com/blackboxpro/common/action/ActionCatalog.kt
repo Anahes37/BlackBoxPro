@@ -62,6 +62,7 @@ object ActionCatalog {
         // Chat / commands
         register("chat_message", "message")
         register("chat_command", "command")
+        register("click_chat_text", "match", "index", "execute")
 
         // Client
         register("client_information", "locale", "viewDistance", "chatMode", "chatColors", "skinParts", "mainHand", "textFiltering", "allowServerListings")
@@ -130,6 +131,8 @@ object ActionCatalog {
         register("query_scoreboard", "objective")
         register("query_screen_state")
         register("query_boss_bar")
+        register("query_chat_style", "match", "index")
+        register("query_slot_tooltip", "slot", "advanced")
 
         // Navigation
         register("look_at_block", "x", "y", "z", "face")
