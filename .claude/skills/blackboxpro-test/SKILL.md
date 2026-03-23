@@ -49,9 +49,69 @@ for i in $(seq 1 40); do
 done
 ```
 
-### 配置文件
+### 进程启动规则
 
-**每次执行前必须先读取** `.claude/config/blackboxpro-env.json`。
+**优先使用 Terminal 技能启动进程，无匹配技能时才降级到 Bash background。**
+
+启动客户端或服务端时，按以下优先级决策：
+
+| 优先级 | 方式 | 条件 |
+|--------|------|------|
+| ① 高 | 调用对应的 Terminal 技能（`Skill` 工具） | 当前会话有匹配版本的 client/server 技能 |
+| ② 低 | `Bash run_in_background: true` | 无匹配技能，或技能不适用 |
+
+**版本→技能映射**：
+
+| 版本 | 角色 | 技能名 |
+|------|------|--------|
+| 1.21.11 | 客户端 | `client` |
+| 1.21.11 | 服务端 | `server` |
+| 1.12.2  | 客户端 | `client-1.12.2` |
+| 1.12.2  | 服务端 | `server-1.12.2` |
+
+使用 Terminal 技能时，直接调用 `Skill` 工具并传入启动指令，无需手动拼命令：
+```
+Skill("client")       → 启动 1.21.11 Fabric 客户端
+Skill("client-1.12.2") → 启动 1.12.2 Forge 客户端
+Skill("server")       → 启动 1.21.11 服务端
+Skill("server-1.12.2") → 启动 1.12.2 服务端
+```
+
+Terminal 技能启动后，**读取日志也通过同一技能**（查看日志指令），不要用 `TaskOutput` 读取。
+
+降级到 Bash background 时，使用 `TaskOutput` 读取后台输出。
+
+### 工程/配置约定（非常重要）
+
+- **本技能运行目录 = 接入/使用 BBP 的项目仓库根目录**（即你当前执行技能的项目）。
+- **配置文件也属于接入项目**：每次执行前必须先读取 `./.claude/config/blackboxpro-env.json`（不是 BBP 仓库里的配置）。
+
+### 定位或拉取 BBP 仓库（bbp.* → BBP_ROOT）
+
+先根据配置计算 `BBP_ROOT`（BlackBoxPro 仓库根目录）：
+
+| 配置项 | 说明 | 示例 |
+|--------|------|------|
+| `bbp.method` | `local`（本机路径）或 `git`（自动克隆） | `local` |
+| `bbp.localPath` | BBP 仓库根目录（仅 local） | `D:/repos/BlackBoxPro` |
+| `bbp.git.url` | BBP git 地址（仅 git） | `https://github.com/<org>/BlackBoxPro.git` |
+| `bbp.git.ref` | 分支/Tag/Commit（仅 git，可空=默认分支） | `main` |
+| `bbp.git.cloneDir` | 克隆目录（仅 git，相对“接入项目”根目录） | `.bbp/BlackBoxPro` |
+
+解析规则：
+1. `local`：`BBP_ROOT = bbp.localPath`
+2. `git`：若 `cloneDir` 不存在则先 `git clone`，再（可选）checkout `ref`；`BBP_ROOT = <cloneDir>`
+3. 校验：`BBP_ROOT` 下必须存在 `gradlew` 或 `gradlew.bat`
+
+示例脚本（git 模式，在“接入项目根目录”执行）：
+```bash
+CLONE_DIR="<bbp.git.cloneDir>"
+[ -d "$CLONE_DIR/.git" ] || git clone "<bbp.git.url>" "$CLONE_DIR"
+[ -z "<bbp.git.ref>" ] || (cd "$CLONE_DIR" && git checkout "<bbp.git.ref>")
+BBP_ROOT="$CLONE_DIR"
+```
+
+### 运行参数配置（versions.*）
 
 若关键字段为空，暂停流程，用 AskUserQuestion 逐项询问后回填配置文件。
 
@@ -61,12 +121,12 @@ done
 | 配置项 | 说明 | 示例 |
 |--------|------|------|
 | `client.launchMethod` | `runClient`（Gradle）或 `launcher`（外部启动器） | `runClient` |
-| `client.launchCommand` | 启动客户端的完整命令 | `./gradlew :mod:1.21.11:fabric:runClient --no-daemon` |
-| `client.launchCwd` | 工作目录（相对仓库根，空=仓库根） | `mod/1.12.2` |
-| `client.javaHome` | JAVA_HOME（空=系统默认） | `/Library/Java/.../jdk-21` |
+| `client.launchCommand` | 启动客户端的完整命令 | `./gradlew.bat --no-daemon :1.21.11:fabric:runClient` |
+| `client.launchCwd` | 工作目录（相对 `BBP_ROOT`；空=`BBP_ROOT`） | `mod` |
+| `client.javaHome` | JAVA_HOME（空=系统默认） | `C:/Program Files/Java/jdk-21` |
 | `client.playerName` | 游戏内玩家名 | `Player` |
-| `server.directory` | 服务端安装目录 | `/Users/xxx/server/paper-1.21.11` |
-| `server.jar` | 服务端 JAR | `paper-1.21.11-97.jar` |
+| `server.directory` | 服务端安装目录（绝对路径或相对接入项目根） | `D:/mc-server/paper-1.21.11` |
+| `server.jar` | 服务端 JAR 文件名 | `paper-1.21.11-97.jar` |
 | `server.javaPath` | 服务端 java 路径（空=`java`） | `java` |
 | `server.jvmArgs` | JVM 参数 | `-Xms4G -Xmx4G -XX:+UseG1GC` |
 | `build.javaHome` | 构建用 JAVA_HOME（空=系统默认） | 同 client.javaHome |
@@ -94,14 +154,14 @@ done
 | A | 客户端自测 | 仅 Mod，单人世界，无需服务端 | 直达 `:38081` |
 | B | 服务端联调 | Plugin + Mod，多人服务器 | Plugin `:38080` 转发 Mod `:38081` |
 
-## 固定产物路径
+## 产物路径（相对 BBP_ROOT）
 
 | 产物 | 路径 |
 |------|------|
-| 1.21.11 Fabric Mod | `mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-*.jar` |
-| 1.21.11 NeoForge Mod | `mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-*.jar` |
-| 1.12.2 Forge Mod | `mod/1.12.2/forge/build/libs/BlackBoxPro-forge-1.12.2-*.jar` |
-| Plugin | `plugin/build/libs/BlackBoxPro-Plugin-*.jar` |
+| 1.21.11 Fabric Mod | `<BBP_ROOT>/mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-*.jar` |
+| 1.21.11 NeoForge Mod | `<BBP_ROOT>/mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-*.jar` |
+| 1.12.2 Forge Mod | `<BBP_ROOT>/mod/1.12.2/forge/build/libs/BlackBoxPro-forge-1.12.2-*.jar` |
+| Plugin | `<BBP_ROOT>/plugin/build/libs/BlackBoxPro-Plugin-*.jar` |
 
 ---
 
@@ -111,11 +171,9 @@ done
 
 根据版本执行：
 ```bash
-# 1.21.11
-./gradlew mod_buildAll --no-daemon
-
-# 1.12.2
-./gradlew forge1122_build --no-daemon
+# 所有 Gradle 构建都应在 BBP_ROOT 下执行
+cd <BBP_ROOT> && ./gradlew mod_buildAll --no-daemon
+cd <BBP_ROOT> && ./gradlew forge1122_build --no-daemon
 ```
 
 构建失败则停止流程，向用户报告错误。
@@ -126,13 +184,13 @@ done
 
 ```
 launchCommand = config.versions[version].client.launchCommand
-launchCwd = config.versions[version].client.launchCwd  （空则用仓库根）
+launchCwd = config.versions[version].client.launchCwd  （空则用 BBP_ROOT）
 javaHome = config.versions[version].client.javaHome     （非空则设 JAVA_HOME）
 ```
 
 组装并执行：
 ```bash
-cd <launchCwd> && JAVA_HOME="<javaHome>" <launchCommand>
+cd <BBP_ROOT>/<launchCwd> && JAVA_HOME="<javaHome>" <launchCommand>
 ```
 
 > 必须用 `run_in_background: true`，客户端是长驻进程。
@@ -151,7 +209,76 @@ done
 
 失败时：读取客户端后台任务输出，查找错误原因并报告。
 
+### A3.5. 界面检测与初始化
+
+HTTP 就绪后，**立即查询当前界面**，根据结果决定下一步：
+
+```bash
+curl -s --max-time 8 -X POST http://localhost:38081/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"qs_init","action":"query_screen_state"}'
+```
+
+解析 `data.screenClass`（或 `data.type`），按以下逻辑处理：
+
+#### 场景 1：首次启动界面（语言选择 / 初始化向导）
+
+**判断标志**：screenClass 包含 `LanguageSelectScreen`、`InitialScreen`、`AccessibilityOnboardingScreen` 等，或 options.txt 不存在于运行目录。
+
+**处理流程**：
+
+1. **覆盖 options.txt**：将模板文件复制到客户端运行目录，跳过初始化向导：
+   ```bash
+   # 运行目录（按版本）：
+   # 1.21.11 Fabric:  <BBP_ROOT>/mod/1.21.11/fabric/run/
+   # 1.21.11 NeoForge:<BBP_ROOT>/mod/1.21.11/neoforge/run/
+   # 1.12.2 Forge:    <BBP_ROOT>/mod/1.12.2/forge/run/
+   #
+   # 模板来源（优先级）：
+   # 1. config.versions[version].client.optionsTemplate（若配置了绝对/相对路径）
+   # 2. <BBP_ROOT>/mod/options-default.txt（BBP 内置默认模板）
+   cp "<optionsTemplate>" "<runDir>/options.txt"
+   ```
+
+2. **关闭当前界面**（让客户端回到主菜单）：
+   ```bash
+   curl -s --max-time 8 -X POST http://localhost:38081/execute \
+     -H "Content-Type: application/json" \
+     -d '{"id":"cs_init","action":"close_screen"}'
+   ```
+
+3. **等待并重新查询**：等待 3s 后再次 `query_screen_state`，确认已进入主菜单（`TitleScreen` / `MainMenuScreen`）。若仍不在主菜单则截图记录并报告。
+
+#### 场景 2：主菜单 / 标题界面
+
+**判断标志**：screenClass 包含 `TitleScreen`、`MainMenuScreen`、`PauseScreen` 等，或 `data.type` 为 `"title"` / `"main_menu"`。
+
+- **方案 A** → 继续 A4（创建/加入世界）
+- **方案 B** → 继续 B6（连接服务器）
+
+#### 场景 3：已在世界中（`data.open == false` 或 screenClass 为空/游戏内 HUD）
+
+玩家已在某个世界或服务器中（可能是上次测试未正常退出）：
+
+1. 先执行 `leave_world`（方案 A）或 `disconnect`（方案 B）退出当前世界
+2. 等待 2s 后再次 `query_screen_state` 确认回到主菜单
+3. 然后继续正常流程
+
+#### 场景 4：其他未知界面
+
+截图确认当前状态：
+
+```bash
+curl -s --max-time 8 -X POST http://localhost:38081/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"ss_diag","action":"screenshot","params":{"testId":"init-diag","prefix":"screen"}}'
+```
+
+读取截图文件进行视觉分析，向用户报告当前界面类型后再决定是否继续。
+
 ### A4. 进入世界
+
+**前提**：已通过 A3.5 确认当前处于主菜单。
 
 自动决策逻辑（不需要用户选择）：
 
@@ -247,10 +374,10 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 ### B1. 构建
 
 ```bash
-./gradlew buildAll --no-daemon
+cd <BBP_ROOT> && ./gradlew buildAll --no-daemon
 # 或分步：
-# ./gradlew mod_buildAll --no-daemon
-# ./gradlew plugin_build --no-daemon
+# cd <BBP_ROOT> && ./gradlew mod_buildAll --no-daemon
+# cd <BBP_ROOT> && ./gradlew plugin_build --no-daemon
 ```
 
 ### B2. 部署 Plugin
@@ -258,7 +385,7 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 从配置文件读取 `server.pluginDir`（或 `server.directory + "/plugins"`）：
 
 ```bash
-cp plugin/build/libs/BlackBoxPro-Plugin-*.jar <server.directory>/plugins/
+cp <BBP_ROOT>/plugin/build/libs/BlackBoxPro-Plugin-*.jar <server.directory>/plugins/
 ```
 
 > Plugin jar 被服务端占用时无法覆盖，必须先停服再部署再启服。
@@ -281,7 +408,21 @@ cd <server.directory> && <server.javaPath> <server.jvmArgs> -jar <server.jar> no
 
 先轮询 `:38080`（Plugin），再轮询 `:38081`（Mod），各 3s × 40 次。
 
+### B5.5. 界面检测与初始化
+
+同方案 A3.5，轮询就绪后立即查询界面状态：
+
+```bash
+curl -s --max-time 8 -X POST http://localhost:38081/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"qs_init","action":"query_screen_state"}'
+```
+
+按 A3.5 的场景 1-4 处理（首次启动覆盖 options.txt、已在世界中则先退出），确认处于主菜单后继续 B6。
+
 ### B6. 连接服务器
+
+**前提**：已通过 B5.5 确认当前处于主菜单。
 
 ```bash
 curl -s --max-time 8 -X POST http://localhost:38081/execute \
@@ -289,7 +430,35 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
   -d '{"id":"c1","action":"connect_to_server","params":{"ip":"127.0.0.1","port":25565}}'
 ```
 
-轮询确认连接：每 3 秒查服务端日志是否包含 `joined the game`，最多 20 次（60 秒）。
+**连接成功**：轮询服务端日志包含 `joined the game`，每 3s 检查一次，最多 20 次（60s）。
+
+**连接失败处理**：若响应 `status != "success"` 或超时：
+
+1. **立即查询界面状态**：
+   ```bash
+   curl -s --max-time 8 -X POST http://localhost:38081/execute \
+     -H "Content-Type: application/json" \
+     -d '{"id":"qs_fail","action":"query_screen_state"}'
+   ```
+
+2. **根据返回的 screenClass 判断**：
+
+   | 界面类型 | 说明 | 处理 |
+   |----------|------|------|
+   | `DisconnectedScreen` / `ConnectScreen` | 连接被拒或认证失败 | 截图记录错误信息，报告给用户，停止流程 |
+   | `TitleScreen` / `MainMenuScreen` | 连接未建立，仍在主菜单 | 检查服务端日志（online-mode / 端口），报告原因 |
+   | 游戏内 HUD（open=false） | 连接实际已成功但响应异常 | 继续流程，跳过错误 |
+   | 其他未知界面 | 状态不明 | 截图 + 视觉分析，向用户报告 |
+
+3. **截图兜底**（query_screen_state 无法确认时）：
+   ```bash
+   curl -s --max-time 8 -X POST http://localhost:38081/execute \
+     -H "Content-Type: application/json" \
+     -d '{"id":"ss_fail","action":"screenshot","params":{"testId":"connect-fail","prefix":"diag"}}'
+   ```
+   读取截图进行视觉分析，向用户说明当前状态后再决定是否重试。
+
+4. **不自动重试连接**：确认原因后报告用户，由用户决定是否继续。
 
 ### B7. 执行全量测试
 

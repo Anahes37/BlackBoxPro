@@ -17,6 +17,27 @@ description: 为 BlackBoxPro 新增一个 Minecraft 版本的测试支持。自�
 
 ---
 
+## 前置：定位 BBP 仓库（BBP_ROOT）
+
+本技能可以在“接入 BBP 的项目目录”中运行，配置文件应放在当前项目的 `.claude/config/blackboxpro-env.json`（而不是写死在 BBP 仓库里）。
+
+需要先得到 `BBP_ROOT`（BlackBoxPro 仓库根目录），两种方式任选其一：
+
+- **本机已有 BBP**：在配置中填写 `bbp.method=local` + `bbp.localPath`（指向 BlackBoxPro 根目录）
+- **自动克隆 BBP**：在配置中填写 `bbp.method=git` + `bbp.git.url` + `bbp.git.cloneDir`（相对当前项目根目录）。若目录不存在则先 `git clone`，再继续流程
+
+校验：`$BBP_ROOT/gradlew` 或 `$BBP_ROOT/gradlew.bat` 必须存在。
+
+示例脚本（git 模式，在“接入项目根目录”执行）：
+```bash
+CLONE_DIR="<bbp.git.cloneDir>"
+[ -d "$CLONE_DIR/.git" ] || git clone "<bbp.git.url>" "$CLONE_DIR"
+[ -z "<bbp.git.ref>" ] || (cd "$CLONE_DIR" && git checkout "<bbp.git.ref>")
+BBP_ROOT="$CLONE_DIR"
+```
+
+---
+
 ## 验收标准
 
 **通过条件（必须同时满足）：**
@@ -69,7 +90,7 @@ echo "yarn=$YARN loader=$LOADER fabric_api=$FABRIC_API"
 **1.2 复制目录并替换版本号**
 
 ```bash
-cd /f/minecraft/mod/BlackBoxPro/mod
+cd "${BBP_ROOT}/mod"
 cp -r 1.21.11 {mc_version}
 
 # 修改 gradle.properties
@@ -109,7 +130,9 @@ project(":{mc_version}:fabric").projectDir = file("{mc_version}/fabric")
 
 ```bash
 MC_VER="{mc_version}"
-SERVER_DIR="F:/minecraft/server/paper-${MC_VER}"
+# 由用户配置/输入一个服务端根目录（不要写死在技能里）
+SERVER_BASE_DIR="{SERVER_BASE_DIR}"
+SERVER_DIR="${SERVER_BASE_DIR}/paper-${MC_VER}"
 
 BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MC_VER}/builds" | \
   python3 -c "import json,sys; d=json.load(sys.stdin); print(d['builds'][-1]['build'] if d.get('builds') else 'NOT_FOUND')")
@@ -126,7 +149,7 @@ echo "eula=true" > "${SERVER_DIR}/eula.txt"
 
 ```bash
 # Terminal 1：首次启动（生成 server.properties）
-cd /f/minecraft/server/paper-{mc_version}
+cd "${SERVER_DIR}"
 "/c/Program Files/Java/jdk-21/bin/java.exe" -Xms2G -Xmx2G -jar {jar} nogui
 # 等待 Done 后立即停服
 curl -X POST http://localhost:38080/execute -d '{"id":"s","action":"stop_server"}'
@@ -143,7 +166,7 @@ powershell -NoProfile -Command "
 
 ```bash
 powershell -NoProfile -Command "
-Copy-Item 'F:\minecraft\mod\BlackBoxPro\plugin\build\libs\BlackBoxPro-Plugin-*.jar' '${SERVER_DIR}\plugins\' -Force"
+Copy-Item "${BBP_ROOT}\\plugin\\build\\libs\\BlackBoxPro-Plugin-*.jar" "${SERVER_DIR}\\plugins\\" -Force"
 ```
 
 ---
@@ -151,7 +174,7 @@ Copy-Item 'F:\minecraft\mod\BlackBoxPro\plugin\build\libs\BlackBoxPro-Plugin-*.j
 ### 阶段 3：构建验证
 
 ```bash
-cd /f/minecraft/mod/BlackBoxPro/mod
+cd "${BBP_ROOT}/mod"
 JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:build --no-daemon 2>&1
 ```
 
@@ -173,14 +196,14 @@ JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:build --
 
 **Step 1：启动服务端（Terminal 1）**
 ```bash
-cd /f/minecraft/server/paper-{mc_version}
+cd "${SERVER_DIR}"
 "/c/Program Files/Java/jdk-21/bin/java.exe" -Xms2G -Xmx4G -XX:+UseG1GC -jar {jar} nogui
 ```
 等待日志出现 `Done`。
 
 **Step 2：启动客户端（Terminal 2）**
 ```bash
-cd /f/minecraft/mod/BlackBoxPro/mod
+cd "${BBP_ROOT}/mod"
 JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:runClient --no-daemon
 ```
 轮询 `netstat :38081 LISTENING`（每 2s，最多 120s）。
@@ -260,7 +283,7 @@ else:
 | 项目 | 值 |
 |------|-----|
 | Java（Gradle/运行时） | `C:\Program Files\Java\jdk-21` |
-| 服务端目录 | `F:\minecraft\server\paper-{mc_version}` |
+| 服务端目录 | `{SERVER_BASE_DIR}/paper-{mc_version}` |
 | 服务端 JAR | `{jar_name}` |
 | 客户端启动 | `cd mod && JAVA_HOME="C:/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:runClient` |
 | 玩家名 | `{player_name}`（runClient 开发模式随机） |
@@ -310,4 +333,4 @@ curl -X POST http://localhost:38081/execute -H Content-Type:application/json -d 
 | 1.12.2 | Forge | 52/0/54 | 2026-03-22 | 基线版本 |
 | 1.21.11 | Fabric | 54/0/52 | 2026-03-22 | 主测版本，参考基准 |
 
-Base directory for this skill: F:\minecraft\mod\BlackBoxPro\.claude\skillsdd-mc-version
+（本技能不应包含任何本机绝对路径；请通过 bbp.localPath 或 bbp.git.cloneDir 指定 BBP_ROOT）

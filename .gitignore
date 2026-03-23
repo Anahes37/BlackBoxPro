@@ -24,6 +24,8 @@ out/
 .narrafork/
 .worktrees/
 .claude/
+!.claude/skills/
+!.claude/skills/**
 
 # OS
 .DS_Store
