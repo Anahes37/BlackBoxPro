@@ -1,6 +1,6 @@
 ---
 name: add-mc-version
-description: 为 BlackBoxPro 新增一个 Minecraft 版本的测试支持。自动完成 mod 代码生成、环境搭建、构建验证、测试执行、验收判断全流程。验收标准：全量测试 failed=0 且 passed ≥ 参考版本。
+description: 为 BlackBoxPro 新增一个 Minecraft 版本的测试支持。自动完成 mod 代码生成、环境搭建、构建验证、测试执行、验收判断全流程。验收标准：全量测试 failed=0 且 passed ≥ 参考版本；启动前必须检查并释放 25565/38080/38081 的对应旧实例端口占用。
 ---
 
 # BlackBoxPro 新版本接入技能
@@ -58,10 +58,19 @@ BBP_ROOT="$CLONE_DIR"
 
 ### 阶段 0：前置检查
 
-1. 停止当前服务端（若有）：
-   `curl -s POST http://localhost:38080/execute {"action":"stop_server"}`
-2. 检查端口 25565 无占用
-3. 确认 mod/{mc_version} 是否已存在（存在则跳过代码生成）
+1. 检查 `38080` 是否已有旧 Plugin HTTP：
+   - 若 `curl -sf http://localhost:38080/status` 成功，先调用 `stop_server` 优雅停服
+   - 再确认 `38080` 已释放；未释放则继续停止残留服务端进程
+2. 检查 `25565` 是否被旧服务端占用：
+   - 若占用，停止对应服务端进程 / 终端
+   - 确认 `25565` 已释放后再继续
+3. 检查 `38081` 是否被旧客户端 / Mod HTTP 占用：
+   - 若 `curl -sf http://localhost:38081/status` 成功，说明旧客户端测试实例仍在运行，必须先停止
+   - 若仅端口占用但 HTTP 不通，也要停止残留客户端进程 / 终端
+   - 确认 `38081` 已释放后再继续
+4. 确认 `mod/{mc_version}` 是否已存在（存在则跳过代码生成）
+
+> 规则：后续每次启动服务端或客户端前，若发现对应端口仍被旧实例占用，必须先停掉旧实例，禁止直接叠加启动。
 
 ---
 
@@ -195,6 +204,9 @@ JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:build --
 ### 阶段 4：测试执行
 
 **Step 1：启动服务端（Terminal 1）**
+
+启动前再次确认 `25565` / `38080` 未被旧实例占用；若占用，重复阶段 0 的停服清理。
+
 ```bash
 cd "${SERVER_DIR}"
 "/c/Program Files/Java/jdk-21/bin/java.exe" -Xms2G -Xmx4G -XX:+UseG1GC -jar {jar} nogui
@@ -202,6 +214,9 @@ cd "${SERVER_DIR}"
 等待日志出现 `Done`。
 
 **Step 2：启动客户端（Terminal 2）**
+
+启动前再次确认 `38081` 未被旧实例占用；若占用，重复阶段 0 的停客户端清理。
+
 ```bash
 cd "${BBP_ROOT}/mod"
 JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:runClient --no-daemon

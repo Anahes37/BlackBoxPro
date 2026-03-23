@@ -1,6 +1,6 @@
 ---
 name: blackboxpro-test
-description: 部署并测试 BlackBoxPro 黑盒测试环境。两种模式：客户端自测（单人世界 HTTP 直达 mod:38081）和服务端联调（plugin:38080 转发 mod:38081）。覆盖构建、部署、启动、测试、截图视觉分析。
+description: 部署并测试 BlackBoxPro 黑盒测试环境。两种模式：客户端自测（单人世界 HTTP 直达 mod:38081）和服务端联调（plugin:38080 转发 mod:38081）。覆盖构建、部署、启动、测试、截图视觉分析；启动前必须检查并释放 25565/38080/38081 的对应旧实例端口占用。
 ---
 
 BlackBoxPro 自动化测试部署技能。根据用户指定的版本和模式，执行构建→启动→测试→清理全流程。
@@ -126,6 +126,17 @@ done
 ```
 
 ### 进程启动规则
+
+**启动前必须先做端口预检查，发现对应旧实例仍在运行时先停止，再启动新实例。**
+
+- 客户端启动前：检查 `38081`；若占用，先停止旧的 Mod / 客户端进程，确认端口释放后再启动。
+- 服务端启动前：检查 `25565` 与 `38080`；若占用，优先对旧服务端执行 `stop_server`（`38080` 可访问时），再处理残留服务端进程，确认两个端口都释放后再启动。
+- 两个 MC 版本共用这些端口，**禁止并行启动两个版本**；发现旧版本残留时必须先清理。
+
+推荐顺序：
+1. 先检查 `curl -sf http://localhost:38080/status` / `http://localhost:38081/status`；可访问则说明旧 BBP 实例仍存活，必须优先优雅停止。
+2. 若 HTTP 不可访问但端口仍被占用，视为残留进程；停止对应 Terminal / 后台任务，必要时结束占用该端口的 Java / Gradle / Minecraft 进程。
+3. 重新确认端口已释放后，才允许进入下面的启动步骤。
 
 **优先使用 Terminal 技能启动进程，无匹配技能时才降级到 Bash background。**
 
@@ -255,6 +266,8 @@ cd <BBP_ROOT> && ./gradlew forge1122_build --no-daemon
 构建失败则停止流程，向用户报告错误。
 
 ### A2. 后台启动客户端
+
+启动前先按“进程启动规则”检查并释放 `38081`；若旧 Mod / 客户端仍在运行，优先停止旧实例并确认端口释放，再执行下面的启动命令。
 
 使用 Bash 的 `run_in_background` 启动客户端。命令从配置文件读取：
 
@@ -468,6 +481,8 @@ cp <BBP_ROOT>/plugin/build/libs/BlackBoxPro-Plugin-*.jar <server.directory>/plug
 
 ### B3. 后台启动服务端
 
+启动前先按“进程启动规则”检查并释放 `25565` 与 `38080`；若 `38080/status` 可访问，先调用 `stop_server`，若端口仍占用，再停止旧服务端进程，确认释放后再启动。
+
 ```bash
 cd <server.directory> && <server.javaPath> <server.jvmArgs> -jar <server.jar> nogui
 ```
@@ -477,6 +492,8 @@ cd <server.directory> && <server.javaPath> <server.jvmArgs> -jar <server.jar> no
 轮询服务端就绪：每 3 秒读取后台任务输出，检查是否包含 `Done`，最多 40 次。
 
 ### B4. 后台启动客户端
+
+启动前先按“进程启动规则”检查并释放 `38081`；若旧 Mod / 客户端仍在运行，必须先停止旧实例并确认端口释放。
 
 同方案 A2。
 
@@ -609,6 +626,7 @@ curl -s --max-time 8 -X POST http://localhost:38080/execute \
 ## 注意事项
 
 - 两个 MC 版本不要同时启动（都占用 25565 和 38081）
+- 每次启动前必须检查并释放 `25565` / `38080` / `38081` 的旧实例占用，确认端口空闲后再继续
 - 修改 Plugin 后必须停服 → 部署 → 重启
 - 修改 Mod 后需重启客户端
 - 所有控制通过 HTTP，禁止使用 RCON

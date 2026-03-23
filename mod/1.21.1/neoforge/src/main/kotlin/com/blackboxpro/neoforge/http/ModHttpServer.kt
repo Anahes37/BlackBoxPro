@@ -17,6 +17,7 @@ object ModHttpServer {
         try {
             val s = HttpServer.create(InetSocketAddress(port), 0)
             s.createContext(HttpEndpoints.EXECUTE, ExecuteHandler)
+            s.createContext(HttpEndpoints.STATUS, StatusHandler)
             s.executor = Executors.newCachedThreadPool { r ->
                 Thread(r, "BlackBoxPro-Http").apply { isDaemon = true }
             }
