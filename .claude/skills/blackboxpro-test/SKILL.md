@@ -19,6 +19,82 @@ BlackBoxPro 自动化测试部署技能。根据用户指定的版本和模式�
 - 用户："查询类的 action 有哪些？" → Read `reference/action-catalog.md`，定位"查询行为"章节
 - 用户："screenshot 需要什么参数？" → Read `reference/action-catalog.md`，搜索 `screenshot`
 - 用户："请求格式是什么？" → Read `reference/http-api.md`
+- 用户："我需要一个 xxx action" → 先查 `reference/action-catalog.md`，找不到则引导注册自定义 action（见下方"找不到 Action 的处理流程"）
+
+### 找不到 Action 的处理流程
+
+当用户需要某个 action 但不确定是否存在时，按以下决策树处理：
+
+```
+用户描述需求
+    │
+    ├─ Step 1：查 action-catalog.md
+    │   ├─ 找到匹配 → 直接使用，告知 action ID 和参数
+    │   └─ 未找到 → Step 2
+    │
+    ├─ Step 2：模糊匹配（功能相近的 action）
+    │   ├─ 有相近替代方案 → 告知用户，说明差异，询问是否满足需求
+    │   └─ 无替代 → Step 3
+    │
+    └─ Step 3：引导注册自定义 Action（Read register-action.md）
+```
+
+#### Step 3：注册自定义 Action 流程
+
+Read `reference/register-action.md` 获取完整 API，然后按以下步骤引导用户：
+
+**① 实现 ActionExecutor**
+
+在用户 mod 中创建 action 类（`com.blackboxpro.common.runtime.action.ActionExecutor`）：
+
+```kotlin
+class MyAction : ActionExecutor {
+    override fun execute(params: JsonObject): ActionResult {
+        val value = params.getStringOrNull("key")
+            ?: return ActionResult.fail("Missing: key")
+        // 业务逻辑...
+        return ActionResult.ok(message = "done")
+    }
+}
+```
+
+**② 声明对 BBP 的前置依赖**
+
+| 平台 | 配置文件 | 写法 |
+|------|----------|------|
+| Fabric | `fabric.mod.json` | `"depends": { "blackboxpro": "*" }` |
+| NeoForge | `mods.toml` | `[[dependencies.yourmod]]` + `modId = "blackboxpro"` |
+| Forge 1.12.2 | `@Mod` 注解 | `dependencies = "required-after:blackboxpro"` |
+
+**③ 在 mod 初始化时注册**
+
+```kotlin
+// Fabric
+ActionRegistry.registerExternal("mymod_my_action", MyAction())
+
+// NeoForge
+ActionRegistry.registerExternal("mymod_my_action", MyAction())
+
+// Forge 1.12.2（在 FMLInitializationEvent 中）
+ActionRegistry.registerExternal("mymod_my_action", MyAction())
+```
+
+> action ID 建议加 mod 前缀（如 `mymod_`）避免与 BBP 内置 action 冲突。
+
+**④ 验证注册成功**
+
+重启客户端后调用 `/status` 确认 mod 已加载，然后直接 HTTP 调用测试：
+
+```bash
+curl -s --max-time 8 -X POST http://localhost:38081/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"test1","action":"mymod_my_action","params":{"key":"value"}}'
+```
+
+**注意事项**：
+- 主线程操作需调度：Fabric `MinecraftClient.getInstance().execute {}` / NeoForge `Minecraft.getInstance().execute {}`
+- 长耗时操作使用异步模式（`ActionResult.async()` + `RuntimeResponseSender`），详见 `register-action.md`
+- 自定义 action 不参与 `run_test` 全量测试，只能通过 HTTP 手动调用
 
 ## 通用规则
 
