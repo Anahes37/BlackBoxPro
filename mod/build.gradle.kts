@@ -1,5 +1,11 @@
 import java.util.Properties
 
+plugins {
+    id("fabric-loom") version "1.14-SNAPSHOT" apply false
+    id("net.neoforged.moddev") version "2.0.140" apply false
+    id("org.jetbrains.kotlin.jvm") version "2.2.0" apply false
+}
+
 val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
 val gradlew1122 = if (isWindows) file("1.12.2/gradlew.bat") else file("1.12.2/gradlew")
 

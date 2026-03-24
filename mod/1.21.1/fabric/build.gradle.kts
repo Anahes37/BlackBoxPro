@@ -7,7 +7,6 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
 }
 
-// ֱ�Ӵӱ��汾Ŀ¼��ȡ�����İ汾���ԣ�����������Ŀע��
 val localProps = Properties().apply {
     projectDir.parentFile.resolve("gradle.properties").reader().use(::load)
 }
