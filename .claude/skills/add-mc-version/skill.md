@@ -1,6 +1,6 @@
 ---
 name: add-mc-version
-description: 为 BlackBoxPro 新增一个 Minecraft 版本的测试支持。自动完成 mod 代码生成、环境搭建、构建验证、测试执行、验收判断全流程。验收标准：全量测试 failed=0 且 passed ≥ 参考版本；启动前必须检查并释放 25565/38080/38081 的对应旧实例端口占用。
+description: 为 BlackBoxPro 新增一个 Minecraft 版本的测试支持。自动完成 mod 代码生成、环境搭建、构建验证，并在用户已手动启动的环境上执行测试与验收；禁止由 AI 代启动客户端或服务端。验收标准：全量测试 failed=0 且 passed ≥ 参考版本；启动前必须检查并释放 25565/38080/38081 的对应旧实例端口占用。
 ---
 
 # BlackBoxPro 新版本接入技能
@@ -53,6 +53,19 @@ BBP_ROOT="$CLONE_DIR"
 - 环境问题 → 报告具体错误，给出操作指引
 
 ---
+
+## 非阻塞规则
+
+**禁止由 AI 调起任何长驻/阻塞型进程。** 包括但不限于：
+- `./gradlew :{mc_version}:fabric:runClient`
+- 各类 Minecraft 启动器 / PCL / 外部 launcher
+- `java -jar <server.jar> nogui`
+- 任何会持续占用终端并让后续步骤长期等待的命令
+
+执行边界：
+- **允许**：代码生成、构建、下载服务端、部署插件、编辑配置、有限时 HTTP 调用、短时轮询就绪状态
+- **禁止**：使用 Bash background、Terminal 技能或其他方式代替用户启动客户端/服务端
+- 若环境未就绪：必须输出精确的手动启动命令、工作目录、`JAVA_HOME`/`javaPath`、就绪判定，然后暂停自动流程，等待用户在外部终端完成启动
 
 ## 执行流程
 
@@ -154,16 +167,20 @@ curl -o "${SERVER_DIR}/${JAR}" "https://api.papermc.io/v2/projects/paper/version
 echo "eula=true" > "${SERVER_DIR}/eula.txt"
 ```
 
-**2.2 首次启动生成配置，然后关闭在线验证**
+**2.2 首次启动生成配置（用户手动执行），然后关闭在线验证**
+
+若 `server.properties` 尚不存在，**AI 不得执行首次启动命令**。必须先输出以下信息给用户，由用户在外部终端手动完成首次启动并在看到 `Done` 后自行关闭：
+
+```text
+请在外部终端完成服务端首次启动：
+- 工作目录: ${SERVER_DIR}
+- 命令: "/c/Program Files/Java/jdk-21/bin/java.exe" -Xms2G -Xmx2G -jar {jar} nogui
+- 完成标志: 生成 server.properties 且日志出现 Done
+```
+
+用户完成后，再继续关闭在线验证：
 
 ```bash
-# Terminal 1：首次启动（生成 server.properties）
-cd "${SERVER_DIR}"
-"/c/Program Files/Java/jdk-21/bin/java.exe" -Xms2G -Xmx2G -jar {jar} nogui
-# 等待 Done 后立即停服
-curl -X POST http://localhost:38080/execute -d '{"id":"s","action":"stop_server"}'
-
-# 关闭在线验证
 powershell -NoProfile -Command "
 (Get-Content '${SERVER_DIR}/server.properties') -replace 'online-mode=true','online-mode=false' | Set-Content '${SERVER_DIR}/server.properties'"
 powershell -NoProfile -Command "
@@ -203,26 +220,35 @@ JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:build --
 
 ### 阶段 4：测试执行
 
-**Step 1：启动服务端（Terminal 1）**
+**Step 1：确认服务端已手动启动**
 
 启动前再次确认 `25565` / `38080` 未被旧实例占用；若占用，重复阶段 0 的停服清理。
 
-```bash
-cd "${SERVER_DIR}"
-"/c/Program Files/Java/jdk-21/bin/java.exe" -Xms2G -Xmx4G -XX:+UseG1GC -jar {jar} nogui
-```
-等待日志出现 `Done`。
+若 `curl -sf http://localhost:38080/status` 失败，**不要执行服务端启动命令**。必须输出以下信息给用户，由用户在外部终端手动启动：
 
-**Step 2：启动客户端（Terminal 2）**
+```text
+请在外部终端启动服务端：
+- 工作目录: ${SERVER_DIR}
+- 命令: "/c/Program Files/Java/jdk-21/bin/java.exe" -Xms2G -Xmx4G -XX:+UseG1GC -jar {jar} nogui
+- 就绪判定 1: 日志出现 Done
+- 就绪判定 2: curl -sf http://localhost:38080/status
+```
+
+**Step 2：确认客户端已手动启动**
 
 启动前再次确认 `38081` 未被旧实例占用；若占用，重复阶段 0 的停客户端清理。
 
-```bash
-cd "${BBP_ROOT}/mod"
-JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:runClient --no-daemon
+若 `curl -sf http://localhost:38081/status` 失败，**不要执行客户端启动命令**。必须输出以下信息给用户，由用户在外部终端手动启动：
+
+```text
+请在外部终端启动客户端：
+- 工作目录: ${BBP_ROOT}/mod
+- JAVA_HOME: /c/Program Files/Java/jdk-21
+- 命令: ./gradlew :{mc_version}:fabric:runClient --no-daemon
+- 就绪判定: curl -sf http://localhost:38081/status
 ```
-轮询 `netstat :38081 LISTENING`（每 2s，最多 120s）。
-记录日志中 `Setting user: PlayerXXX` 的玩家名。
+
+待 `:38081` 就绪后，记录日志中 `Setting user: PlayerXXX` 的玩家名。
 
 **Step 3：连接服务器**
 ```bash
@@ -242,10 +268,12 @@ curl -s -X POST http://localhost:38080/execute \
 ```
 阻塞等待完成（约 40-60s）。
 
-**Step 5：停服停客户端**
+**Step 5：收尾**
 ```bash
+# 默认不主动关闭用户手动启动的服务端/客户端
+# 若用户明确要求回收环境，可停服务端：
 curl -s -X POST http://localhost:38080/execute -d '{"id":"stop","action":"stop_server"}'
-# Terminal 2: Ctrl-C
+# 客户端仍由用户手动关闭
 ```
 
 ---
@@ -300,7 +328,7 @@ else:
 | Java（Gradle/运行时） | `C:\Program Files\Java\jdk-21` |
 | 服务端目录 | `{SERVER_BASE_DIR}/paper-{mc_version}` |
 | 服务端 JAR | `{jar_name}` |
-| 客户端启动 | `cd mod && JAVA_HOME="C:/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:runClient` |
+| 客户端手动启动 | `cd mod && JAVA_HOME="C:/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:runClient`（仅展示给用户，不由 AI 执行） |
 | 玩家名 | `{player_name}`（runClient 开发模式随机） |
 | 最新测试结果 | `{passed}/{failed}/{skipped}` |
 ```

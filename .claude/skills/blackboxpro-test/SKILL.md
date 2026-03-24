@@ -1,9 +1,9 @@
 ---
 name: blackboxpro-test
-description: 部署并测试 BlackBoxPro 黑盒测试环境。两种模式：客户端自测（单人世界 HTTP 直达 mod:38081）和服务端联调（plugin:38080 转发 mod:38081）。覆盖构建、部署、启动、测试、截图视觉分析；启动前必须检查并释放 25565/38080/38081 的对应旧实例端口占用。
+description: 部署并测试 BlackBoxPro 黑盒测试环境。两种模式：客户端自测（单人世界 HTTP 直达 mod:38081）和服务端联调（plugin:38080 转发 mod:38081）。覆盖构建、部署、环境检测、测试、截图视觉分析；启动前必须检查并释放 25565/38080/38081 的对应旧实例端口占用，且禁止由 AI 代启动客户端或服务端。
 ---
 
-BlackBoxPro 自动化测试部署技能。根据用户指定的版本和模式，执行构建→启动→测试→清理全流程。
+BlackBoxPro 自动化测试部署技能。根据用户指定的版本和模式，执行构建→部署→环境检测→测试→清理流程；**不负责代启动任何长驻客户端/服务端进程**。
 
 ## 参考资源（Level 3 按需加载）
 
@@ -98,6 +98,18 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 
 ## 通用规则
 
+### 非阻塞规则
+
+**禁止由 AI 调起任何长驻/阻塞型进程。** 包括但不限于：
+- 启动 Minecraft 客户端（`runClient`、启动器、PCL、外部 launcher、对应 Terminal/Skill）
+- 启动 Paper/Spigot 服务端（`java -jar ... nogui`、对应 Terminal/Skill）
+- 任何会持续占用终端并导致后续步骤悬挂等待的命令
+
+执行边界：
+- **允许**：构建、复制产物、编辑配置、有限时 `curl` 请求、读取已有日志/状态、停止旧实例、轮询短时就绪状态
+- **禁止**：使用 `Bash run_in_background: true` 启动客户端/服务端，或调用任何用于启动 client/server 的 Skill / Terminal
+- 若测试所需环境未运行：**立即停止自动流程**，输出配置中的启动命令、工作目录、`JAVA_HOME` 与就绪判定方式，要求用户在外部终端或已有会话手动启动；检测到 `:38080` / `:38081` 就绪后再继续
+
 ### 轮询规则
 
 **禁止任何单次等待超过 8 秒。** 所有需要等待的场景必须使用轮询循环：
@@ -125,48 +137,24 @@ for i in $(seq 1 40); do
 done
 ```
 
-### 进程启动规则
+### 环境准备规则
 
-**启动前必须先做端口预检查，发现对应旧实例仍在运行时先停止，再启动新实例。**
+**切换测试环境前必须先做端口预检查，发现对应旧实例仍在运行时先停止，再继续。**
 
-- 客户端启动前：检查 `38081`；若占用，先停止旧的 Mod / 客户端进程，确认端口释放后再启动。
-- 服务端启动前：检查 `25565` 与 `38080`；若占用，优先对旧服务端执行 `stop_server`（`38080` 可访问时），再处理残留服务端进程，确认两个端口都释放后再启动。
-- 两个 MC 版本共用这些端口，**禁止并行启动两个版本**；发现旧版本残留时必须先清理。
+- 客户端相关：检查 `38081`；若占用，先停止旧的 Mod / 客户端进程，确认端口释放后再继续。
+- 服务端相关：检查 `25565` 与 `38080`；若占用，优先对旧服务端执行 `stop_server`（`38080` 可访问时），再处理残留服务端进程，确认两个端口都释放后再继续。
+- 两个 MC 版本共用这些端口，**禁止并行保留两个版本实例**；发现旧版本残留时必须先清理。
 
 推荐顺序：
 1. 先检查 `curl -sf http://localhost:38080/status` / `http://localhost:38081/status`；可访问则说明旧 BBP 实例仍存活，必须优先优雅停止。
-2. 若 HTTP 不可访问但端口仍被占用，视为残留进程；停止对应 Terminal / 后台任务，必要时结束占用该端口的 Java / Gradle / Minecraft 进程。
-3. 重新确认端口已释放后，才允许进入下面的启动步骤。
+2. 若 HTTP 不可访问但端口仍被占用，视为残留进程；提示用户关闭对应外部终端/启动器，必要时结束占用该端口的 Java / Gradle / Minecraft 进程。
+3. 重新确认端口已释放后，才允许部署新产物或进入测试流程。
 
-**优先使用 Terminal 技能启动进程，无匹配技能时才降级到 Bash background。**
-
-启动客户端或服务端时，按以下优先级决策：
-
-| 优先级 | 方式 | 条件 |
-|--------|------|------|
-| ① 高 | 调用对应的 Terminal 技能（`Skill` 工具） | 当前会话有匹配版本的 client/server 技能 |
-| ② 低 | `Bash run_in_background: true` | 无匹配技能，或技能不适用 |
-
-**版本→技能映射**：
-
-| 版本 | 角色 | 技能名 |
-|------|------|--------|
-| 1.21.11 | 客户端 | `client` |
-| 1.21.11 | 服务端 | `server` |
-| 1.12.2  | 客户端 | `client-1.12.2` |
-| 1.12.2  | 服务端 | `server-1.12.2` |
-
-使用 Terminal 技能时，直接调用 `Skill` 工具并传入启动指令，无需手动拼命令：
-```
-Skill("client")       → 启动 1.21.11 Fabric 客户端
-Skill("client-1.12.2") → 启动 1.12.2 Forge 客户端
-Skill("server")       → 启动 1.21.11 服务端
-Skill("server-1.12.2") → 启动 1.12.2 服务端
-```
-
-Terminal 技能启动后，**读取日志也通过同一技能**（查看日志指令），不要用 `TaskOutput` 读取。
-
-降级到 Bash background 时，使用 `TaskOutput` 读取后台输出。
+**本技能不负责启动客户端/服务端。** 当需要用户手动启动时，必须输出：
+- 启动命令
+- 工作目录
+- `JAVA_HOME`（若有）
+- 就绪判定方式（如 `curl -sf http://localhost:38081/status`、日志 `Done`、`joined the game`）
 
 ### 工程/配置约定（非常重要）
 
@@ -265,11 +253,17 @@ cd <BBP_ROOT> && ./gradlew forge1122_build --no-daemon
 
 构建失败则停止流程，向用户报告错误。
 
-### A2. 后台启动客户端
+### A2. 客户端预启动检查（不代启动）
 
-启动前先按“进程启动规则”检查并释放 `38081`；若旧 Mod / 客户端仍在运行，优先停止旧实例并确认端口释放，再执行下面的启动命令。
+启动前先按“环境准备规则”检查并释放 `38081`；若旧 Mod / 客户端仍在运行，优先停止旧实例并确认端口释放。
 
-使用 Bash 的 `run_in_background` 启动客户端。命令从配置文件读取：
+先检查：
+```bash
+curl -sf http://localhost:38081/status
+```
+
+- 若已就绪：直接进入 A3
+- 若未就绪：**不要执行启动命令**。从配置文件读取以下信息并原样输出给用户，由用户在外部终端手动启动客户端：
 
 ```
 launchCommand = config.versions[version].client.launchCommand
@@ -277,16 +271,20 @@ launchCwd = config.versions[version].client.launchCwd  （空则用 BBP_ROOT）
 javaHome = config.versions[version].client.javaHome     （非空则设 JAVA_HOME）
 ```
 
-组装并执行：
-```bash
-cd <BBP_ROOT>/<launchCwd> && JAVA_HOME="<javaHome>" <launchCommand>
+建议输出格式：
+```text
+请在外部终端手动启动客户端：
+- 工作目录: <BBP_ROOT>/<launchCwd>
+- JAVA_HOME: <javaHome 或 系统默认>
+- 命令: <launchCommand>
+- 就绪判定: curl -sf http://localhost:38081/status
 ```
 
-> 必须用 `run_in_background: true`，客户端是长驻进程。
+> 不得使用 `run_in_background`、Terminal 技能或其他方式代替用户启动长驻客户端进程。
 
-### A3. 轮询等待 HTTP 就绪
+### A3. 检测 HTTP 就绪
 
-每 3 秒检查一次 `localhost:38081/status`，最多 40 次（120 秒）：
+仅在用户确认已手动启动客户端，或 `:38081` 已开始就绪时，才执行以下轮询。每 3 秒检查一次 `localhost:38081/status`，最多 40 次（120 秒）：
 
 ```bash
 for i in $(seq 1 40); do
@@ -296,7 +294,7 @@ for i in $(seq 1 40); do
 done
 ```
 
-失败时：读取客户端后台任务输出，查找错误原因并报告。
+失败时：报告 `:38081` 未就绪，并要求用户检查外部终端中的客户端日志；不要尝试代为重启客户端。
 
 ### A3.5. 界面检测与初始化
 
@@ -434,8 +432,8 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
   -H "Content-Type: application/json" \
   -d '{"id":"lw1","action":"leave_world"}'
 
-# 2. 停止客户端后台进程
-# 使用 TaskStop 终止 A2 启动的后台任务
+# 2. 本技能不主动关闭客户端
+# 如需结束，请提示用户手动关闭外部终端/启动器中的客户端进程
 ```
 
 ### A8. 输出报告
@@ -479,27 +477,38 @@ cp <BBP_ROOT>/plugin/build/libs/BlackBoxPro-Plugin-*.jar <server.directory>/plug
 
 > Plugin jar 被服务端占用时无法覆盖，必须先停服再部署再启服。
 
-### B3. 后台启动服务端
+### B3. 服务端预启动检查（不代启动）
 
-启动前先按“进程启动规则”检查并释放 `25565` 与 `38080`；若 `38080/status` 可访问，先调用 `stop_server`，若端口仍占用，再停止旧服务端进程，确认释放后再启动。
+启动前先按“环境准备规则”检查并释放 `25565` 与 `38080`；若 `38080/status` 可访问，先调用 `stop_server`，若端口仍占用，再停止旧服务端进程，确认释放后再继续。
 
+先检查：
 ```bash
-cd <server.directory> && <server.javaPath> <server.jvmArgs> -jar <server.jar> nogui
+curl -sf http://localhost:38080/status
 ```
 
-使用 `run_in_background: true`。
+- 若已就绪：直接进入 B4
+- 若未就绪：**不要执行 `java -jar ... nogui`**。从配置读取 `server.directory`、`server.javaPath`、`server.jvmArgs`、`server.jar`，原样输出给用户，由用户在外部终端手动启动服务端
 
-轮询服务端就绪：每 3 秒读取后台任务输出，检查是否包含 `Done`，最多 40 次。
+建议输出格式：
+```text
+请在外部终端手动启动服务端：
+- 工作目录: <server.directory>
+- 命令: <server.javaPath> <server.jvmArgs> -jar <server.jar> nogui
+- 就绪判定 1: 日志出现 Done
+- 就绪判定 2: curl -sf http://localhost:38080/status
+```
 
-### B4. 后台启动客户端
+> 不得使用 `run_in_background`、Terminal 技能或其他方式代替用户启动长驻服务端进程。
 
-启动前先按“进程启动规则”检查并释放 `38081`；若旧 Mod / 客户端仍在运行，必须先停止旧实例并确认端口释放。
+### B4. 客户端预启动检查（不代启动）
 
-同方案 A2。
+启动前先按“环境准备规则”检查并释放 `38081`；若旧 Mod / 客户端仍在运行，必须先停止旧实例并确认端口释放。
+
+同方案 A2：若 `:38081` 未就绪，只能输出手动启动命令给用户，禁止代为启动。
 
 ### B5. 轮询等待双端 HTTP 就绪
 
-先轮询 `:38080`（Plugin），再轮询 `:38081`（Mod），各 3s × 40 次。
+仅在用户确认服务端与客户端已手动启动，或两个端口已进入启动过程时，先轮询 `:38080`（Plugin），再轮询 `:38081`（Mod），各 3s × 40 次。
 
 ### B5.5. 界面检测与初始化
 
@@ -566,13 +575,13 @@ curl -s --max-time 120 -X POST http://localhost:38080/execute \
 ### B8. 清理
 
 ```bash
-# 停止服务端
+# 默认不主动停止用户手动启动的服务端/客户端
+# 若用户明确要求收尾，可先停服务端：
 curl -s --max-time 8 -X POST http://localhost:38080/execute \
   -H "Content-Type: application/json" \
   -d '{"id":"stop","action":"stop_server"}'
 
-# 停止客户端后台进程
-# 使用 TaskStop 终止后台任务
+# 客户端仍由用户手动关闭
 ```
 
 ### B9. 输出报告
@@ -607,8 +616,8 @@ curl -s --max-time 8 -X POST http://localhost:38080/execute \
 
 | 症状 | 原因 | 解决方案 |
 |------|------|---------|
-| `:38081` 轮询超时 | Mod 未加载或崩溃 | 读取客户端后台输出，查找异常 |
-| `:38080` 轮询超时 | Plugin 未启用 | 读取服务端后台输出，检查插件加载 |
+| `:38081` 轮询超时 | Mod 未加载或崩溃 | 要求用户检查外部终端中的客户端日志，确认 Mod 是否成功加载 |
+| `:38080` 轮询超时 | Plugin 未启用 | 要求用户检查外部终端中的服务端日志，确认 Plugin 是否成功加载 |
 | `Already in a world` | 未先 leave_world | 先执行 `leave_world` |
 | `World already exists` | 同名世界 | 自动 fallback 到 `join_world` |
 | `World not found` | 世界不存在 | 使用 `create_world` |
