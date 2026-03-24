@@ -23,7 +23,10 @@ out/
 # Claude / Narrafork
 .narrafork/
 .worktrees/
-.claude/
+.claude/*
+!.claude/skills
+!.claude/commands/
+!.claude/commands/**
 
 # OS
 .DS_Store

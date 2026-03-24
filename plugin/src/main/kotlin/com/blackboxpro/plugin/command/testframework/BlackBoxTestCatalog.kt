@@ -74,6 +74,8 @@ object BlackBoxTestCatalog {
         "set_beacon_effect",
         "rename_item",
         "select_trade",
+        "connect_to_server",
+        "close_screen",
         "create_world",
         "join_world",
         "leave_world",
@@ -369,9 +371,13 @@ object BlackBoxTestCatalog {
             "debug_sample_subscription" ->
                 CompletableFuture.completedFuture(BlackBoxPrepareResult("需要服务端调试采样支持"))
 
-            // ===== 世界管理类 =====
+            // ===== 客户端会话 / 世界管理类 =====
+            "connect_to_server" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("该 action 用于启动前连接流程，不纳入 run_test 全量回放"))
+            "close_screen" ->
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("需要显式打开 GUI；当前 run_test 默认场景不覆盖"))
             "create_world", "join_world", "leave_world" ->
-                CompletableFuture.completedFuture(BlackBoxPrepareResult("当前版本不支持该 action"))
+                CompletableFuture.completedFuture(BlackBoxPrepareResult("该 action 属于客户端会话管理，当前 run_test 服务端联调链路不覆盖"))
 
             // ===== keep_alive：会踢人 =====
             "keep_alive" ->
@@ -459,6 +465,11 @@ object BlackBoxTestCatalog {
             addProperty("uuid", "00000000-0000-0000-0000-000000000000")
             addProperty("result", "accepted")
         }
+        "connect_to_server" -> JsonObject().apply {
+            addProperty("ip", "127.0.0.1")
+            addProperty("port", 25565)
+        }
+        "close_screen" -> JsonObject()
         "create_world" -> JsonObject().apply {
             addProperty("worldName", "blackbox_test_world")
             addProperty("gameMode", "creative")
@@ -593,7 +604,7 @@ object BlackBoxTestCatalog {
         actionId.startsWith("query_") -> "query"
         actionId in setOf("look_at", "look_at_entity", "look_at_block", "pathfind_to", "navigate_to", "break_block", "place_block_at", "attack", "use", "open_container", "container_transfer", "drop_inventory", "wait", "batch", "respawn", "craft_recipe") -> "composite"
         actionId in setOf("chat_message", "chat_command") -> "chat"
-        actionId in setOf("client_information", "player_abilities", "resource_pack_response", "screenshot", "create_world", "join_world", "leave_world") -> "client"
+        actionId in setOf("client_information", "player_abilities", "resource_pack_response", "screenshot", "connect_to_server", "close_screen", "create_world", "join_world", "leave_world") -> "client"
         actionId in setOf("custom_payload", "tab_complete", "keep_alive", "pong", "debug_sample_subscription", "chunk_batch_received") -> "debug"
         actionId in setOf("player_move", "player_move_look", "player_look", "player_on_ground", "confirm_teleportation", "move_vehicle", "paddle_boat", "player_input") -> "movement"
         actionId in setOf("dig_start", "dig_cancel", "dig_finish", "place_block", "use_item") -> "block"

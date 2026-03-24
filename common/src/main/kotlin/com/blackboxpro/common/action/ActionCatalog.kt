@@ -70,6 +70,8 @@ object ActionCatalog {
         register("player_abilities", "flying")
         register("resource_pack_response", "uuid", "result")
         register("screenshot", "testId", "prefix", "playerName")
+        register("connect_to_server", "ip", "port")
+        register("close_screen")
         register("create_world", "worldName", "gameMode", "difficulty", "allowCommands", "generateStructures", "bonusChest", "seed")
         register("join_world", "worldName")
         register("leave_world")
