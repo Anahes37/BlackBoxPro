@@ -71,11 +71,11 @@ kotlin {
 }
 
 tasks.named<Jar>("jar") {
+    // 1.21.1 的 runtime 工程已经内嵌了 common 源码/输出，这里避免再次打入导致重复条目
     from(runtimeSourceSet.output)
-    from(commonSourceSet.output)
 }
 
 tasks.named<Jar>("sourcesJar") {
+    // 同上：避免 sourcesJar 中出现 duplicate entry
     from(runtimeSourceSet.allSource)
-    from(commonSourceSet.allSource)
 }
