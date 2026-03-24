@@ -25,6 +25,8 @@ out/
 .worktrees/
 .claude/*
 !.claude/skills
+!.claude/commands/
+!.claude/commands/**
 
 # OS
 .DS_Store
