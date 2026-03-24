@@ -1,12 +1,20 @@
 {
-  "$schema": "用于 deploying-blackbox 技能的环境配置。首次使用时请根据注释填写各项。",
-
+  "$schema": "BlackBoxPro 技能环境配置（注意：此配置应放在‘接入/使用 BBP 的项目仓库’中，而不是写死在 BBP 仓库里）。通过 bbp.* 指定本机 BBP 路径或提供 git 信息以自动克隆。",
+  "bbp": {
+    "method": "local",
+    "localPath": "",
+    "git": {
+      "url": "",
+      "ref": "main",
+      "cloneDir": ".bbp/BlackBoxPro"
+    }
+  },
   "versions": {
     "1.21.11": {
       "client": {
         "launchMethod": "runClient",
-        "launchCommand": "./gradlew :mod:1.21.11:fabric:runClient --no-daemon",
-        "launchCwd": "",
+        "launchCommand": "./gradlew.bat --no-daemon :1.21.11:fabric:runClient",
+        "launchCwd": "mod",
         "javaHome": "",
         "playerName": "Player",
         "modDir": "",
@@ -21,10 +29,29 @@
         "pluginDir": ""
       }
     },
+    "1.21.1": {
+      "client": {
+        "launchMethod": "launcher",
+        "launchCommand": "",
+        "launchCwd": "",
+        "javaHome": "",
+        "playerName": "Player",
+        "modDir": "",
+        "screenshotDir": "",
+        "logFile": ""
+      },
+      "server": {
+        "directory": "",
+        "jar": "",
+        "javaPath": "",
+        "jvmArgs": "-Xms2G -Xmx2G -XX:+UseG1GC",
+        "pluginDir": ""
+      }
+    },
     "1.12.2": {
       "client": {
         "launchMethod": "runClient",
-        "launchCommand": "./gradlew :forge:runClient --no-daemon",
+        "launchCommand": "./gradlew.bat --no-daemon :forge:runClient",
         "launchCwd": "mod/1.12.2",
         "javaHome": "",
         "playerName": "Developer",
@@ -41,12 +68,10 @@
       }
     }
   },
-
   "build": {
     "javaHome": "",
     "gradleExtraArgs": "--no-daemon"
   },
-
   "ports": {
     "plugin": 38080,
     "mod": 38081,
