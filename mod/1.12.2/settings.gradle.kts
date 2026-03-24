@@ -13,11 +13,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-// 独立运行 1.12.2 构建时自行接入 common；作为 mod 的 included build 时由上层先构建 common jar。
-if (gradle.parent == null) {
-    includeBuild("../../common")
-}
-
+// 1.12.2 只依赖顶层预构建的 common jar，避免与 common 源码构建形成跨版本 Gradle 组合构建。
 rootProject.name = "BlackBoxPro-1122"
 
 include("runtime", "forge")

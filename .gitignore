@@ -2,6 +2,9 @@
 .gradle/
 build/
 **/build/
+.gradle-user-home
+.gradle-user-home-common
+.gradle-user-home-root
 
 # IDE
 .idea/

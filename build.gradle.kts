@@ -18,6 +18,8 @@ val commonProjectDir = file("common")
 val modProjectDir = file("mod")
 val pluginProjectDir = file("plugin")
 val forge1122ProjectDir = file("mod/1.12.2")
+val commonGradleUserHome = file(".gradle-user-home/common")
+val forge1122GradleUserHome = file(".gradle-user-home/forge1122")
 val rootProps = java.util.Properties()
 val rootPropsStream = java.io.FileInputStream(file("gradle.properties"))
 rootProps.load(rootPropsStream)
@@ -57,20 +59,16 @@ tasks.register("forge1122_build", execTaskClass, object : Action<Exec> {
     override fun execute(task: Exec) {
         task.group = "standalone"
         task.description = "build 独立项目 1.12.2"
-        task.workingDir = rootDir
-        if (isWindows) {
-            task.commandLine(
-                "cmd",
-                "/c",
-                "\"${rootGradlew.absolutePath}\" -p \"${commonProjectDir.absolutePath}\" --no-daemon jar && \"${forge1122Gradlew.absolutePath}\" --no-daemon build"
-            )
-        } else {
-            task.commandLine(
-                "sh",
-                "-lc",
-                "\"${rootGradlew.absolutePath}\" -p \"${commonProjectDir.absolutePath}\" --no-daemon jar && \"${forge1122Gradlew.absolutePath}\" --no-daemon build"
-            )
-        }
+        task.dependsOn("common_build")
+        task.workingDir = forge1122ProjectDir
+        task.commandLine(
+            forge1122Gradlew.absolutePath,
+            "-g",
+            forge1122GradleUserHome.absolutePath,
+            "--no-daemon",
+            "clean",
+            "build"
+        )
     }
 })
 
@@ -80,7 +78,13 @@ tasks.register("forge1122_clean", execTaskClass, object : Action<Exec> {
         task.group = "standalone"
         task.description = "clean 独立项目 1.12.2"
         task.workingDir = forge1122ProjectDir
-        task.commandLine(forge1122Gradlew.absolutePath, "--no-daemon", "clean")
+        task.commandLine(
+            forge1122Gradlew.absolutePath,
+            "-g",
+            forge1122GradleUserHome.absolutePath,
+            "--no-daemon",
+            "clean"
+        )
         task.isIgnoreExitValue = true
     }
 })
@@ -145,12 +149,11 @@ tasks.register("mod1211_pack_neoforge", execTaskClass, object : Action<Exec> {
 val collectJars = tasks.register("collectJars", syncTaskClass, object : Action<Sync> {
     override fun execute(task: Sync) {
         task.group = "build"
-        task.description = "收集客户端 mod 与服务端插件的 jar 到根 build/libs"
+        task.description = "收集 common、客户端 mod 与服务端插件的 jar 到根 build/libs"
         task.into(layout.buildDirectory.dir("libs"))
+        task.from(fileTree("common/build/libs"))
         task.from(fileTree("mod/1.21.11/fabric/build/libs"))
         task.from(fileTree("mod/1.21.11/neoforge/build/libs"))
-        task.from(fileTree("mod/1.21.1/fabric/build/libs"))
-        task.from(fileTree("mod/1.21.1/neoforge/build/libs"))
         task.from(fileTree("mod/1.12.2/forge/build/libs"))
         task.from(fileTree("plugin/build/libs"))
     }
@@ -159,8 +162,8 @@ val collectJars = tasks.register("collectJars", syncTaskClass, object : Action<S
 tasks.register("buildAll", object : Action<Task> {
     override fun execute(task: Task) {
         task.group = "build"
-        task.description = "构建客户端 mod 与服务端插件并收集 jar 到根 build/libs"
-        task.dependsOn("mod2111_build", "mod1211_pack_neoforge", "forge1122_build", "plugin_build")
+        task.description = "构建 common、1.21.11 客户端、1.12.2 客户端与服务端插件并收集 jar 到根 build/libs"
+        task.dependsOn("common_build", "mod2111_build", "plugin_build", "forge1122_build")
         task.finalizedBy(collectJars)
     }
 })

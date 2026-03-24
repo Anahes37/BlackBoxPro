@@ -6,7 +6,6 @@ plugins {
 }
 
 val commonJar = rootProject.extra["commonJar"] as File
-val standaloneCommonBuild = gradle.includedBuilds.find { it.name == "common" }
 
 base.archivesName.set("BlackBoxPro-runtime-1.12.2")
 
@@ -35,23 +34,9 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    if (standaloneCommonBuild != null) {
-        dependsOn(standaloneCommonBuild.task(":jar"))
-    }
     kotlinOptions {
         jvmTarget = "1.8"
         freeCompilerArgs = listOf("-Xjvm-default=all")
     }
 }
 
-tasks.withType<JavaCompile> {
-    if (standaloneCommonBuild != null) {
-        dependsOn(standaloneCommonBuild.task(":jar"))
-    }
-}
-
-tasks.named("jar") {
-    if (standaloneCommonBuild != null) {
-        dependsOn(standaloneCommonBuild.task(":jar"))
-    }
-}

@@ -6,11 +6,7 @@ plugins {
 }
 
 val commonJar = rootProject.extra["commonJar"] as File
-val standaloneCommonBuild = gradle.includedBuilds.find { it.name == "common" }
 val commonJarFiles = files(commonJar)
-if (standaloneCommonBuild != null) {
-    commonJarFiles.builtBy(standaloneCommonBuild.task(":jar"))
-}
 
 sourceSets {
     main {
@@ -48,18 +44,9 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    if (standaloneCommonBuild != null) {
-        dependsOn(standaloneCommonBuild.task(":jar"))
-    }
     kotlinOptions {
         jvmTarget = "1.8"
         freeCompilerArgs = listOf("-Xjvm-default=all")
-    }
-}
-
-tasks.withType<JavaCompile> {
-    if (standaloneCommonBuild != null) {
-        dependsOn(standaloneCommonBuild.task(":jar"))
     }
 }
 
@@ -73,14 +60,13 @@ tasks.withType<ProcessResources> {
 }
 
 tasks.jar {
-    if (standaloneCommonBuild != null) {
-        dependsOn(standaloneCommonBuild.task(":jar"))
-    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from({
-        configurations.getByName("embeddedCommon").map { zipTree(it) }
+        configurations.getByName("embeddedCommon").files.map { zipTree(it) }
     })
     from({
-        configurations.runtimeClasspath.filter { it.name.startsWith("kotlin-") }.map { zipTree(it) }
+        configurations.getByName("runtimeClasspath").files
+            .filter { it.name.startsWith("kotlin-") }
+            .map { zipTree(it) }
     })
 }
