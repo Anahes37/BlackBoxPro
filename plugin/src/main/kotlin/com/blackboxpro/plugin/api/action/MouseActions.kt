@@ -27,10 +27,25 @@ object MouseActions {
     ): CompletableFuture<ResponseMessage> =
         QueryActions.queryChatStyle(player, match, index)
 
+    fun hoverSlot(
+        player: Player,
+        windowId: Int,
+        slot: Int,
+        durationTicks: Int = 0
+    ): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "hover_slot", JsonObject().apply {
+            addProperty("windowId", windowId)
+            addProperty("slot", slot)
+            addProperty("durationTicks", durationTicks)
+        })
+
     fun querySlotTooltip(
         player: Player,
         slot: Int,
         advanced: Boolean = false
     ): CompletableFuture<ResponseMessage> =
         QueryActions.querySlotTooltip(player, slot, advanced)
+
+    fun queryTooltipState(player: Player): CompletableFuture<ResponseMessage> =
+        QueryActions.queryTooltipState(player)
 }

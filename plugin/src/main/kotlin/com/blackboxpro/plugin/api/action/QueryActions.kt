@@ -91,6 +91,9 @@ object QueryActions {
     fun queryBossBar(player: Player): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "query_boss_bar")
 
+    fun queryTooltipState(player: Player): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "query_tooltip_state")
+
     fun queryChatStyle(
         player: Player,
         match: String,

@@ -39,7 +39,8 @@ object ActionCatalog {
         register("pick_item_from_block", "x", "y", "z", "includeData")
         register("pick_item_from_entity", "entityId", "includeData")
         register("bundle_selected_slot", "slotId", "selectedIndex")
-        register("slot_state_change", "windowId", "slotId", "state")
+        register("slot_state_change", "windowId", "slotId", "newState")
+        register("hover_slot", "windowId", "slot", "durationTicks")
 
         // Player state
         register("sneak_start")
@@ -131,6 +132,7 @@ object ActionCatalog {
         register("query_scoreboard", "objective")
         register("query_screen_state")
         register("query_boss_bar")
+        register("query_tooltip_state")
         register("query_chat_style", "match", "index")
         register("query_slot_tooltip", "slot", "advanced")
 

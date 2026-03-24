@@ -46,6 +46,9 @@ object BlackBoxTestCatalog {
         "pick_item_from_entity",
         "bundle_selected_slot",
         "slot_state_change",
+        "hover_slot",
+        "query_slot_tooltip",
+        "query_tooltip_state",
         "leave_bed",
         "horse_jump_start",
         "horse_jump_stop",
@@ -232,6 +235,14 @@ object BlackBoxTestCatalog {
                                             }
                                         }
                                         "close_container" -> { /* windowId 已加入 */ }
+                                        "hover_slot" -> {
+                                            addProperty("slot", 0)
+                                            addProperty("durationTicks", 10)
+                                        }
+                                        "slot_state_change" -> {
+                                            addProperty("slotId", 0)
+                                            addProperty("newState", false)
+                                        }
                                         "drop_inventory" -> {
                                             addProperty("slot", 0)
                                             addProperty("dropStack", false)
@@ -491,6 +502,7 @@ object BlackBoxTestCatalog {
         }
         "query_tab_list" -> JsonObject().apply { addProperty("limit", 10) }
         "query_scoreboard" -> JsonObject()
+        "query_slot_tooltip" -> JsonObject().apply { addProperty("slot", 0) }
         "screenshot" -> JsonObject().apply {
             addProperty("testId", ctx.testId)
             addProperty("prefix", "catalog_${actionId}")

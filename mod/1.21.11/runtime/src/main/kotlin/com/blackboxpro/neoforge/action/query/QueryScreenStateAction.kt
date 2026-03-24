@@ -2,6 +2,7 @@ package com.blackboxpro.neoforge.action.query
 
 import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
+import com.blackboxpro.neoforge.util.ContainerTooltipHelper
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.inventory.*
@@ -36,7 +37,9 @@ class QueryScreenStateAction : ActionExecutor {
                              else classifyScreen(screen)
             addProperty("screenType", screenType)
 
-            // DisconnectedScreen：补充断线原因和详情（用类名匹配兼容不同版本）
+            val tooltipState = ContainerTooltipHelper.queryCurrentTooltip()
+            tooltipState.applyToScreenState(this)
+
             if (screen != null && screen.javaClass.simpleName == "DisconnectedScreen") {
                 val reasonNames = listOf("reason", "f_96306_")
                 for (name in reasonNames) {

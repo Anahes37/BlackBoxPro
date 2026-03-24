@@ -2,6 +2,7 @@ package com.blackboxpro.fabric.action.query
 
 import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
+import com.blackboxpro.fabric.util.ContainerTooltipHelper
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.ingame.*
@@ -36,10 +37,10 @@ class QueryScreenStateAction : ActionExecutor {
                              else classifyScreen(screen)
             addProperty("screenType", screenType)
 
-            // DisconnectedScreen：补充断线原因和详情
-            // 用类名匹配而非 import 类型检查，兼容不同版本的 Fabric Yarn 路径
+            val tooltipState = ContainerTooltipHelper.queryCurrentTooltip()
+            tooltipState.applyToScreenState(this)
+
             if (screen != null && screen.javaClass.simpleName == "DisconnectedScreen") {
-                // 尝试 reason 字段（所有已知版本）
                 val reasonFieldNames = listOf("reason", "f_96306_")
                 for (name in reasonFieldNames) {
                     val found = runCatching {
@@ -50,7 +51,6 @@ class QueryScreenStateAction : ActionExecutor {
                     }.getOrNull() ?: false
                     if (found) break
                 }
-                // 尝试 info/details 字段
                 val detailFieldNames = listOf("info", "details", "f_96307_")
                 for (name in detailFieldNames) {
                     val found = runCatching {

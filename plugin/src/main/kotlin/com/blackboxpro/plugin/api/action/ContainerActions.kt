@@ -47,9 +47,9 @@ object ContainerActions {
             addProperty("entityId", entityId); addProperty("includeData", includeData)
         })
 
-    fun slotStateChange(player: Player, windowId: Int, slotId: Int, state: Boolean): CompletableFuture<ResponseMessage> =
+    fun slotStateChange(player: Player, windowId: Int, slotId: Int, newState: Boolean): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "slot_state_change", JsonObject().apply {
-            addProperty("windowId", windowId); addProperty("slotId", slotId); addProperty("state", state)
+            addProperty("windowId", windowId); addProperty("slotId", slotId); addProperty("newState", newState)
         })
 
     fun creativeSetSlot(player: Player, slot: Int): CompletableFuture<ResponseMessage> =

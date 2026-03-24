@@ -2,6 +2,7 @@ package com.blackboxpro.forge.action.query
 
 import com.blackboxpro.forge.action.ActionExecutor
 import com.blackboxpro.forge.action.ActionResult
+import com.blackboxpro.forge.util.ContainerTooltipHelper
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiDisconnected
@@ -33,10 +34,9 @@ class QueryScreenStateAction : ActionExecutor {
             }
 
             addProperty("screenType", classifyScreen(screen))
+            ContainerTooltipHelper.queryCurrentTooltip().applyToScreenState(this)
 
-            // GuiDisconnected：补充断线原因
             if (screen is GuiDisconnected) {
-                // 1.12.2 ForgeGradle 映射下字段可能是 reason 或 SRG 名，尝试多个
                 val fieldNames = listOf("reason", "field_96306_", "message", "cause")
                 for (name in fieldNames) {
                     val found = runCatching {
@@ -47,7 +47,6 @@ class QueryScreenStateAction : ActionExecutor {
                     }.getOrNull() ?: false
                     if (found) break
                 }
-                // 尝试从所有字段里找 ITextComponent 类型的
                 if (!has("reason")) {
                     runCatching {
                         screen.javaClass.declaredFields.forEach { f ->

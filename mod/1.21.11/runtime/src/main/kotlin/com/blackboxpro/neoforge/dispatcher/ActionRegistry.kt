@@ -79,6 +79,7 @@ object ActionRegistry {
         register("pick_item_from_entity", PickItemFromEntityAction())
         register("bundle_selected_slot", BundleSelectedSlotAction())
         register("slot_state_change", SlotStateChangeAction())
+        register("hover_slot", HoverSlotAction())
 
         // === 玩家状态与动作 ===
         register("sneak_start", SneakStartAction())
@@ -171,6 +172,9 @@ object ActionRegistry {
         register("query_scoreboard", QueryScoreboardAction())
         register("query_screen_state", QueryScreenStateAction())
         register("query_boss_bar", QueryBossBarAction())
+        register("query_tooltip_state", QueryTooltipStateAction())
+        register("query_chat_style", QueryChatStyleAction())
+        register("query_slot_tooltip", QuerySlotTooltipAction())
 
         // === 玩家动作（新增）===
         register("jump", JumpAction())

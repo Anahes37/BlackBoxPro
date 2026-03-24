@@ -267,10 +267,22 @@ object HighLevelActions {
         MouseActions.queryChatStyle(player, match, index = 0)
 
     /**
+     * 将鼠标悬停到当前容器中的指定槽位。
+     */
+    fun hoverSlot(player: Player, windowId: Int, slot: Int, durationTicks: Int = 0): CompletableFuture<ResponseMessage> =
+        MouseActions.hoverSlot(player, windowId, slot, durationTicks)
+
+    /**
      * 查询当前容器中指定槽位的 Tooltip。
      */
     fun querySlotTooltip(player: Player, slot: Int): CompletableFuture<ResponseMessage> =
         MouseActions.querySlotTooltip(player, slot, advanced = false)
+
+    /**
+     * 查询当前鼠标悬浮 Tooltip 状态。
+     */
+    fun queryTooltipState(player: Player): CompletableFuture<ResponseMessage> =
+        MouseActions.queryTooltipState(player)
 
     /**
      * 先查样式，若存在 ClickEvent 再执行点击。
