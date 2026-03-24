@@ -149,12 +149,17 @@ tasks.register("mod1211_pack_neoforge", execTaskClass, object : Action<Exec> {
 val collectJars = tasks.register("collectJars", syncTaskClass, object : Action<Sync> {
     override fun execute(task: Sync) {
         task.group = "build"
-        task.description = "收集 common、客户端 mod 与服务端插件的 jar 到根 build/libs"
+        task.description = "收集客户端 mod 与服务端插件的 jar 到根 build/libs"
         task.into(layout.buildDirectory.dir("libs"))
-        task.from(fileTree("common/build/libs"))
+        // 1.21.11
         task.from(fileTree("mod/1.21.11/fabric/build/libs"))
         task.from(fileTree("mod/1.21.11/neoforge/build/libs"))
+        // 1.21.1
+        task.from(fileTree("mod/1.21.1/fabric/build/libs"))
+        task.from(fileTree("mod/1.21.1/neoforge/build/libs"))
+        // 1.12.2
         task.from(fileTree("mod/1.12.2/forge/build/libs"))
+        // plugin
         task.from(fileTree("plugin/build/libs"))
     }
 })
@@ -162,8 +167,8 @@ val collectJars = tasks.register("collectJars", syncTaskClass, object : Action<S
 tasks.register("buildAll", object : Action<Task> {
     override fun execute(task: Task) {
         task.group = "build"
-        task.description = "构建 common、1.21.11 客户端、1.12.2 客户端与服务端插件并收集 jar 到根 build/libs"
-        task.dependsOn("common_build", "mod2111_build", "plugin_build", "forge1122_build")
+        task.description = "构建 common、1.21.11/1.21.1 客户端、1.12.2 客户端与服务端插件并收集 jar 到根 build/libs"
+        task.dependsOn("common_build", "mod2111_build", "mod1211_pack_neoforge", "plugin_build", "forge1122_build")
         task.finalizedBy(collectJars)
     }
 })

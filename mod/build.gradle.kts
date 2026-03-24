@@ -13,9 +13,14 @@ val sharedProps = Properties().apply {
     file("gradle.properties").reader().use(::load)
 }
 
+// 从根目录 gradle.properties 读取版本号（单一来源）
+val rootProps = Properties().apply {
+    file("../gradle.properties").reader().use(::load)
+}
+
 allprojects {
     group = "com.blackboxpro"
-    version = sharedProps.getProperty("version", "0.0.0")
+    version = rootProps.getProperty("version", sharedProps.getProperty("version", "0.0.0"))
 }
 
 subprojects {
