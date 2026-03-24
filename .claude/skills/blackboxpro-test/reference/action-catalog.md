@@ -1,8 +1,8 @@
 # BlackBoxPro Action 完整目录
 
-按功能分类，共 106 个 Action。每个表格列出 action ID、参数和简要说明。
+按功能分类，共 108 个 Action。每个表格列出 action ID、参数和简要说明。
 
-> 查询方式：按分类标题跳转，或搜索 action ID。
+> 这是便于检索的参考快照；若与运行时代码不一致，以 `common/src/main/kotlin/com/blackboxpro/common/action/ActionCatalog.kt` 与各端 `ActionRegistry.kt` 为准。
 
 ## 移动与位置（8）
 
@@ -80,7 +80,7 @@
 | `chat_message` | `message` | 发送聊天消息 |
 | `chat_command` | `command` | 执行聊天命令（不含 `/`） |
 
-## 客户端设置（7）
+## 客户端会话与设置（9）
 
 | Action | 参数 | 说明 |
 |--------|------|------|
@@ -88,11 +88,13 @@
 | `player_abilities` | `flying` | 设置飞行状态 |
 | `resource_pack_response` | `uuid`, `result` | 资源包响应 |
 | `screenshot` | `testId`, `prefix`, `playerName` | 截图保存到磁盘 |
+| `connect_to_server` | `ip`, `port` | 连接到多人服务器 |
+| `close_screen` | 无 | 关闭当前 GUI / 初始化界面 |
 | `create_world` | `worldName`(必填), `gameMode`, `difficulty`, `allowCommands`, `generateStructures`, `bonusChest`, `seed` | 创建单人世界 |
 | `join_world` | `worldName`(必填) | 加入已有单人世界 |
-| `leave_world` | 无 | 离开当前世界回主菜单 |
+| `leave_world` | 无 | 离开当前世界并回到主菜单 |
 
-## 进阶交互（16）
+## 进阶交互（17）
 
 | Action | 参数 | 说明 |
 |--------|------|------|
@@ -125,7 +127,7 @@
 | `debug_sample_subscription` | `type` | 调试采样订阅 |
 | `chunk_batch_received` | `desiredChunksPerTick` | 区块批次确认 |
 
-## 复合行为（15）
+## 复合行为（16）
 
 | Action | 参数 | 说明 |
 |--------|------|------|
@@ -167,13 +169,13 @@
 
 ## 1.12.2 不支持的 Action（11）
 
-以下 Action 仅在 1.21.11 可用：
+以下 Action 仅在 1.21.x 可用：
 
 `bundle_selected_slot`, `chunk_batch_received`, `debug_sample_subscription`, `pick_entity`, `pick_item_from_block`, `pick_item_from_entity`, `pong`, `query_block_nbt`, `query_entity_nbt`, `slot_state_change`, `update_jigsaw_block`
 
 ## 仅 Plugin 端 Action（2）
 
-以下 Action 只能通过 Plugin HTTP (:38080) 调用：
+以下 Action 只能通过 Plugin HTTP (`:38080`) 调用：
 
 | Action | 参数 | 说明 |
 |--------|------|------|

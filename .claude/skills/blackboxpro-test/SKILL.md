@@ -11,15 +11,17 @@ BlackBoxPro 自动化测试部署技能。根据用户指定的版本和模式�
 
 | 文件 | 用途 | 何时读取 |
 |------|------|---------|
-| `reference/action-catalog.md` | 全部 106 个 Action 的 ID、参数、分类 | 用户问"有哪些 action"、需要查参数、按分类筛选时 |
+| `reference/action-catalog.md` | 全部 108 个 Action 的 ID、参数、分类快照 | 用户问"有哪些 action"、需要查参数、按分类筛选时 |
 | `reference/http-api.md` | HTTP 端点格式（请求/响应 JSON 结构） | 需要确认 API 调用格式时 |
 | `reference/register-action.md` | 注册第三方自定义 Action 的完整流程 | 用户要添加新 action、扩展测试能力时 |
+
+> `reference/action-catalog.md` 只是便于检索的快照；若与实际代码不一致，以 `common/src/main/kotlin/com/blackboxpro/common/action/ActionCatalog.kt` 和对应 loader 的 `ActionRegistry.kt` 为准，尤其注意 `connect_to_server`、`close_screen` 这类容易遗漏的会话类 action。
 
 示例场景：
 - 用户："查询类的 action 有哪些？" → Read `reference/action-catalog.md`，定位"查询行为"章节
 - 用户："screenshot 需要什么参数？" → Read `reference/action-catalog.md`，搜索 `screenshot`
 - 用户："请求格式是什么？" → Read `reference/http-api.md`
-- 用户："我需要一个 xxx action" → 先查 `reference/action-catalog.md`，找不到则引导注册自定义 action（见下方"找不到 Action 的处理流程"）
+- 用户："我需要一个 xxx action" → 先查 `reference/action-catalog.md`，找不到再查 `ActionCatalog.kt` / `ActionRegistry.kt`，仍不存在再引导注册自定义 action（见下方"找不到 Action 的处理流程"）
 
 ### 找不到 Action 的处理流程
 
@@ -28,12 +30,18 @@ BlackBoxPro 自动化测试部署技能。根据用户指定的版本和模式�
 ```
 用户描述需求
     │
-    ├─ Step 1：查 action-catalog.md
+    ├─ Step 1：查 reference/action-catalog.md
     │   ├─ 找到匹配 → 直接使用，告知 action ID 和参数
-    │   └─ 未找到 → Step 2
+    │   └─ 未找到 → Step 1.5
+    │
+    ├─ Step 1.5：查代码事实源
+    │   ├─ Read common/.../ActionCatalog.kt
+    │   ├─ 必要时再查对应 loader 的 ActionRegistry.kt
+    │   ├─ 找到匹配 → 直接使用，顺便指出 reference 快照已滞后
+    │   └─ 仍未找到 → Step 2
     │
     ├─ Step 2：模糊匹配（功能相近的 action）
-    │   ├─ 有相近替代方案 → 告知用户，说明差异，询问是否满足需求
+    │   ├─ 有相近替代方案 → 告知用户，说明差异
     │   └─ 无替代 → Step 3
     │
     └─ Step 3：引导注册自定义 Action（Read register-action.md）
@@ -145,10 +153,26 @@ done
 - 服务端相关：检查 `25565` 与 `38080`；若占用，优先对旧服务端执行 `stop_server`（`38080` 可访问时），再处理残留服务端进程，确认两个端口都释放后再继续。
 - 两个 MC 版本共用这些端口，**禁止并行保留两个版本实例**；发现旧版本残留时必须先清理。
 
-推荐顺序：
-1. 先检查 `curl -sf http://localhost:38080/status` / `http://localhost:38081/status`；可访问则说明旧 BBP 实例仍存活，必须优先优雅停止。
-2. 若 HTTP 不可访问但端口仍被占用，视为残留进程；提示用户关闭对应外部终端/启动器，必要时结束占用该端口的 Java / Gradle / Minecraft 进程。
-3. 重新确认端口已释放后，才允许部署新产物或进入测试流程。
+#### 旧实例清理状态机（统一流程）
+
+1. **识别归属**
+   - 先判定旧实例是：HTTP 可达的 BBP 实例、当前会话自己创建的后台任务/terminal，还是用户手动启动的外部进程。
+   - 只允许接管当前会话明确创建的 task / terminal；**禁止**向未知用户终端盲发 `Ctrl-C`、`y` 或其他输入。
+2. **优雅停止**
+   - 服务端：若 `curl -sf http://localhost:38080/status` 成功，先调用 `stop_server`。
+   - 客户端：若 `curl -sf http://localhost:38081/status` 成功，只做会话级清理（如 `leave_world` 回主菜单）；**不负责代替用户关闭整个客户端进程**。
+   - 若存在当前会话自己创建的后台任务 / terminal，先发送一次中断，再立即读取 buffer；若出现确认提示，先处理提示，再继续，不要连续盲发多次 `Ctrl-C`。
+3. **退出确认**
+   - 每次停止动作后都必须重新检查：
+     - `:38080` / `:38081` 的 `/status` 是否已不可访问
+     - `25565` / `38080` / `38081` 对应端口是否已释放
+     - 对于 owned task / terminal，进程是否已结束或终端是否已回到 shell prompt
+   - 任一条件未满足，都**不能**开始下一次启动或部署。
+4. **升级处理**
+   - 若 HTTP 已不可达但端口仍被占用，视为残留 Java / Gradle / Minecraft 进程。
+   - 若不是当前会话 owned task / terminal，停止自动流程，明确要求用户关闭对应外部终端/启动器；必要时再处理占用该端口的残留进程。
+5. **重启闸门**
+   - 只有在端口确认释放后，才允许部署新产物、提示用户重新启动，或进入下一阶段测试。
 
 **本技能不负责启动客户端/服务端。** 当需要用户手动启动时，必须输出：
 - 启动命令
@@ -196,15 +220,22 @@ BBP_ROOT="$CLONE_DIR"
 | 配置项 | 说明 | 示例 |
 |--------|------|------|
 | `client.launchMethod` | `runClient`（Gradle）或 `launcher`（外部启动器） | `runClient` |
-| `client.launchCommand` | 启动客户端的完整命令 | `./gradlew.bat --no-daemon :1.21.11:fabric:runClient` |
+| `client.launchCommand` | 启动客户端的完整命令 | `./gradlew --no-daemon :<version>:fabric:runClient` |
 | `client.launchCwd` | 工作目录（相对 `BBP_ROOT`；空=`BBP_ROOT`） | `mod` |
 | `client.javaHome` | JAVA_HOME（空=系统默认） | `C:/Program Files/Java/jdk-21` |
 | `client.playerName` | 游戏内玩家名 | `Player` |
-| `server.directory` | 服务端安装目录（绝对路径或相对接入项目根） | `D:/mc-server/paper-1.21.11` |
-| `server.jar` | 服务端 JAR 文件名 | `paper-1.21.11-97.jar` |
+| `server.directory` | 服务端安装目录（绝对路径或相对接入项目根） | `D:/mc-server/paper-<version>` |
+| `server.jar` | 服务端 JAR 文件名 | `paper-<version>-latest.jar` |
 | `server.javaPath` | 服务端 java 路径（空=`java`） | `java` |
 | `server.jvmArgs` | JVM 参数 | `-Xms4G -Xmx4G -XX:+UseG1GC` |
 | `build.javaHome` | 构建用 JAVA_HOME（空=系统默认） | 同 client.javaHome |
+
+### 版本解析规则（必须动态）
+
+- `resolvedVersion`：**用户显式指定** → `config.activeVersion` → `versions.*` 中唯一已配置版本 → 扫描 `<BBP_ROOT>/mod/settings.gradle.kts` 得到的唯一候选；若仍有多个候选才询问用户。
+- `referenceVersion`：**仅作为验收基准**，优先 `config.referenceVersion`；若未配置可默认 `1.21.11`，但**绝不能**把它当作当前运行版本。
+- `resolvedLoader`：用户显式指定 > `config.versions[resolvedVersion].client.loader`（若有）> 从 `client.launchCommand` 推断（`fabric` / `neoforge` / `forge`）。
+- 所有命令、产物路径、run 目录、截图目录都必须基于 `resolvedVersion + resolvedLoader` 展开，禁止把 `1.21.11` 当成隐式默认值。
 
 ## 决策树
 
@@ -212,14 +243,16 @@ BBP_ROOT="$CLONE_DIR"
 用户请求测试
     │
     ├─ 指定了版本？
-    │   ├─ 是 → 使用指定版本
-    │   └─ 否 → 询问用户选择 1.21.11 / 1.12.2
+    │   ├─ 是 → resolvedVersion = 用户指定
+    │   └─ 否 → 按“版本解析规则”动态解析
     │
     ├─ 指定了模式？
     │   ├─ 是 → 使用指定模式
     │   └─ 否 → 默认方案 A（客户端自测）
     │
-    └─ 读取配置 → 缺失则询问 → 进入对应流程
+    ├─ 读取配置 → 缺失则询问 → 回填
+    │
+    └─ 用 resolvedVersion / resolvedLoader 展开命令、路径、报告
 ```
 
 ## 两种部署模式
@@ -233,10 +266,12 @@ BBP_ROOT="$CLONE_DIR"
 
 | 产物 | 路径 |
 |------|------|
-| 1.21.11 Fabric Mod | `<BBP_ROOT>/mod/1.21.11/fabric/build/libs/BlackBoxPro-fabric-1.21.11-*.jar` |
-| 1.21.11 NeoForge Mod | `<BBP_ROOT>/mod/1.21.11/neoforge/build/libs/BlackBoxPro-neoforge-1.21.11-*.jar` |
+| 1.21.x Fabric Mod | `<BBP_ROOT>/mod/<resolvedVersion>/fabric/build/libs/BlackBoxPro-fabric-<resolvedVersion>-*.jar` |
+| 1.21.x NeoForge Mod | `<BBP_ROOT>/mod/<resolvedVersion>/neoforge/build/libs/BlackBoxPro-neoforge-<resolvedVersion>-*.jar` |
 | 1.12.2 Forge Mod | `<BBP_ROOT>/mod/1.12.2/forge/build/libs/BlackBoxPro-forge-1.12.2-*.jar` |
 | Plugin | `<BBP_ROOT>/plugin/build/libs/BlackBoxPro-Plugin-*.jar` |
+
+> `resolvedVersion` 只能来自上面的动态解析流程；不要根据旧文档假设成 `1.21.11`。
 
 ---
 
@@ -244,14 +279,22 @@ BBP_ROOT="$CLONE_DIR"
 
 ### A1. 构建 Mod
 
-根据版本执行：
+按 `resolvedVersion` / `resolvedLoader` 精确构建，避免因为示例写死旧版本而误建错误模块：
 ```bash
-# 所有 Gradle 构建都应在 BBP_ROOT 下执行
-cd <BBP_ROOT> && ./gradlew mod_buildAll --no-daemon
-cd <BBP_ROOT> && ./gradlew forge1122_build --no-daemon
+# 在 BBP_ROOT 下执行
+# 1.21.x Fabric
+./mod/gradlew -p "<BBP_ROOT>/mod" --no-daemon :<resolvedVersion>:fabric:build
+
+# 1.21.x NeoForge
+./mod/gradlew -p "<BBP_ROOT>/mod" --no-daemon :<resolvedVersion>:neoforge:build
+
+# 1.12.2 Forge
+./gradlew forge1122_build --no-daemon
 ```
 
-构建失败则停止流程，向用户报告错误。
+- 仅执行与当前目标版本/loader 对应的命令。
+- 只有用户明确要求全量构建时，才使用 `./gradlew buildAll --no-daemon`。
+- 构建失败则停止流程，向用户报告错误。
 
 ### A2. 客户端预启动检查（不代启动）
 
@@ -266,9 +309,9 @@ curl -sf http://localhost:38081/status
 - 若未就绪：**不要执行启动命令**。从配置文件读取以下信息并原样输出给用户，由用户在外部终端手动启动客户端：
 
 ```
-launchCommand = config.versions[version].client.launchCommand
-launchCwd = config.versions[version].client.launchCwd  （空则用 BBP_ROOT）
-javaHome = config.versions[version].client.javaHome     （非空则设 JAVA_HOME）
+launchCommand = config.versions[resolvedVersion].client.launchCommand
+launchCwd = config.versions[resolvedVersion].client.launchCwd  （空则用 BBP_ROOT）
+javaHome = config.versions[resolvedVersion].client.javaHome     （非空则设 JAVA_HOME）
 ```
 
 建议输出格式：
@@ -316,13 +359,13 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 
 1. **覆盖 options.txt**：将模板文件复制到客户端运行目录，跳过初始化向导：
    ```bash
-   # 运行目录（按版本）：
-   # 1.21.11 Fabric:  <BBP_ROOT>/mod/1.21.11/fabric/run/
-   # 1.21.11 NeoForge:<BBP_ROOT>/mod/1.21.11/neoforge/run/
+   # 运行目录（按 resolvedVersion / resolvedLoader）：
+   # 1.21.x Fabric:   <BBP_ROOT>/mod/<resolvedVersion>/fabric/run/
+   # 1.21.x NeoForge: <BBP_ROOT>/mod/<resolvedVersion>/neoforge/run/
    # 1.12.2 Forge:    <BBP_ROOT>/mod/1.12.2/forge/run/
    #
    # 模板来源（优先级）：
-   # 1. config.versions[version].client.optionsTemplate（若配置了绝对/相对路径）
+   # 1. config.versions[resolvedVersion].client.optionsTemplate（若配置了绝对/相对路径）
    # 2. <BBP_ROOT>/mod/options-default.txt（BBP 内置默认模板）
    cp "<optionsTemplate>" "<runDir>/options.txt"
    ```
@@ -347,7 +390,7 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 
 玩家已在某个世界或服务器中（可能是上次测试未正常退出）：
 
-1. 先执行 `leave_world`（方案 A）或 `disconnect`（方案 B）退出当前世界
+1. 统一执行 `leave_world` 退出当前世界（方案 A / B 都使用它；当前没有独立 `disconnect` action）
 2. 等待 2s 后再次 `query_screen_state` 确认回到主菜单
 3. 然后继续正常流程
 
@@ -421,7 +464,7 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 从 screenshot 响应中提取 `data.filePath`，用 Read 工具读取 PNG 进行视觉验证。
 
 截图路径：
-- 1.21.11：`mod/1.21.11/fabric/run/screenshots/blackboxpro/`
+- 1.21.x：`mod/<resolvedVersion>/<resolvedLoader>/run/screenshots/blackboxpro/`
 - 1.12.2：`mod/1.12.2/forge/run/screenshots/blackboxpro/`
 
 ### A7. 清理
@@ -440,7 +483,7 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 
 ```
 === BlackBoxPro 客户端自测报告 ===
-版本: 1.12.2
+版本: <resolvedVersion>
 模式: A（客户端自测）
 世界: blackbox_test (created/joined)
 
@@ -461,10 +504,18 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 ### B1. 构建
 
 ```bash
-cd <BBP_ROOT> && ./gradlew buildAll --no-daemon
-# 或分步：
-# cd <BBP_ROOT> && ./gradlew mod_buildAll --no-daemon
-# cd <BBP_ROOT> && ./gradlew plugin_build --no-daemon
+# 先构建目标版本对应的 Mod
+# 1.21.x
+./mod/gradlew -p "<BBP_ROOT>/mod" --no-daemon :<resolvedVersion>:<resolvedLoader>:build
+
+# 1.12.2
+./gradlew forge1122_build --no-daemon
+
+# 再构建 Plugin
+./gradlew plugin_build --no-daemon
+
+# 仅当用户明确要求全量构建时，才使用：
+# ./gradlew buildAll --no-daemon
 ```
 
 ### B2. 部署 Plugin
@@ -588,14 +639,14 @@ curl -s --max-time 8 -X POST http://localhost:38080/execute \
 
 ```
 === BlackBoxPro 服务端联调报告 ===
-版本: 1.21.11
+版本: <resolvedVersion>
 模式: B（服务端联调）
-玩家: Player
+玩家: <playerName>
 
 测试结果:
-  passed: 54
-  failed: 0
-  skipped: 52
+  passed: <passed>
+  failed: <failed>
+  skipped: <skipped>
 
 通过标准: failed == 0
 判定: PASS
@@ -618,7 +669,9 @@ curl -s --max-time 8 -X POST http://localhost:38080/execute \
 |------|------|---------|
 | `:38081` 轮询超时 | Mod 未加载或崩溃 | 要求用户检查外部终端中的客户端日志，确认 Mod 是否成功加载 |
 | `:38080` 轮询超时 | Plugin 未启用 | 要求用户检查外部终端中的服务端日志，确认 Plugin 是否成功加载 |
-| `Already in a world` | 未先 leave_world | 先执行 `leave_world` |
+| `Already in a world` | 未先 `leave_world` | 先执行 `leave_world`，确认回到主菜单后再继续 |
+| `38081` 仍占用但 `/status` 不通 | 旧 Gradle / Minecraft 进程未真正退出 | 按“旧实例清理状态机”确认进程结束、终端回到 prompt、端口释放后再继续 |
+| 多次 `Ctrl-C` 后仍卡住 | 终端停在确认提示或 Gradle 未退出 | 先读取 buffer 确认提示内容，再处理确认输入；不要盲目重复中断 |
 | `World already exists` | 同名世界 | 自动 fallback 到 `join_world` |
 | `World not found` | 世界不存在 | 使用 `create_world` |
 | 截图全黑 | 窗口遮挡或最小化 | 确保客户端窗口可见 |

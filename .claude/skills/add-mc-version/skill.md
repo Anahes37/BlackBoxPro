@@ -12,8 +12,14 @@ description: 为 BlackBoxPro 新增一个 Minecraft 版本的测试支持。自�
 ```
 
 示例：
-- `/add-mc-version 1.21.1` → 接入 1.21.1 Fabric（默认）
-- `/add-mc-version 1.21.1 loader=both` → 同时接入 Fabric + NeoForge
+- `/add-mc-version 1.21.4` → 接入 1.21.4 Fabric（默认）
+- `/add-mc-version 1.21.4 loader=both ref_version=1.21.1` → 以 1.21.1 为参考模板，同时接入 Fabric + NeoForge
+
+### 参数语义（必须区分）
+
+- `mc_version`：**要新增的目标版本**。
+- `ref_version`：**复制模板与验收基准版本**，默认可用 `1.21.11`，但它不是当前目标版本；若仓库实际更适合从 `1.21.1` 演进，必须显式传 `ref_version=1.21.1`。
+- `loader`：目标接入的 loader；若为 `both`，代码生成与 settings 注册都要同时覆盖 Fabric + NeoForge。
 
 ---
 
@@ -57,7 +63,7 @@ BBP_ROOT="$CLONE_DIR"
 ## 非阻塞规则
 
 **禁止由 AI 调起任何长驻/阻塞型进程。** 包括但不限于：
-- `./gradlew :{mc_version}:fabric:runClient`
+- `./gradlew :{mc_version}:<loader>:runClient`（工作目录为 `${BBP_ROOT}/mod`）
 - 各类 Minecraft 启动器 / PCL / 外部 launcher
 - `java -jar <server.jar> nogui`
 - 任何会持续占用终端并让后续步骤长期等待的命令
@@ -82,6 +88,23 @@ BBP_ROOT="$CLONE_DIR"
    - 若仅端口占用但 HTTP 不通，也要停止残留客户端进程 / 终端
    - 确认 `38081` 已释放后再继续
 4. 确认 `mod/{mc_version}` 是否已存在（存在则跳过代码生成）
+
+#### 旧实例清理状态机（统一流程）
+
+1. **识别归属**
+   - 先判定旧实例是：HTTP 可达的 BBP 实例、当前会话自己创建的后台任务/terminal，还是用户手动启动的外部进程。
+   - 只允许接管当前会话明确创建的 task / terminal；**禁止**向未知用户终端盲发 `Ctrl-C`、`y` 或其他输入。
+2. **优雅停止**
+   - 服务端：若 `38080/status` 可访问，先走 `stop_server`。
+   - 客户端：若 `38081/status` 可访问，只允许做会话级清理与确认，不代替用户关闭整个客户端。
+   - 若存在当前会话自己创建的后台任务 / terminal，先发一次中断，再立即读取输出；若出现确认提示，先处理提示再继续，不要连续盲发多次 `Ctrl-C`。
+3. **退出确认**
+   - 每次停止动作后都必须重新确认：`25565` / `38080` / `38081` 已释放，HTTP `/status` 已不可访问，owned task / terminal 已结束或回到 prompt。
+4. **升级处理**
+   - 若 HTTP 已不可达但端口仍被占用，视为残留 Java / Gradle / Minecraft 进程。
+   - 若不是当前会话 owned task / terminal，停止自动流程，明确要求用户关闭对应外部终端/启动器。
+5. **重启闸门**
+   - 只有在端口确认释放后，才允许部署新产物、提示用户重启，或进入下一阶段。
 
 > 规则：后续每次启动服务端或客户端前，若发现对应端口仍被旧实例占用，必须先停掉旧实例，禁止直接叠加启动。
 
@@ -113,7 +136,7 @@ echo "yarn=$YARN loader=$LOADER fabric_api=$FABRIC_API"
 
 ```bash
 cd "${BBP_ROOT}/mod"
-cp -r 1.21.11 {mc_version}
+cp -r {ref_version} {mc_version}
 
 # 修改 gradle.properties
 # 替换字段：minecraft_version, yarn_mappings, loader_version, fabric_version, neoforge_version
@@ -134,14 +157,16 @@ fabric_version={FABRIC_API}+{mc_version}
 
 **1.4 注册到 mod/settings.gradle.kts**
 
-在文件末尾追加：
+按 loader 动态追加：
 ```kotlin
 include("{mc_version}:runtime")
-include("{mc_version}:fabric")
+include("{mc_version}:fabric")      // loader=fabric|both 时需要
+include("{mc_version}:neoforge")    // loader=neoforge|both 时需要
 
 project(":{mc_version}").projectDir = file("{mc_version}")
 project(":{mc_version}:runtime").projectDir = file("{mc_version}/runtime")
-project(":{mc_version}:fabric").projectDir = file("{mc_version}/fabric")
+project(":{mc_version}:fabric").projectDir = file("{mc_version}/fabric")      // 按需添加
+project(":{mc_version}:neoforge").projectDir = file("{mc_version}/neoforge")  // 按需添加
 ```
 
 ---
@@ -201,8 +226,13 @@ Copy-Item "${BBP_ROOT}\\plugin\\build\\libs\\BlackBoxPro-Plugin-*.jar" "${SERVER
 
 ```bash
 cd "${BBP_ROOT}/mod"
-JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:build --no-daemon 2>&1
+JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:{selected_loader}:build --no-daemon 2>&1
 ```
+
+> `selected_loader` 必须来自用户传入的 `loader`：
+> - `fabric` → `fabric`
+> - `neoforge` → `neoforge`
+> - `both` → 分别执行 Fabric 与 NeoForge 两次构建验证
 
 **编译错误处理规则：**
 
@@ -244,9 +274,11 @@ JAVA_HOME="/c/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:build --
 请在外部终端启动客户端：
 - 工作目录: ${BBP_ROOT}/mod
 - JAVA_HOME: /c/Program Files/Java/jdk-21
-- 命令: ./gradlew :{mc_version}:fabric:runClient --no-daemon
+- 命令: ./gradlew :{mc_version}:{selected_loader}:runClient --no-daemon
 - 就绪判定: curl -sf http://localhost:38081/status
 ```
+
+> `selected_loader` 同构建阶段；若 `loader=both`，先选择一个 loader 完成联调验收，再对另一侧重复执行一轮。
 
 待 `:38081` 就绪后，记录日志中 `Setting user: PlayerXXX` 的玩家名。
 
@@ -285,7 +317,7 @@ import json
 
 r = json.load(open(f"result_{mc_version}.json", encoding="utf-8"))["data"]
 passed, failed, skipped = r["passed"], r["failed"], r["skipped"]
-ref_passed = 54  # 参考版本（1.21.11）
+ref_passed = <ref_passed>  # 来自 ref_version={ref_version} 的历史基准，不要写死到脚本里
 
 print(f"结果：{passed}/{failed}/{skipped}")
 
@@ -328,7 +360,7 @@ else:
 | Java（Gradle/运行时） | `C:\Program Files\Java\jdk-21` |
 | 服务端目录 | `{SERVER_BASE_DIR}/paper-{mc_version}` |
 | 服务端 JAR | `{jar_name}` |
-| 客户端手动启动 | `cd mod && JAVA_HOME="C:/Program Files/Java/jdk-21" ./gradlew :{mc_version}:fabric:runClient`（仅展示给用户，不由 AI 执行） |
+| 客户端手动启动 | `cd mod && JAVA_HOME="C:/Program Files/Java/jdk-21" ./gradlew :{mc_version}:{selected_loader}:runClient`（仅展示给用户，不由 AI 执行） |
 | 玩家名 | `{player_name}`（runClient 开发模式随机） |
 | 最新测试结果 | `{passed}/{failed}/{skipped}` |
 ```
@@ -374,6 +406,6 @@ curl -X POST http://localhost:38081/execute -H Content-Type:application/json -d 
 | MC 版本 | 加载器 | 通过/失败/跳过 | 接入日期 | 备注 |
 |---|---|---|---|---|
 | 1.12.2 | Forge | 52/0/54 | 2026-03-22 | 基线版本 |
-| 1.21.11 | Fabric | 54/0/52 | 2026-03-22 | 主测版本，参考基准 |
+| 1.21.11 | Fabric | 54/0/52 | 2026-03-22 | 参考基准示例，可被 `ref_version` 覆盖 |
 
 （本技能不应包含任何本机绝对路径；请通过 bbp.localPath 或 bbp.git.cloneDir 指定 BBP_ROOT）
