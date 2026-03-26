@@ -26,6 +26,10 @@ object ActionRegistry {
         registry.register(actionId, executor)
     }
 
+    fun registerExternal(actionId: String, executor: ActionExecutor) {
+        registry.registerExternal(actionId, executor)
+    }
+
     fun find(actionId: String): ActionExecutor? = registry.find(actionId)
 
     fun size(): Int = registry.size()

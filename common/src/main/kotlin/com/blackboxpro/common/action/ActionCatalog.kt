@@ -39,7 +39,7 @@ object ActionCatalog {
         register("pick_item_from_block", "x", "y", "z", "includeData")
         register("pick_item_from_entity", "entityId", "includeData")
         register("bundle_selected_slot", "slotId", "selectedIndex")
-        register("slot_state_change", "windowId", "slotId", "newState")
+        register("slot_state_change", "windowId", "slotId", "state")
         register("hover_slot", "windowId", "slot", "durationTicks")
 
         // Player state

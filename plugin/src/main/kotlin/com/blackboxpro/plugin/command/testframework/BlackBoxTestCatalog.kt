@@ -243,7 +243,7 @@ object BlackBoxTestCatalog {
                                         }
                                         "slot_state_change" -> {
                                             addProperty("slotId", 0)
-                                            addProperty("newState", false)
+                                            addProperty("state", false)
                                         }
                                         "drop_inventory" -> {
                                             addProperty("slot", 0)

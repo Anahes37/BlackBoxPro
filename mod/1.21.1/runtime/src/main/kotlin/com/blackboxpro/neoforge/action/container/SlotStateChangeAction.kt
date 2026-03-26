@@ -12,12 +12,12 @@ class SlotStateChangeAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val slotId = params.requireInt("slotId")
         val windowId = params.requireInt("windowId")
-        val newState = params.requireBoolean("newState")
+        val state = params.requireBoolean("state")
 
         val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
 
-        networkHandler.send(ServerboundContainerSlotStateChangedPacket(slotId, windowId, newState))
-        return ActionResult.ok("Changed slot $slotId state to $newState in window $windowId")
+        networkHandler.send(ServerboundContainerSlotStateChangedPacket(slotId, windowId, state))
+        return ActionResult.ok("Changed slot $slotId state to $state in window $windowId")
     }
 }
