@@ -1,6 +1,6 @@
 modLoader = "kotlinforforge"
 loaderVersion = "[5,)"
-license = "All-Rights-Reserved"
+license = "MIT"
 
 [[mods]]
 modId = "blackboxpro"

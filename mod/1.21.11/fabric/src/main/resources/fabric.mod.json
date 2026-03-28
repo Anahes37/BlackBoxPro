@@ -6,7 +6,7 @@
   "description": "BlackBoxPro client mod for Fabric.",
   "authors": [],
   "contact": {},
-  "license": "All-Rights-Reserved",
+  "license": "MIT",
   "environment": "client",
   "accessWidener": "blackboxpro.accesswidener",
   "mixins": [
