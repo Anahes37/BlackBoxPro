@@ -48,6 +48,14 @@ jobs:
           chmod +x mod/1.12.2/gradlew
           chmod +x plugin/gradlew
 
+      - name: Remove local proxy settings
+        run: |
+          sed -i '/systemProp\.http\.proxy/d' gradle.properties
+          sed -i '/systemProp\.https\.proxy/d' gradle.properties
+          sed -i '/systemProp\.java\.net\.useSystemProxies/d' gradle.properties
+          sed -i '/systemProp\.http\.nonProxyHosts/d' gradle.properties
+          sed -i '/systemProp\.https\.nonProxyHosts/d' gradle.properties
+
       - name: Read version
         id: version
         run: echo "version=$(grep '^version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_OUTPUT"
