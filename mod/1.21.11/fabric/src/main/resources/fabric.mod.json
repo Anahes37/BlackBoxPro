@@ -8,6 +8,10 @@
   "contact": {},
   "license": "All-Rights-Reserved",
   "environment": "client",
+  "accessWidener": "blackboxpro.accesswidener",
+  "mixins": [
+    "blackboxpro.mixins.json"
+  ],
   "entrypoints": {
     "client": [
       {

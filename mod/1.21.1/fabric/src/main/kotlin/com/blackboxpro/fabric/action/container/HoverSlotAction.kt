@@ -1,11 +1,11 @@
-package com.blackboxpro.neoforge.action.container
+package com.blackboxpro.fabric.action.container
 
-import com.blackboxpro.neoforge.action.ActionExecutor
-import com.blackboxpro.neoforge.action.ActionResult
+import com.blackboxpro.fabric.action.ActionExecutor
+import com.blackboxpro.fabric.action.ActionResult
 import com.blackboxpro.common.runtime.dispatcher.RuntimeResponseSender
 import com.blackboxpro.common.runtime.scheduler.RuntimeTickScheduler
-import com.blackboxpro.neoforge.util.ContainerTooltipHelper
-import com.blackboxpro.neoforge.util.requireInt
+import com.blackboxpro.fabric.util.ContainerTooltipHelper
+import com.blackboxpro.fabric.util.requireInt
 import com.google.gson.JsonObject
 
 class HoverSlotAction : ActionExecutor {
