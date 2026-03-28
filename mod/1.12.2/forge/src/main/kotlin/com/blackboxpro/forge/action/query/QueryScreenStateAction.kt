@@ -80,7 +80,6 @@ class QueryScreenStateAction : ActionExecutor {
         is GuiRepair -> "anvil"
         is net.minecraft.client.gui.GuiEnchantment -> "enchanting_table"
         is net.minecraft.client.gui.GuiMerchant -> "villager_trade"
-        is net.minecraft.client.gui.inventory.GuiHopper -> "hopper"
         is net.minecraft.client.gui.inventory.GuiShulkerBox -> "shulker_box"
         is GuiScreenBook -> "book"
         is GuiDisconnected -> "disconnected"
