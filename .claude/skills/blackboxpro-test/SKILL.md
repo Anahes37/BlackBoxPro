@@ -112,6 +112,7 @@ curl -s --max-time 8 -X POST http://localhost:38081/execute \
 - 启动 Minecraft 客户端（`runClient`、启动器、PCL、外部 launcher、对应 Terminal/Skill）
 - 启动 Paper/Spigot 服务端（`java -jar ... nogui`、对应 Terminal/Skill）
 - 任何会持续占用终端并导致后续步骤悬挂等待的命令
+- 但允许使用 NarraFork 对话中启动的 Terminal 并自动执行命令
 
 执行边界：
 - **允许**：构建、复制产物、编辑配置、有限时 `curl` 请求、读取已有日志/状态、停止旧实例、轮询短时就绪状态

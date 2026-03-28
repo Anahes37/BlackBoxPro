@@ -38,4 +38,7 @@ object ClientActions {
         BlackBoxApi.sendAsync(player, "resource_pack_response", JsonObject().apply {
             addProperty("uuid", uuid); addProperty("result", result)
         })
+
+    fun openInventory(player: Player): CompletableFuture<ResponseMessage> =
+        BlackBoxApi.sendAsync(player, "open_inventory")
 }

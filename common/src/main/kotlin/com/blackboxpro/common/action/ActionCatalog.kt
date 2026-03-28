@@ -73,6 +73,7 @@ object ActionCatalog {
         register("screenshot", "testId", "prefix", "playerName")
         register("connect_to_server", "ip", "port")
         register("close_screen")
+        register("open_inventory")
         register("create_world", "worldName", "gameMode", "difficulty", "allowCommands", "generateStructures", "bonusChest", "seed")
         register("join_world", "worldName")
         register("leave_world")

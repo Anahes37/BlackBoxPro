@@ -51,7 +51,17 @@
 # 查询玩家状态
 curl -s --max-time 8 -X POST http://localhost:38081/execute \
   -H "Content-Type: application/json" \
-  -d '{"id":"q1","action":"query_player_state"}'
+  -d '{"id":"q1","action":"query_player_state","params":{}}'
+
+# 截图（普通）
+curl -s --max-time 8 -X POST http://localhost:38081/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"s1","action":"screenshot","params":{"testId":"default","prefix":"verify"}}'
+
+# 截图（带 tooltip 渲染）— 在容器界面中悬停指定槽位并渲染 tooltip 后截图
+curl -s --max-time 15 -X POST http://localhost:38081/execute \
+  -H "Content-Type: application/json" \
+  -d '{"id":"st1","action":"screenshot_tooltip","params":{"slot":36,"windowId":0}}'
 
 # 批量执行
 curl -s --max-time 8 -X POST http://localhost:38081/execute \
