@@ -42,8 +42,8 @@ object BlockActions {
             addProperty("insideBlock", insideBlock); addProperty("sequence", sequence)
         })
 
-    fun useItem(player: Player, hand: String = "main_hand", sequence: Int = 0): CompletableFuture<ResponseMessage> =
+    fun useItem(player: Player, hand: String = "main_hand"): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "use_item", JsonObject().apply {
-            addProperty("hand", hand); addProperty("sequence", sequence)
+            addProperty("hand", hand)
         })
 }

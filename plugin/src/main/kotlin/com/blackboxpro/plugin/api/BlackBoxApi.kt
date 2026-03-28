@@ -45,6 +45,10 @@ object BlackBoxApi {
         }, executor)
     }
 
+    fun shutdown() {
+        executor.shutdownNow()
+    }
+
     fun sendBatch(player: Player, actions: List<Pair<String, JsonObject>>) {
         val batchParams = JsonObject().apply {
             add("actions", JsonArray().apply {

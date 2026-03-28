@@ -23,7 +23,7 @@ object EntityActions {
 
     fun interactEntityAt(
         player: Player, entityId: Int,
-        targetX: Float, targetY: Float, targetZ: Float,
+        targetX: Double, targetY: Double, targetZ: Double,
         hand: String = "main_hand", sneaking: Boolean = false
     ): CompletableFuture<ResponseMessage> =
         BlackBoxApi.sendAsync(player, "interact_entity_at", JsonObject().apply {

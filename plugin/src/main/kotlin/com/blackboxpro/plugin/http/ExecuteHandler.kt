@@ -17,9 +17,13 @@ object ExecuteHandler : HttpHandler {
 
     private val gson = Gson()
 
+    private const val MAX_BODY_SIZE = 1024 * 1024 // 1MB
+
     override fun handle(exchange: HttpExchange) {
         val responseJson = buildResponse(exchange)
-        sendHttpResponse(exchange, responseJson)
+        if (responseJson.isNotEmpty()) {
+            sendHttpResponse(exchange, responseJson)
+        }
     }
 
     private fun buildResponse(exchange: HttpExchange): String {
@@ -28,7 +32,11 @@ object ExecuteHandler : HttpHandler {
         }
 
         val body = try {
-            exchange.requestBody.readBytes().toString(Charsets.UTF_8)
+            val bytes = exchange.requestBody.readBytes()
+            if (bytes.size > MAX_BODY_SIZE) {
+                return gson.toJson(ResponseMessage("", "failure", "Request body too large: ${bytes.size} bytes"))
+            }
+            bytes.toString(Charsets.UTF_8)
         } catch (e: Exception) {
             return gson.toJson(ResponseMessage("", "failure", "Failed to read request body: ${e.message}"))
         }
@@ -42,7 +50,8 @@ object ExecuteHandler : HttpHandler {
 
         // 特殊处理：服务端本地执行，不需要 relay
         if (command.action == "run_test") {
-            return handleRunTest(command)
+            handleRunTest(command, exchange)
+            return "" // 响应由 handleRunTest 异步发送
         }
         if (command.action == "stop_server") {
             submit { Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop") }
@@ -68,25 +77,35 @@ object ExecuteHandler : HttpHandler {
         }
     }
 
-    private fun handleRunTest(command: CommandMessage): String {
+    private fun handleRunTest(command: CommandMessage, exchange: HttpExchange) {
         val playerName = command.params?.get("player")?.asString
-            ?: return gson.toJson(ResponseMessage(command.id, "failure", "Missing param: player"))
+        if (playerName == null) {
+            sendHttpResponse(exchange, gson.toJson(ResponseMessage(command.id, "failure", "Missing param: player")))
+            return
+        }
         val scope = command.params.get("scope")?.asString ?: "full"
         val player = Bukkit.getPlayer(playerName)
-            ?: return gson.toJson(ResponseMessage(command.id, "failure", "Player not online: $playerName"))
+        if (player == null) {
+            sendHttpResponse(exchange, gson.toJson(ResponseMessage(command.id, "failure", "Player not online: $playerName")))
+            return
+        }
         val consoleSender = Bukkit.getConsoleSender()
-        return try {
-            val future = when (scope) {
-                "smoke" -> BlackBoxTestRunner.runSmoke(player, consoleSender)
-                else -> BlackBoxTestRunner.runFull(player, consoleSender)
+        val future = when (scope) {
+            "smoke" -> BlackBoxTestRunner.runSmoke(player, consoleSender)
+            else -> BlackBoxTestRunner.runFull(player, consoleSender)
+        }
+        future.orTimeout(1800, TimeUnit.SECONDS).whenComplete { result, error ->
+            try {
+                val resp = if (error != null) {
+                    val msg = if (error is TimeoutException) "Test timed out after 30 minutes" else "Test failed: ${error.message}"
+                    gson.toJson(ResponseMessage(command.id, "failure", msg))
+                } else {
+                    gson.toJson(ResponseMessage(command.id, "success", "Test '$scope' completed", result))
+                }
+                sendHttpResponse(exchange, resp)
+            } catch (e: Exception) {
+                warning("[BlackBoxPro] Failed to send test response: ${e.message}")
             }
-            val result = future.get(1800, TimeUnit.SECONDS)
-            gson.toJson(ResponseMessage(command.id, "success", "Test '$scope' completed", result))
-        } catch (e: TimeoutException) {
-            gson.toJson(ResponseMessage(command.id, "failure", "Test timed out after 30 minutes"))
-        } catch (e: Exception) {
-            warning("[BlackBoxPro] Test '$scope' exception: ${e.message}")
-            gson.toJson(ResponseMessage(command.id, "failure", "Test failed: ${e.message}"))
         }
     }
 

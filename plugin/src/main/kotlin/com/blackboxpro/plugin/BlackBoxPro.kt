@@ -1,5 +1,6 @@
 package com.blackboxpro.plugin
 
+import com.blackboxpro.plugin.api.BlackBoxApi
 import taboolib.common.platform.Plugin
 import taboolib.common.platform.function.info
 import taboolib.common.util.unsafeLazy
@@ -20,6 +21,7 @@ object BlackBoxPro : Plugin() {
     }
 
     override fun onDisable() {
+        BlackBoxApi.shutdown()
         info("[BlackBoxPro] Server plugin disabled.")
     }
 }
