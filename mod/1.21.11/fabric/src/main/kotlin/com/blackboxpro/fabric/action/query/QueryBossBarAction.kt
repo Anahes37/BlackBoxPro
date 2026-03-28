@@ -5,6 +5,7 @@ import com.blackboxpro.fabric.action.ActionResult
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
+import org.tabooproject.reflex.Reflex.Companion.getProperty
 
 /**
  * 查询当前活跃的 Boss Bar 信息。
@@ -20,10 +21,8 @@ class QueryBossBarAction : ActionExecutor {
 
         try {
             // BossBarHud.bossBars 是 Map<UUID, ClientBossBar>
-            val field = bossBarHud.javaClass.getDeclaredField("bossBars")
-            field.isAccessible = true
             @Suppress("UNCHECKED_CAST")
-            val bossBars = field.get(bossBarHud) as? Map<*, *> ?: emptyMap<Any, Any>()
+            val bossBars = bossBarHud.getProperty<Map<*, *>>("bossBars") ?: emptyMap<Any, Any>()
 
             bossBars.values.forEach { bar ->
                 if (bar is net.minecraft.entity.boss.BossBar) {

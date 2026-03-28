@@ -9,6 +9,7 @@ base {
 }
 
 repositories {
+    maven("https://repo.tabooproject.org/repository/releases/")
     mavenCentral()
 }
 
@@ -18,6 +19,7 @@ neoForge {
 
 dependencies {
     api(project(":common"))
+    implementation("org.tabooproject.reflex:reflex:1.2.3")
 }
 
 java {

@@ -14,6 +14,7 @@ import net.minecraft.world.Difficulty
 import net.minecraft.world.GameMode
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
+import org.tabooproject.reflex.Reflex.Companion.invokeMethod
 
 class CreateWorldAction : ActionExecutor {
 
@@ -65,9 +66,7 @@ class CreateWorldAction : ActionExecutor {
                             creator.setSeed(seedText)
                         }
 
-                        val createLevel = CreateWorldScreen::class.java.getDeclaredMethod("createLevel")
-                        createLevel.isAccessible = true
-                        createLevel.invoke(screen)
+                        screen.invokeMethod<Any?>("createLevel")
                     } catch (t: Throwable) {
                         terminal.set(ActionResult.fail("Failed to create world: ${t.message}"))
                     }

@@ -6,6 +6,7 @@ import com.blackboxpro.fabric.util.ContainerTooltipHelper
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.ingame.*
+import org.tabooproject.reflex.Reflex.Companion.getProperty
 
 /**
  * 查询当前打开的屏幕/GUI 状态。
@@ -43,23 +44,13 @@ class QueryScreenStateAction : ActionExecutor {
             if (screen != null && screen.javaClass.simpleName == "DisconnectedScreen") {
                 val reasonFieldNames = listOf("reason", "f_96306_")
                 for (name in reasonFieldNames) {
-                    val found = runCatching {
-                        val f = screen.javaClass.getDeclaredField(name)
-                        f.isAccessible = true
-                        val v = f.get(screen)
-                        if (v != null) { addProperty("reason", v.toString()); true } else false
-                    }.getOrNull() ?: false
-                    if (found) break
+                    val v = runCatching { screen.getProperty<Any?>(name) }.getOrNull()
+                    if (v != null) { addProperty("reason", v.toString()); break }
                 }
                 val detailFieldNames = listOf("info", "details", "f_96307_")
                 for (name in detailFieldNames) {
-                    val found = runCatching {
-                        val f = screen.javaClass.getDeclaredField(name)
-                        f.isAccessible = true
-                        val v = f.get(screen)
-                        if (v != null) { addProperty("details", v.toString()); true } else false
-                    }.getOrNull() ?: false
-                    if (found) break
+                    val v = runCatching { screen.getProperty<Any?>(name) }.getOrNull()
+                    if (v != null) { addProperty("details", v.toString()); break }
                 }
             }
         }

@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiDisconnected
 import net.minecraft.client.gui.GuiScreenBook
 import net.minecraft.client.gui.inventory.*
+import org.tabooproject.reflex.Reflex.Companion.getProperty
 
 class QueryScreenStateAction : ActionExecutor {
 
@@ -41,9 +42,7 @@ class QueryScreenStateAction : ActionExecutor {
                 val fieldNames = listOf("reason", "field_96306_", "message", "cause")
                 for (name in fieldNames) {
                     val found = runCatching {
-                        val f = screen.javaClass.getDeclaredField(name)
-                        f.isAccessible = true
-                        val v = f.get(screen)
+                        val v = screen.getProperty<Any?>(name)
                         if (v != null) { addProperty("reason", v.toString()); true } else false
                     }.getOrNull() ?: false
                     if (found) break

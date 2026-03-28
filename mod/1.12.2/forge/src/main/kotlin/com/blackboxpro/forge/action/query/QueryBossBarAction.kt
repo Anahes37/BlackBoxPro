@@ -6,6 +6,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.world.BossInfo
+import org.tabooproject.reflex.Reflex.Companion.getProperty
 
 class QueryBossBarAction : ActionExecutor {
 
@@ -16,10 +17,8 @@ class QueryBossBarAction : ActionExecutor {
         val bars = JsonArray()
 
         try {
-            val field = bossOverlay.javaClass.getDeclaredField("mapBossInfos")
-            field.isAccessible = true
             @Suppress("UNCHECKED_CAST")
-            val bossInfos = field.get(bossOverlay) as? Map<*, *> ?: emptyMap<Any, Any>()
+            val bossInfos = bossOverlay.getProperty<Map<*, *>>("mapBossInfos") ?: emptyMap<Any, Any>()
 
             bossInfos.values.forEach { bar ->
                 if (bar is BossInfo) {

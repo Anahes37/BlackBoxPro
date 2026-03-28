@@ -26,10 +26,16 @@ base {
 
 repositories {
     mavenCentral()
+    maven("https://repo.tabooproject.org/repository/releases/")
 }
+
+val shadeReflex: Configuration by configurations.creating
 
 dependencies {
     implementation(project(":common"))
+    implementation("org.tabooproject.reflex:reflex:1.2.3")
+    shadeReflex("org.tabooproject.reflex:reflex:1.2.3")
+    shadeReflex("org.tabooproject.reflex:analyser:1.2.3")
 
     minecraft("com.mojang:minecraft:${localProp("minecraft_version")}")
     mappings("net.fabricmc:yarn:${localProp("yarn_mappings")}:v2")
@@ -58,6 +64,13 @@ kotlin {
 
 tasks.named<Jar>("jar") {
     from(commonSourceSet.output)
+    from({ shadeReflex.files.map { zipTree(it) } }) {
+        exclude("META-INF/**")
+        exclude("org/objectweb/asm/**")
+        exclude("org/apache/commons/**")
+        exclude("kotlin/**")
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.named<Jar>("sourcesJar") {

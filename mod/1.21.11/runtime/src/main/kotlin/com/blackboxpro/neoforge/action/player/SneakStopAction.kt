@@ -4,6 +4,7 @@ import com.blackboxpro.neoforge.action.ActionExecutor
 import com.blackboxpro.neoforge.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
+import net.minecraft.world.entity.player.Input
 
 class SneakStopAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -12,7 +13,8 @@ class SneakStopAction : ActionExecutor {
             ?: return ActionResult.fail("Player not available")
 
         // 清除客户端本地 sneak 状态
-        player.input.keyPresses = player.input.keyPresses.withShift(false)
+        val kp = player.input.keyPresses
+        player.input.keyPresses = Input(kp.forward(), kp.backward(), kp.left(), kp.right(), kp.jump(), false, kp.sprint())
         player.setShiftKeyDown(false)
         return ActionResult.ok("Stopped sneaking")
     }

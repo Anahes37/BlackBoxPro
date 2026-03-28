@@ -10,7 +10,7 @@ import net.minecraft.item.ItemStack
 import net.minecraft.client.util.ITooltipFlag
 import net.minecraft.util.text.TextFormatting
 import org.lwjgl.input.Mouse
-import java.lang.reflect.Field
+import org.tabooproject.reflex.Reflex.Companion.getProperty
 import kotlin.math.roundToInt
 
 object ContainerTooltipHelper {
@@ -216,20 +216,9 @@ object ContainerTooltipHelper {
     }
 
     private fun readInt(instance: Any, fieldName: String): Int? {
-        var current: Class<*>? = instance.javaClass
-        while (current != null) {
-            val type = current
-            val value = runCatching {
-                val field: Field = type.getDeclaredField(fieldName)
-                field.isAccessible = true
-                field.get(instance)
-            }.getOrNull()
-            if (value is Number) {
-                return value.toInt()
-            }
-            current = type.superclass
+        return runCatching { instance.getProperty<Any?>(fieldName) }.getOrNull()?.let {
+            if (it is Number) it.toInt() else null
         }
-        return null
     }
 
     private data class ScreenLayout(val left: Int, val top: Int)

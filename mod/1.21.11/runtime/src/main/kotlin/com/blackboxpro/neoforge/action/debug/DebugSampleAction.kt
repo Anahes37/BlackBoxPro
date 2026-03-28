@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.game.ServerboundDebugSubscriptionRequestPa
 import net.minecraft.util.debug.DebugSubscription
 import net.minecraft.util.debug.DebugSubscriptions
 import org.slf4j.LoggerFactory
+import org.tabooproject.reflex.Reflex.Companion.getProperty
 
 class DebugSampleAction : ActionExecutor {
 
@@ -20,8 +21,7 @@ class DebugSampleAction : ActionExecutor {
                 DebugSubscriptions::class.java.declaredFields.forEach { field ->
                     if (DebugSubscription::class.java.isAssignableFrom(field.type)) {
                         try {
-                            field.isAccessible = true
-                            val type = field.get(null) as? DebugSubscription<*>
+                            val type = DebugSubscriptions::class.java.getProperty<DebugSubscription<*>>(field.name, isStatic = true)
                             if (type != null) {
                                 put(field.name.lowercase(), type)
                             }

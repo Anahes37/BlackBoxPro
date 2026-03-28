@@ -6,6 +6,7 @@ import com.blackboxpro.neoforge.util.requireInt
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket
+import org.tabooproject.reflex.Reflex.Companion.setProperty
 
 class SetCarriedItemAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -19,7 +20,7 @@ class SetCarriedItemAction : ActionExecutor {
             ?: return ActionResult.fail("Not connected to server")
         val player = Minecraft.getInstance().player
 
-        player?.inventory?.selected = slot
+        player?.inventory?.setProperty("selected", slot)
         handler.send(ServerboundSetCarriedItemPacket(slot))
         return ActionResult.ok("Selected hotbar slot $slot")
     }

@@ -13,8 +13,8 @@ import net.minecraft.world.item.TooltipFlag
 import net.minecraft.core.registries.BuiltInRegistries
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW
-import java.lang.reflect.Field
-import java.lang.reflect.Method
+import org.tabooproject.reflex.Reflex.Companion.getProperty
+import org.tabooproject.reflex.Reflex.Companion.invokeMethod
 import kotlin.math.roundToInt
 
 object ContainerTooltipHelper {
@@ -248,34 +248,12 @@ object ContainerTooltipHelper {
 
     private fun readNumber(instance: Any, vararg names: String): Number? {
         names.forEach { name ->
-            findMethod(instance.javaClass, name)?.let { method ->
-                val value = runCatching { method.invoke(instance) }.getOrNull()
-                if (value is Number) {
-                    return value
-                }
-            }
-            findField(instance.javaClass, name)?.let { field ->
-                val value = runCatching { field.get(instance) }.getOrNull()
-                if (value is Number) {
-                    return value
-                }
-            }
-        }
-        return null
-    }
-
-    private fun findMethod(type: Class<*>, name: String): Method? =
-        runCatching { type.getMethod(name) }.getOrNull()
-            ?: runCatching { type.getDeclaredMethod(name).apply { isAccessible = true } }.getOrNull()
-
-    private fun findField(type: Class<*>, name: String): Field? {
-        var current: Class<*>? = type
-        while (current != null) {
-            val field = runCatching { current.getDeclaredField(name).apply { isAccessible = true } }.getOrNull()
-            if (field != null) {
-                return field
-            }
-            current = current.superclass
+            // 先尝试作为字段读取（更常见的场景）
+            val fieldResult = runCatching { instance.getProperty<Any?>(name) }.getOrNull()
+            if (fieldResult is Number) return fieldResult
+            // 再尝试作为方法调用
+            val methodResult = runCatching { instance.invokeMethod<Any?>(name) }.getOrNull()
+            if (methodResult is Number) return methodResult
         }
         return null
     }

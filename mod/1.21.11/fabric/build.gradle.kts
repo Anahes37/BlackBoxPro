@@ -17,12 +17,22 @@ base {
     archivesName.set("BlackBoxPro-fabric-${property("minecraft_version")}")
 }
 
+loom {
+    accessWidenerPath.set(file("src/main/resources/blackboxpro.accesswidener"))
+}
+
 repositories {
+    maven("https://repo.tabooproject.org/repository/releases/")
     mavenCentral()
 }
 
+val shadeReflex: Configuration by configurations.creating
+
 dependencies {
     implementation(project(":common"))
+    implementation("org.tabooproject.reflex:reflex:1.2.3")
+    shadeReflex("org.tabooproject.reflex:reflex:1.2.3")
+    shadeReflex("org.tabooproject.reflex:analyser:1.2.3")
 
     minecraft("com.mojang:minecraft:${property("minecraft_version")}")
     mappings("net.fabricmc:yarn:${property("yarn_mappings")}:v2")
@@ -53,6 +63,13 @@ kotlin {
 
 tasks.named<Jar>("jar") {
     from(commonSourceSet.output)
+    from({ shadeReflex.files.map { zipTree(it) } }) {
+        exclude("META-INF/**")
+        exclude("org/objectweb/asm/**")
+        exclude("org/apache/commons/**")
+        exclude("kotlin/**")
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.named<Jar>("sourcesJar") {

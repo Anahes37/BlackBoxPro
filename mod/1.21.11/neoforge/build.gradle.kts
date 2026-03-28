@@ -18,6 +18,7 @@ base {
 }
 
 repositories {
+    maven("https://repo.tabooproject.org/repository/releases/")
     mavenCentral()
     maven { setUrl("https://thedarkcolour.github.io/KotlinForForge/") }
 }
@@ -35,9 +36,14 @@ neoForge {
     }
 }
 
+val shadeReflex: Configuration by configurations.creating
+
 dependencies {
     implementation(project(":common"))
     implementation(project(":1.21.11:runtime"))
+    implementation("org.tabooproject.reflex:reflex:1.2.3")
+    shadeReflex("org.tabooproject.reflex:reflex:1.2.3")
+    shadeReflex("org.tabooproject.reflex:analyser:1.2.3")
     implementation("thedarkcolour:kotlinforforge-neoforge:${property("kotlin_for_forge_version")}")
 }
 
@@ -66,6 +72,13 @@ kotlin {
 tasks.named<Jar>("jar") {
     from(runtimeSourceSet.output)
     from(commonSourceSet.output)
+    from({ shadeReflex.files.map { zipTree(it) } }) {
+        exclude("META-INF/**")
+        exclude("org/objectweb/asm/**")
+        exclude("org/apache/commons/**")
+        exclude("kotlin/**")
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.named<Jar>("sourcesJar") {

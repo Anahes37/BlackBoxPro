@@ -26,6 +26,7 @@ base {
 
 repositories {
     mavenCentral()
+    maven("https://repo.tabooproject.org/repository/releases/")
     maven { setUrl("https://thedarkcolour.github.io/KotlinForForge/") }
 }
 
@@ -42,10 +43,15 @@ neoForge {
     }
 }
 
+val shadeReflex: Configuration by configurations.creating
+
 dependencies {
     implementation(project(":common"))
     implementation(project(":1.21.1:runtime"))
     implementation("thedarkcolour:kotlinforforge-neoforge:${localProp("kotlin_for_forge_version")}")
+    implementation("org.tabooproject.reflex:reflex:1.2.3")
+    shadeReflex("org.tabooproject.reflex:reflex:1.2.3")
+    shadeReflex("org.tabooproject.reflex:analyser:1.2.3")
 }
 
 tasks.processResources {
@@ -73,6 +79,13 @@ kotlin {
 tasks.named<Jar>("jar") {
     // 1.21.1 的 runtime 工程已经内嵌了 common 源码/输出，这里避免再次打入导致重复条目
     from(runtimeSourceSet.output)
+    from({ shadeReflex.files.map { zipTree(it) } }) {
+        exclude("META-INF/**")
+        exclude("org/objectweb/asm/**")
+        exclude("org/apache/commons/**")
+        exclude("kotlin/**")
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.named<Jar>("sourcesJar") {

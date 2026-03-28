@@ -5,6 +5,7 @@ import com.blackboxpro.neoforge.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.inventory.*
+import org.tabooproject.reflex.Reflex.Companion.getProperty
 
 /**
  * 查询当前打开的屏幕/GUI 状态。
@@ -77,13 +78,12 @@ class QueryScreenStateAction : ActionExecutor {
         val instance = target ?: return null
         for (fieldName in fieldNames) {
             val value = runCatching {
-                val field = instance.javaClass.getDeclaredField(fieldName)
-                field.isAccessible = true
-                field.get(instance)?.toString()
+                instance.getProperty<Any?>(fieldName)?.toString()
             }.getOrNull()
             if (!value.isNullOrBlank()) return value
         }
 
+        // Fallback: 按类型搜索 Component 字段（Reflex 不支持按类型搜索，保留原始反射）
         return runCatching {
             instance.javaClass.declaredFields.firstNotNullOfOrNull { field ->
                 field.isAccessible = true

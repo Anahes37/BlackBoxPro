@@ -4,6 +4,7 @@ import com.blackboxpro.fabric.action.ActionExecutor
 import com.blackboxpro.fabric.action.ActionResult
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
+import net.minecraft.util.PlayerInput
 
 class SneakStopAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
@@ -12,7 +13,8 @@ class SneakStopAction : ActionExecutor {
             ?: return ActionResult.fail("Player not available")
 
         // 清除客户端本地 sneak 状态
-        player.input.playerInput = player.input.playerInput.withSneaking(false)
+        val pi = player.input.playerInput
+        player.input.playerInput = PlayerInput(pi.forward(), pi.backward(), pi.left(), pi.right(), pi.jump(), false, pi.sprint())
         player.setSneaking(false)
         return ActionResult.ok("Stopped sneaking")
     }

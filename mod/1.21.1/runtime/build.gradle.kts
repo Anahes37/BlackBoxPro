@@ -25,6 +25,7 @@ base {
 
 repositories {
     mavenCentral()
+    maven("https://repo.tabooproject.org/repository/releases/")
 }
 
 neoForge {
@@ -37,6 +38,7 @@ dependencies {
     api(project(":common"))
     implementation(project(":common"))
     compileOnly(commonOutputs)
+    implementation("org.tabooproject.reflex:reflex:1.2.3")
 }
 
 tasks.withType<KotlinCompile> {

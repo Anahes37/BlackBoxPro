@@ -15,6 +15,7 @@ sourceSets {
 }
 
 configurations.create("embeddedCommon")
+configurations.create("embeddedReflex")
 
 base.archivesName.set("BlackBoxPro-forge-1.12.2")
 
@@ -33,6 +34,7 @@ minecraft {
 }
 
 repositories {
+    maven("https://repo.tabooproject.org/repository/releases/")
     mavenCentral()
 }
 
@@ -41,6 +43,9 @@ dependencies {
     add("embeddedCommon", commonJarFiles)
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.25")
     implementation("com.google.code.gson:gson:2.8.9")
+    implementation("org.tabooproject.reflex:reflex:1.2.3")
+    add("embeddedReflex", "org.tabooproject.reflex:reflex:1.2.3")
+    add("embeddedReflex", "org.tabooproject.reflex:analyser:1.2.3")
 }
 
 tasks.withType<KotlinCompile> {
@@ -63,6 +68,14 @@ tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from({
         configurations.getByName("embeddedCommon").files.map { zipTree(it) }
+    })
+    from({
+        configurations.getByName("embeddedReflex").files.map { zipTree(it).matching {
+            exclude("META-INF/**")
+            exclude("org/objectweb/asm/**")
+            exclude("org/apache/commons/**")
+            exclude("kotlin/**")
+        }}
     })
     from({
         configurations.getByName("runtimeClasspath").files

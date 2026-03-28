@@ -6,6 +6,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.world.BossEvent
+import org.tabooproject.reflex.Reflex.Companion.getProperty
 
 /**
  * 查询当前活跃的 Boss Bar 信息。
@@ -21,10 +22,8 @@ class QueryBossBarAction : ActionExecutor {
 
         try {
             // BossHealthOverlay.events 是 Map<UUID, LerpingBossEvent>
-            val field = bossOverlay.javaClass.getDeclaredField("events")
-            field.isAccessible = true
             @Suppress("UNCHECKED_CAST")
-            val events = field.get(bossOverlay) as? Map<*, *> ?: emptyMap<Any, Any>()
+            val events = bossOverlay.getProperty<Map<*, *>>("events") ?: emptyMap<Any, Any>()
 
             events.values.forEach { bar ->
                 if (bar is BossEvent) {
