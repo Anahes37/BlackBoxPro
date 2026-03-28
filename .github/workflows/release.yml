@@ -50,12 +50,8 @@ jobs:
 
       - name: Remove local proxy settings and fix CI compatibility
         run: |
-          # 移除本地代理配置
-          sed -i '/systemProp\.http\.proxy/d' gradle.properties
-          sed -i '/systemProp\.https\.proxy/d' gradle.properties
-          sed -i '/systemProp\.java\.net\.useSystemProxies/d' gradle.properties
-          sed -i '/systemProp\.http\.nonProxyHosts/d' gradle.properties
-          sed -i '/systemProp\.https\.nonProxyHosts/d' gradle.properties
+          # 移除所有 gradle.properties 中的本地代理配置
+          find . -name 'gradle.properties' -exec sed -i '/systemProp\.http\.proxy/d;/systemProp\.https\.proxy/d;/systemProp\.java\.net\.useSystemProxies/d;/systemProp\.http\.nonProxyHosts/d;/systemProp\.https\.nonProxyHosts/d' {} +
           # CI 已通过 setup-java 安装 JDK，不需要 foojay toolchain resolver
           sed -i '/foojay-resolver/d' mod/settings.gradle.kts
 
