@@ -14,13 +14,14 @@ object StatusHandler : HttpHandler {
 
     override fun handle(exchange: HttpExchange) {
         try {
+            val client = net.minecraft.client.Minecraft.getInstance()
             val obj = JsonObject().apply {
                 addProperty("status", "running")
                 addProperty("version", BlackBoxProNeoForge.VERSION)
                 addProperty("platform", "neoforge")
                 addProperty("httpPort", RuntimeBlackBoxConfig.current.network.httpPort)
                 addProperty("actions", ActionRegistry.size())
-                addProperty("ready", true)
+                addProperty("ready", client.player != null && client.level != null)
             }
             val bytes = obj.toString().toByteArray(Charsets.UTF_8)
             exchange.responseHeaders.set("Content-Type", "application/json; charset=utf-8")
