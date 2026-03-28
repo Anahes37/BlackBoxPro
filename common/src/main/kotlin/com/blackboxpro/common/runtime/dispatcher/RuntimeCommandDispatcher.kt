@@ -56,6 +56,11 @@ object RuntimeCommandDispatcher {
     }
 
     fun dispatch(message: CommandMessage) {
+        if (!::logger.isInitialized || !::mainThreadExecutor.isInitialized || !::actionResolver.isInitialized) {
+            System.err.println("[BlackBoxPro] CommandDispatcher not initialized, dropping: ${message.action}")
+            return
+        }
+
         logger.info("Dispatching action: {} (id={})", message.action, message.id)
 
         if (!isActionAllowed(message.action)) {

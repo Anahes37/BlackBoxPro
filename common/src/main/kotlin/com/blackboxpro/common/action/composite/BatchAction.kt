@@ -18,6 +18,10 @@ class BatchAction : ActionExecutor {
     }
 
     override fun execute(params: JsonObject): ActionResult {
+        if (!::logger.isInitialized) {
+            return ActionResult.fail("BatchAction not initialized: logger not bound")
+        }
+
         val actionsArray = params.getAsJsonArray("actions")
             ?: return ActionResult.fail("Missing required field: actions")
 
@@ -54,7 +58,7 @@ class BatchAction : ActionExecutor {
 
             if (action == "wait") {
                 val maxDelay = RuntimeBlackBoxConfig.current.execution.maxDelayTicks
-                val ticks = (actionParams.get("ticks")?.asInt ?: 0).coerceAtMost(maxDelay)
+                val ticks = (actionParams.get("ticks")?.asInt ?: 0).coerceAtLeast(0).coerceAtMost(maxDelay)
                 RuntimeTickScheduler.schedule(ticks) {
                     executeBatchStep(actions, index + 1)
                 }
@@ -63,7 +67,21 @@ class BatchAction : ActionExecutor {
 
             val executor = RuntimeCommandDispatcher.resolveAction(action)
             if (executor != null) {
-                val result = executor.execute(actionParams)
+                // safety 检查：batch 内子 action 也需遵守 blockedActions 规则
+                val safety = RuntimeBlackBoxConfig.current.safety
+                if (safety.enabled) {
+                    if (action in safety.blockedActions || (safety.allowedActions.isNotEmpty() && action !in safety.allowedActions)) {
+                        logger.warn("Batch step {} ({}) blocked by safety config, skipping", index, action)
+                        index++
+                        continue
+                    }
+                }
+                val result = try {
+                    executor.execute(actionParams)
+                } catch (e: Exception) {
+                    logger.warn("Batch step {} ({}) threw exception: {}", index, action, e.message)
+                    ActionResult.fail("Exception: ${e.message}")
+                }
                 if (!result.success) {
                     logger.warn("Batch step {} ({}) failed: {}", index, action, result.message)
                 }

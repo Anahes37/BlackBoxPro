@@ -20,7 +20,14 @@ object RuntimeTickScheduler {
                 ready.add(entry.task)
             }
         }
-        ready.forEach { it() }
+        ready.forEach { task ->
+            try {
+                task()
+            } catch (e: Exception) {
+                System.err.println("[BlackBoxPro] TickScheduler task exception: ${e.message}")
+                e.printStackTrace()
+            }
+        }
     }
 
     fun schedule(delayTicks: Int, task: () -> Unit) {

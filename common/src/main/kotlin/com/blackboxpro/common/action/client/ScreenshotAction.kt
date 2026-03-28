@@ -72,7 +72,7 @@ class ScreenshotAction : ActionExecutor {
         name.replace(SANITIZE_PATTERN, "_")
 
     companion object {
-        private val INDEX_PATTERN = Regex("^(\\d{3}).*\\.png$")
+        private val INDEX_PATTERN = Regex("^(\\d+).*\\.png$")
         private val SANITIZE_PATTERN = Regex("[^a-zA-Z0-9_\\-.]")
     }
 }

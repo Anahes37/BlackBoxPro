@@ -7,6 +7,7 @@ class RuntimeActionRegistry(
     private val logger: LogHandler
 ) {
     private val mutableExecutors = mutableMapOf<String, ActionExecutor>()
+    @Volatile
     private var executors: Map<String, ActionExecutor> = emptyMap()
     private var frozen = false
 
@@ -27,6 +28,7 @@ class RuntimeActionRegistry(
      * 第三方 mod 注册自定义 Action 的公开 API。
      * 可在 BBP 初始化完成（frozen）后调用，注册后立即生效。
      */
+    @Synchronized
     fun registerExternal(actionId: String, executor: ActionExecutor) {
         if (mutableExecutors.containsKey(actionId)) {
             logger.warn("Overriding executor for action: {}", actionId)
