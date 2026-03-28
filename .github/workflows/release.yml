@@ -48,37 +48,23 @@ jobs:
           chmod +x mod/1.12.2/gradlew
           chmod +x plugin/gradlew
 
-      - name: Remove local proxy settings
+      - name: Remove local proxy settings and fix CI compatibility
         run: |
+          # 移除本地代理配置
           sed -i '/systemProp\.http\.proxy/d' gradle.properties
           sed -i '/systemProp\.https\.proxy/d' gradle.properties
           sed -i '/systemProp\.java\.net\.useSystemProxies/d' gradle.properties
           sed -i '/systemProp\.http\.nonProxyHosts/d' gradle.properties
           sed -i '/systemProp\.https\.nonProxyHosts/d' gradle.properties
+          # CI 已通过 setup-java 安装 JDK，不需要 foojay toolchain resolver
+          sed -i '/foojay-resolver/d' mod/settings.gradle.kts
 
       - name: Read version
         id: version
         run: echo "version=$(grep '^version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_OUTPUT"
 
-      - name: Build 1.21.11 Mod (Fabric + NeoForge)
-        run: ./gradlew mod2111_build --no-daemon
-
-      - name: Build 1.21.1 Mod (Fabric + NeoForge)
-        run: |
-          cd mod
-          ../gradlew --no-daemon :1.21.1:runtime:build :1.21.1:fabric:build
-          cd ..
-          # Pack NeoForge 1.21.1
-          ./gradlew mod1211_pack_neoforge --no-daemon
-
-      - name: Build 1.12.2 Mod (Forge)
-        run: ./gradlew forge1122_build --no-daemon
-
-      - name: Build Plugin
-        run: ./gradlew plugin_build --no-daemon
-
-      - name: Collect jars
-        run: ./gradlew collectJars --no-daemon
+      - name: Build all modules
+        run: ./gradlew buildAll --no-daemon
 
       - name: List artifacts
         run: ls -la build/libs/
