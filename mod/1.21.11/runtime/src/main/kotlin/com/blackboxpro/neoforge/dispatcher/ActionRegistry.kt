@@ -66,6 +66,7 @@ object ActionRegistry {
         register("interact_entity", InteractEntityAction())
         register("interact_entity_at", InteractEntityAtAction())
         register("swing_arm", SwingArmAction())
+        register("left_click", LeftClickAction())
 
         // === 容器/GUI 操作 ===
         register("click_slot", ClickSlotAction())

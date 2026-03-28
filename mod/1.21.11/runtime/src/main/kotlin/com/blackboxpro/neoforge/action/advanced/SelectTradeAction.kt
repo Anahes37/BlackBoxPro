@@ -10,6 +10,9 @@ import net.minecraft.network.protocol.game.ServerboundSelectTradePacket
 class SelectTradeAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val selectedSlot = params.requireInt("selectedSlot")
+        if (selectedSlot < 0) {
+            return ActionResult.fail("selectedSlot must be >= 0, got: $selectedSlot")
+        }
 
         val networkHandler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")

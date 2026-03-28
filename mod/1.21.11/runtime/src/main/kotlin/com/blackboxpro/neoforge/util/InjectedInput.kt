@@ -41,8 +41,12 @@ class InjectedInput : ClientInput() {
         moveVector = Vec2(sidewaysValue, forwardValue).normalized()
     }
 
-    /** 安装到玩家，替换原始 ClientInput */
+    /** 安装到玩家，替换原始 ClientInput。若当前已有其他 InjectedInput，先卸载以恢复原始 input。 */
     fun install(player: LocalPlayer) {
+        val currentInput = player.input
+        if (currentInput is InjectedInput && currentInput !== this) {
+            currentInput.uninstall(player)
+        }
         original = player.input
         installedPlayer = player
         player.input = this

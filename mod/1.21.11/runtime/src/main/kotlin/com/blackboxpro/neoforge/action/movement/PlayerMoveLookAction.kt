@@ -23,7 +23,7 @@ class PlayerMoveLookAction : ActionExecutor {
         val x = params.requireDouble("x")
         val y = params.requireDouble("y")
         val z = params.requireDouble("z")
-        val pitch = params.requireDouble("pitch").toFloat()
+        val pitch = params.requireDouble("pitch").toFloat().coerceIn(-90f, 90f)
         val speed = params.getDoubleOrDefault("speed", 1.0).coerceIn(0.1, 2.0)
         val timeout = params.getIntOrDefault("timeout", 200)
 
@@ -64,6 +64,10 @@ class PlayerMoveLookAction : ActionExecutor {
                 injected.uninstall()
                 return
             }
+            if (p.input !== injected) {
+                injected.reset()
+                return
+            }
             val threshold = RuntimeBlackBoxConfig.current.pathfinding.arrivalThreshold
 
             ticksElapsed++
@@ -76,6 +80,7 @@ class PlayerMoveLookAction : ActionExecutor {
             if (totalDist < threshold || ticksElapsed >= timeout) {
                 injected.reset()
                 injected.uninstall(p)
+                p.isSprinting = false
                 return
             }
 

@@ -17,7 +17,9 @@ class SetCarriedItemAction : ActionExecutor {
 
         val handler = Minecraft.getInstance().connection
             ?: return ActionResult.fail("Not connected to server")
+        val player = Minecraft.getInstance().player
 
+        player?.inventory?.selected = slot
         handler.send(ServerboundSetCarriedItemPacket(slot))
         return ActionResult.ok("Selected hotbar slot $slot")
     }

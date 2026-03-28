@@ -11,6 +11,11 @@ import net.minecraft.client.Minecraft
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket
 import kotlin.math.sqrt
 
+/**
+ * 直线传送式移动（绕过物理引擎）。
+ * 注意：此 Action 直接 setPos + sendPacket，不经过碰撞/重力检测。
+ * 推荐使用 navigate_to（A* 寻路 + InjectedInput 物理引擎驱动）替代。
+ */
 class PathfindToAction : ActionExecutor {
 
     override fun execute(params: JsonObject): ActionResult {
