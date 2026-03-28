@@ -6,6 +6,7 @@ import com.blackboxpro.forge.util.ContainerTooltipHelper
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiDisconnected
+import net.minecraft.client.gui.GuiRepair
 import net.minecraft.client.gui.GuiScreenBook
 import net.minecraft.client.gui.inventory.*
 import org.tabooproject.reflex.Reflex.Companion.getProperty
@@ -77,8 +78,8 @@ class QueryScreenStateAction : ActionExecutor {
         is GuiBeacon -> "beacon"
         is GuiScreenHorseInventory -> "horse"
         is GuiRepair -> "anvil"
-        is GuiEnchantment -> "enchanting_table"
-        is GuiMerchant -> "villager_trade"
+        is net.minecraft.client.gui.GuiEnchantment -> "enchanting_table"
+        is net.minecraft.client.gui.GuiMerchant -> "villager_trade"
         is net.minecraft.client.gui.inventory.GuiHopper -> "hopper"
         is net.minecraft.client.gui.inventory.GuiShulkerBox -> "shulker_box"
         is GuiScreenBook -> "book"

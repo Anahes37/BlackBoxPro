@@ -19,7 +19,7 @@ class QueryWorldStateAction : ActionExecutor {
             addProperty("thundering", world.isThundering)
             addProperty("dimension", dimensionToString(world.provider.dimension))
             addProperty("hasSkyLight", world.provider.hasSkyLight())
-            addProperty("hasCeiling", !world.provider.hasNoSky && world.provider.dimension == -1)
+            addProperty("hasCeiling", world.provider.dimension == -1)
             addProperty("difficulty", world.difficulty.name.lowercase())
             addProperty("seaLevel", world.seaLevel)
         }

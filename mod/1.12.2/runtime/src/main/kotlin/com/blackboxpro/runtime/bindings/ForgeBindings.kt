@@ -17,7 +17,7 @@ import javax.imageio.ImageIO
 object ForgeBindings : LoggerSupplier {
 
     private val logger = LogManager.getLogger("BlackBoxPro-ForgeBindings")
-    private val screenshotExecutor = Executors.newSingleThreadExecutor { r ->
+    internal val screenshotExecutor = Executors.newSingleThreadExecutor { r ->
         Thread(r, "BlackBoxPro-Screenshot").apply { isDaemon = true }
     }
 

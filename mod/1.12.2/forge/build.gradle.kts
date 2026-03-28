@@ -44,6 +44,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.25")
     implementation("com.google.code.gson:gson:2.8.9")
     implementation("org.tabooproject.reflex:reflex:1.2.3")
+    implementation("org.tabooproject.reflex:analyser:1.2.3")
     add("embeddedReflex", "org.tabooproject.reflex:reflex:1.2.3")
     add("embeddedReflex", "org.tabooproject.reflex:analyser:1.2.3")
 }
