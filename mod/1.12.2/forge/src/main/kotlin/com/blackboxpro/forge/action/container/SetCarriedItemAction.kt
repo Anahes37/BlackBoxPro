@@ -15,9 +15,11 @@ class SetCarriedItemAction : ActionExecutor {
             return ActionResult.fail("Slot must be between 0 and 8, got: $slot")
         }
 
-        val connection = Minecraft.getMinecraft().connection
+        val mc = Minecraft.getMinecraft()
+        val connection = mc.connection
             ?: return ActionResult.fail("Not connected to server")
 
+        mc.player?.inventory?.currentItem = slot
         connection.sendPacket(CPacketHeldItemChange(slot))
         return ActionResult.ok("Selected hotbar slot $slot")
     }

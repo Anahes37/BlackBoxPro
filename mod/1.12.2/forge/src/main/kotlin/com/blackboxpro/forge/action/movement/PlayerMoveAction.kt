@@ -63,6 +63,11 @@ class PlayerMoveAction : ActionExecutor {
                 injected.uninstall()
                 return
             }
+            // 守卫：如果 InjectedMovementInput 已被其他 Action 替换，提前退出
+            if (p.movementInput !== injected) {
+                injected.reset()
+                return
+            }
             val threshold = RuntimeBlackBoxConfig.current.pathfinding.arrivalThreshold
 
             ticksElapsed++

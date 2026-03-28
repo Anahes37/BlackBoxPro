@@ -22,7 +22,7 @@ class QueryActiveEffectsAction : ActionExecutor {
                 addProperty("amplifier", effect.amplifier)
                 addProperty("duration", effect.duration)
                 addProperty("ambient", effect.isAmbient)
-                addProperty("showParticles", effect.doesShowParticles())
+                addProperty("visible", effect.doesShowParticles())
             })
         }
 

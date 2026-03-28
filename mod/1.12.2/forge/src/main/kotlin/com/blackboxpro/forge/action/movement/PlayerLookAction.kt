@@ -11,7 +11,7 @@ import net.minecraft.network.play.client.CPacketPlayer
 class PlayerLookAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val yaw = params.requireDouble("yaw").toFloat()
-        val pitch = params.requireDouble("pitch").toFloat()
+        val pitch = params.requireDouble("pitch").toFloat().coerceIn(-90f, 90f)
         val onGround = params.getBooleanOrDefault("onGround", true)
 
         val mc = Minecraft.getMinecraft()

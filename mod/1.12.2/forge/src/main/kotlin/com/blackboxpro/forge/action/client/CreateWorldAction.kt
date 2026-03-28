@@ -40,6 +40,7 @@ class CreateWorldAction : ActionExecutor {
         }
 
         val gameType = parseGameType(params.getStringOrNull("gameMode"))
+            ?: return ActionResult.fail("Invalid gameMode: ${params.getStringOrNull("gameMode")}")
         val allowCommands = params.getBooleanOrDefault("allowCommands", gameType == GameType.CREATIVE)
         val generateStructures = params.getBooleanOrDefault("generateStructures", true)
         val bonusChest = params.getBooleanOrDefault("bonusChest", false)
@@ -119,13 +120,13 @@ class CreateWorldAction : ActionExecutor {
         return ActionResult.async()
     }
 
-    private fun parseGameType(raw: String?): GameType =
+    private fun parseGameType(raw: String?): GameType? =
         when ((raw ?: "survival").trim().lowercase(Locale.ROOT)) {
             "survival" -> GameType.SURVIVAL
             "creative" -> GameType.CREATIVE
             "adventure" -> GameType.ADVENTURE
             "spectator" -> GameType.SPECTATOR
-            else -> throw IllegalArgumentException("Invalid gameMode: $raw")
+            else -> null
         }
 
     private fun validateWorldName(worldName: String): String? = when {

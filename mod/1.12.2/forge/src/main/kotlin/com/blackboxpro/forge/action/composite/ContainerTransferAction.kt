@@ -10,21 +10,19 @@ class ContainerTransferAction : ActionExecutor {
 
     override fun execute(params: JsonObject): ActionResult {
         val windowId = params.requireInt("windowId")
-        val slotId = params.requireInt("slotId")
-        val actionNumber = params.requireInt("actionNumber")
+        val slot = params.requireInt("slot")
 
-        // Shift-click: clickType=QUICK_MOVE, mouseButton=0
+        // Shift-click: mode=1 (QUICK_MOVE), button=0
         val clickSlot = ActionRegistry.find("click_slot")
             ?: return ActionResult.fail("click_slot action not registered")
         val result = clickSlot.execute(JsonObject().apply {
             addProperty("windowId", windowId)
-            addProperty("slotId", slotId)
-            addProperty("mouseButton", 0)
-            addProperty("clickType", "quick_move")
-            addProperty("actionNumber", actionNumber)
+            addProperty("slot", slot)
+            addProperty("button", 0)
+            addProperty("mode", 1)
         })
-        if (!result.success) return ActionResult.fail("Failed to transfer slot $slotId: ${result.message}")
+        if (!result.success) return ActionResult.fail("Failed to transfer slot $slot: ${result.message}")
 
-        return ActionResult.ok("Transferred slot $slotId in window $windowId")
+        return ActionResult.ok("Transferred slot $slot in window $windowId")
     }
 }

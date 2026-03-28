@@ -27,17 +27,17 @@ object ItemStackSerializer {
     }
 
     private fun serializeComponents(stack: ItemStack, out: JsonObject) {
-        // display name
+        // display name — 使用 minecraft: 前缀与 1.21.11 端保持一致
         if (stack.hasDisplayName()) {
-            out.addProperty("display_name", stack.displayName)
+            out.addProperty("minecraft:custom_name", stack.displayName)
         }
 
-        // lore
+        // lore (tooltip 去掉第一行物品名)
         val lore = stack.getTooltip(Minecraft.getMinecraft().player, net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL)
         if (lore.size > 1) {
             val arr = JsonArray()
             lore.drop(1).forEach { arr.add(it) }
-            out.add("lore", arr)
+            out.add("minecraft:lore", arr)
         }
 
         // enchantments
@@ -52,13 +52,18 @@ object ItemStackSerializer {
                     obj.addProperty(id.registryName?.toString() ?: "unknown", lvl)
                 }
             }
-            out.add("enchantments", obj)
+            out.add("minecraft:enchantments", obj)
         }
 
         // damage
         if (stack.isItemDamaged) {
-            out.addProperty("damage", stack.itemDamage)
-            out.addProperty("max_damage", stack.maxDamage)
+            out.addProperty("minecraft:damage", stack.itemDamage)
+            out.addProperty("minecraft:max_damage", stack.maxDamage)
+        }
+
+        // custom_data (NBT)
+        stack.tagCompound?.let { nbt ->
+            out.add("minecraft:custom_data", nbtToJson(nbt))
         }
     }
 

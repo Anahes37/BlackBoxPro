@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.util.ScreenShotHelper
 import org.apache.logging.log4j.LogManager
 import java.nio.file.Path
+import java.util.concurrent.Executors
 import javax.imageio.ImageIO
 
 
@@ -16,6 +17,9 @@ import javax.imageio.ImageIO
 object ForgeBindings : LoggerSupplier {
 
     private val logger = LogManager.getLogger("BlackBoxPro-ForgeBindings")
+    private val screenshotExecutor = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "BlackBoxPro-Screenshot").apply { isDaemon = true }
+    }
 
     val screenshotProvider = ForgeScreenshotProvider()
 
@@ -50,18 +54,27 @@ class ForgeScreenshotProvider : RuntimeScreenshotBridge.Provider {
     override fun captureAsync(directory: Path, fileName: String, callback: (Result<RuntimeScreenshotBridge.CaptureResult>) -> Unit) {
         try {
             val mc = Minecraft.getMinecraft()
+            // glReadPixels 必须在渲染线程（同步部分）
             val image = ScreenShotHelper.createScreenshot(mc.displayWidth, mc.displayHeight, mc.framebuffer)
-            directory.toFile().mkdirs()
-            val file = java.io.File(directory.toFile(), "$fileName.png")
-            ImageIO.write(image, "png", file)
-            callback(Result.success(
-                RuntimeScreenshotBridge.CaptureResult(
-                    filePath = file.toPath(),
-                    width = image.width,
-                    height = image.height,
-                    fileSize = file.length()
-                )
-            ))
+            // 文件 I/O 移到异步线程，避免阻塞主线程
+            ForgeBindings.screenshotExecutor.execute {
+                try {
+                    directory.toFile().mkdirs()
+                    val file = java.io.File(directory.toFile(), "$fileName.png")
+                    ImageIO.write(image, "png", file)
+                    image.flush()
+                    callback(Result.success(
+                        RuntimeScreenshotBridge.CaptureResult(
+                            filePath = file.toPath(),
+                            width = image.width,
+                            height = image.height,
+                            fileSize = file.length()
+                        )
+                    ))
+                } catch (e: Exception) {
+                    callback(Result.failure(e))
+                }
+            }
         } catch (e: Exception) {
             callback(Result.failure(e))
         }

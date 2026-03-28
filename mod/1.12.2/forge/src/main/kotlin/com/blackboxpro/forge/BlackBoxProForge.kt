@@ -73,6 +73,7 @@ object BlackBoxProForge {
 
         // 4. 启动 HTTP Server
         ModHttpServer.start()
+        Runtime.getRuntime().addShutdownHook(Thread { ModHttpServer.stop() })
 
         logger.info("BlackBoxProForge v{} loaded. {} actions registered.", VERSION, ActionRegistry.size())
     }

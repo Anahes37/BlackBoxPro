@@ -12,6 +12,9 @@ import io.netty.buffer.Unpooled
 class SelectTradeAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val selectedSlot = params.requireInt("selectedSlot")
+        if (selectedSlot < 0) {
+            return ActionResult.fail("selectedSlot must be >= 0, got: $selectedSlot")
+        }
 
         val connection = Minecraft.getMinecraft().connection
             ?: return ActionResult.fail("Not connected to server")

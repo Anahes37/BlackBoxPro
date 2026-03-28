@@ -26,7 +26,7 @@ class LookAtEntityAction : ActionExecutor {
 
         val (yaw, pitch) = calculateYawPitch(
             entity.posX - player.posX,
-            (entity.posY + entity.height / 2) - (player.posY + player.getEyeHeight()),
+            (entity.posY + entity.getEyeHeight()) - (player.posY + player.getEyeHeight()),
             entity.posZ - player.posZ
         )
 

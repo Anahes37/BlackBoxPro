@@ -6,6 +6,7 @@ import com.blackboxpro.forge.util.ContainerTooltipHelper
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiDisconnected
+import net.minecraft.client.gui.GuiScreenBook
 import net.minecraft.client.gui.inventory.*
 
 class QueryScreenStateAction : ActionExecutor {
@@ -76,6 +77,12 @@ class QueryScreenStateAction : ActionExecutor {
         is GuiBrewingStand -> "brewing_stand"
         is GuiBeacon -> "beacon"
         is GuiScreenHorseInventory -> "horse"
+        is GuiRepair -> "anvil"
+        is GuiEnchantment -> "enchanting_table"
+        is GuiMerchant -> "villager_trade"
+        is net.minecraft.client.gui.inventory.GuiHopper -> "hopper"
+        is net.minecraft.client.gui.inventory.GuiShulkerBox -> "shulker_box"
+        is GuiScreenBook -> "book"
         is GuiDisconnected -> "disconnected"
         is GuiContainer -> "container_unknown"
         else -> "other"

@@ -22,7 +22,8 @@ object ChatHistoryBuffer {
     private val buffer = ConcurrentLinkedDeque<ChatEntry>()
 
     fun addMessage(message: ITextComponent, type: String) {
-        val raw = ITextComponent.Serializer.componentToJson(message)
+        val raw = runCatching { ITextComponent.Serializer.componentToJson(message) }
+            .getOrElse { "\"${message.unformattedText}\"" }
         val plain = message.unformattedText
         buffer.addLast(ChatEntry(System.currentTimeMillis(), raw, plain, type))
         while (buffer.size > MAX_SIZE) buffer.pollFirst()

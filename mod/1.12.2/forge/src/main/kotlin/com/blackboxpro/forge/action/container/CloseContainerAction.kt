@@ -21,7 +21,8 @@ class CloseContainerAction : ActionExecutor {
 
         connection.sendPacket(CPacketCloseWindow(windowId))
 
-        // 同步关闭客户端 GUI
+        // 重置客户端容器状态（恢复到 inventoryContainer）并关闭 GUI
+        player.closeScreen()
         mc.displayGuiScreen(null)
 
         return ActionResult.ok("Closed container window $windowId")

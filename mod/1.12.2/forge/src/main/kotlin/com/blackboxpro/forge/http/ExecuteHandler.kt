@@ -15,6 +15,7 @@ object ExecuteHandler : HttpHandler {
 
     private val logger = LogManager.getLogger("BlackBoxPro-Http")
     private val gson = Gson()
+    private const val MAX_BODY_SIZE = 1024 * 1024 // 1MB
 
     override fun handle(exchange: HttpExchange) {
         val responseJson = buildResponse(exchange)
@@ -27,7 +28,11 @@ object ExecuteHandler : HttpHandler {
         }
 
         val body = try {
-            exchange.requestBody.readBytes().toString(Charsets.UTF_8)
+            val bytes = exchange.requestBody.readBytes()
+            if (bytes.size > MAX_BODY_SIZE) {
+                return gson.toJson(ResponseMessage("", "failure", "Request body too large: ${bytes.size} bytes"))
+            }
+            bytes.toString(Charsets.UTF_8)
         } catch (e: Exception) {
             return gson.toJson(ResponseMessage("", "failure", "Failed to read request body: ${e.message}"))
         }

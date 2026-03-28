@@ -9,7 +9,7 @@ class CloseScreenAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val mc = Minecraft.getMinecraft()
         if (mc.currentScreen != null) {
-            mc.addScheduledTask { mc.displayGuiScreen(null) }
+            mc.displayGuiScreen(null)
         }
         return ActionResult.ok("Screen closed")
     }

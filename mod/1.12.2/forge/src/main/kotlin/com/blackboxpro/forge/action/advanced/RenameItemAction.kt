@@ -12,6 +12,9 @@ import io.netty.buffer.Unpooled
 class RenameItemAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val name = params.requireString("name")
+        if (name.length > 50) {
+            return ActionResult.fail("Name too long: ${name.length} > 50")
+        }
 
         val connection = Minecraft.getMinecraft().connection
             ?: return ActionResult.fail("Not connected to server")

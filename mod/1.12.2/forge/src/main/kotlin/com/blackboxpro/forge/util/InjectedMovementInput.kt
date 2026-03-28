@@ -52,8 +52,12 @@ class InjectedMovementInput : MovementInput() {
         }
     }
 
-    /** 安装到玩家，替换原始 MovementInput */
+    /** 安装到玩家，替换原始 MovementInput。若当前已有其他 InjectedMovementInput，先卸载以恢复原始 input。 */
     fun install(player: EntityPlayerSP) {
+        val currentInput = player.movementInput
+        if (currentInput is InjectedMovementInput && currentInput !== this) {
+            currentInput.uninstall(player)
+        }
         original = player.movementInput
         installedPlayer = player
         player.movementInput = this

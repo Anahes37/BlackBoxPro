@@ -17,20 +17,32 @@ import io.netty.buffer.Unpooled
 class SignBookAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val title = params.requireString("title")
+        if (title.length > 128) {
+            return ActionResult.fail("Title too long: ${title.length} > 128")
+        }
         val pagesArray = params.getAsJsonArray("pages")
             ?: return ActionResult.fail("Missing required field: pages")
-
-        val connection = Minecraft.getMinecraft().connection
-            ?: return ActionResult.fail("Not connected to server")
+        if (pagesArray.size() > 200) {
+            return ActionResult.fail("Too many pages: ${pagesArray.size()} > 200")
+        }
 
         val mc = Minecraft.getMinecraft()
-        val playerName = mc.player?.gameProfile?.name ?: "Unknown"
+        val player = mc.player
+            ?: return ActionResult.fail("Player not available")
+        val connection = mc.connection
+            ?: return ActionResult.fail("Not connected to server")
+
+        val playerName = player.gameProfile.name
 
         val book = ItemStack(Items.WRITABLE_BOOK)
         val tag = NBTTagCompound()
         val pagesList = NBTTagList()
         for (i in 0 until pagesArray.size()) {
-            pagesList.appendTag(NBTTagString(pagesArray[i].asString))
+            val page = pagesArray[i].asString
+            if (page.length > 32767) {
+                return ActionResult.fail("Page $i too long: ${page.length} > 32767")
+            }
+            pagesList.appendTag(NBTTagString(page))
         }
         tag.setTag("pages", pagesList)
         tag.setString("title", title)
