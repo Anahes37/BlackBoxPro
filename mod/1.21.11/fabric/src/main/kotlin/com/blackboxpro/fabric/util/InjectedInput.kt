@@ -41,8 +41,12 @@ class InjectedInput : Input() {
         movementVector = Vec2f(sidewaysValue, forwardValue).normalize()
     }
 
-    /** 安装到玩家，替换原始 Input */
+    /** 安装到玩家，替换原始 Input。若当前已有其他 InjectedInput，先卸载以恢复原始 input。 */
     fun install(player: ClientPlayerEntity) {
+        val currentInput = player.input
+        if (currentInput is InjectedInput && currentInput !== this) {
+            currentInput.uninstall(player)
+        }
         original = player.input
         installedPlayer = player
         player.input = this

@@ -9,7 +9,7 @@ class CloseScreenAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val client = MinecraftClient.getInstance()
         if (client.currentScreen != null) {
-            client.execute { client.setScreen(null) }
+            client.setScreen(null)
         }
         return ActionResult.ok("Screen closed")
     }

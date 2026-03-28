@@ -34,7 +34,9 @@ class CreateWorldAction : ActionExecutor {
         }
 
         val mode = parseMode(params.getStringOrNull("gameMode"))
+            ?: return ActionResult.fail("Invalid gameMode: ${params.getStringOrNull("gameMode")}")
         val difficulty = parseDifficulty(params.getStringOrNull("difficulty"))
+            ?: return ActionResult.fail("Invalid difficulty: ${params.getStringOrNull("difficulty")}")
         val allowCommands = params.getBooleanOrDefault("allowCommands", mode.gameMode == GameMode.CREATIVE)
         val generateStructures = params.getBooleanOrDefault("generateStructures", true)
         val bonusChest = params.getBooleanOrDefault("bonusChest", false)
@@ -88,21 +90,21 @@ class CreateWorldAction : ActionExecutor {
         )
     }
 
-    private fun parseMode(raw: String?): WorldMode =
+    private fun parseMode(raw: String?): WorldMode? =
         when ((raw ?: "survival").trim().lowercase(Locale.ROOT)) {
             "survival" -> WorldMode(GameMode.SURVIVAL, WorldCreator.Mode.SURVIVAL)
             "creative" -> WorldMode(GameMode.CREATIVE, WorldCreator.Mode.CREATIVE)
             "hardcore" -> WorldMode(GameMode.SURVIVAL, WorldCreator.Mode.HARDCORE)
-            else -> throw IllegalArgumentException("Invalid gameMode: $raw")
+            else -> null
         }
 
-    private fun parseDifficulty(raw: String?): Difficulty =
+    private fun parseDifficulty(raw: String?): Difficulty? =
         when ((raw ?: "normal").trim().lowercase(Locale.ROOT)) {
             "peaceful" -> Difficulty.PEACEFUL
             "easy" -> Difficulty.EASY
             "normal" -> Difficulty.NORMAL
             "hard" -> Difficulty.HARD
-            else -> throw IllegalArgumentException("Invalid difficulty: $raw")
+            else -> null
         }
 
     private fun validateWorldName(worldName: String): String? = when {

@@ -29,6 +29,7 @@ object Pathfinder {
         val openSet = PriorityQueue<PathNode>(compareBy { it.f })
         val closedSet = HashSet<Long>()
         val bestG = HashMap<Long, Double>()
+        val mutablePos = BlockPos.Mutable()
 
         val startNode = PathNode(start.x, start.y, start.z, g = 0.0, h = heuristic(start.x, start.y, start.z, goal))
         openSet.add(startNode)
@@ -57,9 +58,9 @@ object Pathfinder {
             for (offset in HORIZONTAL_OFFSETS) {
                 val dx = offset[0]
                 val dz = offset[1]
-                expandNeighbor(current, dx, dz, 0, false, 1.0, goal, world, config, openSet, closedSet, bestG)
-                expandNeighbor(current, dx, dz, 1, true, config.jumpCost, goal, world, config, openSet, closedSet, bestG)
-                expandNeighbor(current, dx, dz, -1, false, config.fallCost, goal, world, config, openSet, closedSet, bestG)
+                expandNeighbor(current, dx, dz, 0, false, 1.0, goal, world, config, openSet, closedSet, bestG, mutablePos)
+                expandNeighbor(current, dx, dz, 1, true, config.jumpCost, goal, world, config, openSet, closedSet, bestG, mutablePos)
+                expandNeighbor(current, dx, dz, -1, false, config.fallCost, goal, world, config, openSet, closedSet, bestG, mutablePos)
             }
         }
 
@@ -70,7 +71,8 @@ object Pathfinder {
     private fun expandNeighbor(
         current: PathNode, dx: Int, dz: Int, dy: Int, isJump: Boolean, costMultiplier: Double,
         goal: BlockPos, world: ClientWorld, config: RuntimeNavigationConfig,
-        openSet: PriorityQueue<PathNode>, closedSet: HashSet<Long>, bestG: HashMap<Long, Double>
+        openSet: PriorityQueue<PathNode>, closedSet: HashSet<Long>, bestG: HashMap<Long, Double>,
+        mutablePos: BlockPos.Mutable
     ) {
         val nx = current.x + dx
         val ny = current.y + dy
@@ -81,18 +83,18 @@ object Pathfinder {
 
         // 跳跃需要头顶有空间
         if (isJump) {
-            if (!isPassable(world, current.x, current.y + 2, current.z)) return
+            if (!isPassable(world, current.x, current.y + 2, current.z, mutablePos)) return
         }
 
         // 下落需要水平方向可通过
         if (dy == -1) {
-            if (!isPassable(world, current.x + dx, current.y, current.z + dz)) return
+            if (!isPassable(world, current.x + dx, current.y, current.z + dz, mutablePos)) return
         }
 
         // 目标位置：脚下实心，身体和头部可通过
-        if (!isSolid(world, nx, ny - 1, nz)) return
-        if (!isPassable(world, nx, ny, nz)) return
-        if (!isPassable(world, nx, ny + 1, nz)) return
+        if (!isSolid(world, nx, ny - 1, nz, mutablePos)) return
+        if (!isPassable(world, nx, ny, nz, mutablePos)) return
+        if (!isPassable(world, nx, ny + 1, nz, mutablePos)) return
 
         val tentativeG = current.g + costMultiplier
         val existingG = bestG[key]
@@ -103,15 +105,13 @@ object Pathfinder {
         openSet.add(node)
     }
 
-    private val mutablePos = BlockPos.Mutable()
-
-    private fun isPassable(world: ClientWorld, x: Int, y: Int, z: Int): Boolean {
+    private fun isPassable(world: ClientWorld, x: Int, y: Int, z: Int, mutablePos: BlockPos.Mutable): Boolean {
         mutablePos.set(x, y, z)
         val state = world.getBlockState(mutablePos)
         return !state.isSolidBlock(world, mutablePos)
     }
 
-    private fun isSolid(world: ClientWorld, x: Int, y: Int, z: Int): Boolean {
+    private fun isSolid(world: ClientWorld, x: Int, y: Int, z: Int, mutablePos: BlockPos.Mutable): Boolean {
         mutablePos.set(x, y, z)
         val state = world.getBlockState(mutablePos)
         return state.isSolidBlock(world, mutablePos)

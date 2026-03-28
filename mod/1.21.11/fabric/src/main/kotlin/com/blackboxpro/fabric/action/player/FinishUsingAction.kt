@@ -12,8 +12,15 @@ import net.minecraft.util.math.Direction
 class FinishUsingAction : ActionExecutor {
     override fun execute(params: JsonObject): ActionResult {
         val sequence = params.getIntOrDefault("sequence", 0)
-        val networkHandler = MinecraftClient.getInstance().networkHandler
+        val client = MinecraftClient.getInstance()
+        val networkHandler = client.networkHandler
             ?: return ActionResult.fail("Not connected to server")
+        val player = client.player
+            ?: return ActionResult.fail("Player not available")
+
+        // 同步客户端状态：释放正在使用的物品（弓箭蓄力等）
+        player.stopUsingItem()
+
         networkHandler.sendPacket(
             PlayerActionC2SPacket(PlayerActionC2SPacket.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, Direction.DOWN, sequence)
         )

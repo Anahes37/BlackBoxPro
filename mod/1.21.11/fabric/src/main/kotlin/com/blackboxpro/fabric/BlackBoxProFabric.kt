@@ -10,12 +10,17 @@ import com.blackboxpro.common.runtime.screenshot.RuntimeScreenshotBridge
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
+import net.fabricmc.loader.api.FabricLoader
 import org.slf4j.LoggerFactory
 
 object BlackBoxProFabric : ClientModInitializer {
 
     private val logger = LoggerFactory.getLogger("BlackBoxProFabric")
-    const val VERSION = "1.0.0"
+    val VERSION: String by lazy {
+        FabricLoader.getInstance().getModContainer("blackboxpro")
+            .map { it.metadata.version.friendlyString }
+            .orElse("unknown")
+    }
 
     override fun onInitializeClient() {
         // 1. 加载配置

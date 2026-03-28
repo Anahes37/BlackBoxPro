@@ -88,8 +88,10 @@ class BreakBlockAction : ActionExecutor {
         if (hardness == 0f) return 1
 
         val speed = player.getBlockBreakingSpeed(state)
+        val canHarvest = player.canHarvest(state)
+        val divisor = if (canHarvest) 30.0f else 100.0f
         return if (speed > 0) {
-            ceil(hardness * 30.0f / speed).toInt().coerceAtLeast(1)
+            ceil(hardness * divisor / speed).toInt().coerceAtLeast(1)
         } else {
             defaultTicks
         }

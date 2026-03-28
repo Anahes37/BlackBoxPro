@@ -25,7 +25,7 @@ class NavigateToAction : ActionExecutor {
         val targetX = params.requireDouble("x")
         val targetY = params.requireDouble("y")
         val targetZ = params.requireDouble("z")
-        val speed = params.getDoubleOrDefault("speed", 1.0)
+        val speed = params.getDoubleOrDefault("speed", 1.0).coerceIn(0.1, 2.0)
         val navConfig = RuntimeBlackBoxConfig.current.navigation
         val timeout = params.getIntOrDefault("timeout", navConfig.defaultTimeout)
         val allowJump = params.getBooleanOrDefault("allowJump", true)

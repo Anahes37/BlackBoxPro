@@ -38,8 +38,9 @@ class QueryBossBarAction : ActionExecutor {
                     })
                 }
             }
-        } catch (_: Exception) {
-            // 反射失败时返回空列表
+        } catch (e: Exception) {
+            // 反射失败时返回空列表，记录日志
+            org.slf4j.LoggerFactory.getLogger("BlackBoxPro").warn("QueryBossBarAction reflection failed: {}", e.message)
         }
 
         val data = JsonObject().apply {
