@@ -7,12 +7,15 @@ import com.blackboxpro.neoforge.http.ModHttpServer
 import com.blackboxpro.neoforge.util.ChatHistoryBuffer
 import com.blackboxpro.neoforge.util.NeoForgeRuntimeScreenshotProvider
 import com.blackboxpro.common.runtime.screenshot.RuntimeScreenshotBridge
+import com.blackboxpro.runtime.bindings.ScreenRenderBridge
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.Mod
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent
+import net.neoforged.neoforge.client.event.ScreenEvent
 import net.neoforged.neoforge.common.NeoForge
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Mod("blackboxpro")
 class BlackBoxProNeoForge(modBus: IEventBus) {
@@ -24,6 +27,22 @@ class BlackBoxProNeoForge(modBus: IEventBus) {
 
         // 2. 绑定运行时桥接
         RuntimeScreenshotBridge.bind(NeoForgeRuntimeScreenshotProvider)
+        ScreenRenderBridge.bind { callback ->
+            val fired = AtomicBoolean(false)
+            // 记录注册时的 screen 实例，防止 screen 切换后在错误的 screen 上触发
+            val expectedScreen = net.minecraft.client.Minecraft.getInstance().screen
+            val listener = object {
+                @SubscribeEvent
+                fun onRenderPost(event: ScreenEvent.Render.Post) {
+                    if (expectedScreen != null && event.screen !== expectedScreen) return
+                    if (fired.compareAndSet(false, true)) {
+                        callback.onAfterRender(event.guiGraphics)
+                        NeoForge.EVENT_BUS.unregister(this)
+                    }
+                }
+            }
+            NeoForge.EVENT_BUS.register(listener)
+        }
 
         // 3. 注册所有行为执行器
         ActionRegistry.registerAll()

@@ -21,3 +21,6 @@ type = "required"
 versionRange = "[1.21.11,)"
 ordering = "NONE"
 side = "CLIENT"
+
+[[mixins]]
+config = "blackboxpro.mixins.json"

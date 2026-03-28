@@ -109,11 +109,13 @@ object ActionRegistry {
         register("player_abilities", PlayerAbilitiesAction())
         register("resource_pack_response", ResourcePackResponseAction())
         register("screenshot", ScreenshotAction())
+        register("screenshot_tooltip", ScreenshotTooltipAction())
         register("connect_to_server", ConnectToServerAction())
         register("create_world", CreateWorldAction())
         register("join_world", JoinWorldAction())
         register("leave_world", LeaveWorldAction())
         register("close_screen", CloseScreenAction())
+        register("open_inventory", OpenInventoryAction())
 
         // === 进阶交互 ===
         register("edit_book", EditBookAction())
