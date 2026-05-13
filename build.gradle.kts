@@ -106,6 +106,24 @@ tasks.register("mod2111_build", execTaskClass, object : Action<Exec> {
     }
 })
 
+tasks.register("mod1214_build", execTaskClass, object : Action<Exec> {
+    override fun execute(task: Exec) {
+        task.group = "standalone"
+        task.description = "构建 mod 1.21.4 客户端产物"
+        task.workingDir = rootDir
+        task.commandLine(
+            rootGradlew.absolutePath,
+            "-p",
+            modProjectDir.absolutePath,
+            "--no-daemon",
+            ":1.21.4:runtime:build",
+            ":1.21.4:fabric:build",
+            ":1.21.4:neoforge:classes",
+            ":1.21.4:neoforge:processResources"
+        )
+    }
+})
+
 tasks.register("mod1211_build", execTaskClass, object : Action<Exec> {
     override fun execute(task: Exec) {
         task.group = "standalone"
@@ -157,6 +175,9 @@ val collectJars = tasks.register("collectJars", syncTaskClass, object : Action<S
         // 1.21.1
         task.from(fileTree("mod/1.21.1/fabric/build/libs"))
         task.from(fileTree("mod/1.21.1/neoforge/build/libs"))
+        // 1.21.4
+        task.from(fileTree("mod/1.21.4/fabric/build/libs"))
+        task.from(fileTree("mod/1.21.4/neoforge/build/libs"))
         // 1.12.2
         task.from(fileTree("mod/1.12.2/forge/build/libs"))
         // plugin
@@ -167,8 +188,8 @@ val collectJars = tasks.register("collectJars", syncTaskClass, object : Action<S
 tasks.register("buildAll", object : Action<Task> {
     override fun execute(task: Task) {
         task.group = "build"
-        task.description = "构建 common、1.21.11/1.21.1 客户端、1.12.2 客户端与服务端插件并收集 jar 到根 build/libs"
-        task.dependsOn("common_build", "mod2111_build", "mod1211_pack_neoforge", "plugin_build", "forge1122_build")
+        task.description = "构建 common、1.21.11/1.21.1/1.21.4 客户端、1.12.2 客户端与服务端插件并收集 jar 到根 build/libs"
+        task.dependsOn("common_build", "mod2111_build", "mod1214_build", "mod1211_pack_neoforge", "plugin_build", "forge1122_build")
         task.finalizedBy(collectJars)
     }
 })
@@ -190,6 +211,10 @@ tasks.register("cleanAll", object : Action<Task> {
                 file("mod/1.21.1/runtime/build"),
                 file("mod/1.21.1/fabric/build"),
                 file("mod/1.21.1/neoforge/build"),
+                file("mod/1.21.4/build"),
+                file("mod/1.21.4/runtime/build"),
+                file("mod/1.21.4/fabric/build"),
+                file("mod/1.21.4/neoforge/build"),
                 file("mod/1.12.2/build"),
                 file("mod/1.12.2/runtime/build"),
                 file("mod/1.12.2/forge/build")

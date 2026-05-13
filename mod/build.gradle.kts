@@ -70,6 +70,11 @@ val collectJars = tasks.register<Copy>("collectJars") {
     from(project(":1.21.1:fabric").layout.buildDirectory.dir("libs"))
     from(project(":1.21.1:neoforge").layout.buildDirectory.dir("libs"))
 
+    // 1.21.4
+    from(project(":1.21.4:runtime").layout.buildDirectory.dir("libs"))
+    from(project(":1.21.4:fabric").layout.buildDirectory.dir("libs"))
+    from(project(":1.21.4:neoforge").layout.buildDirectory.dir("libs"))
+
     // 1.12.2
     from(file("1.12.2/build/libs"))
 }
@@ -89,6 +94,11 @@ tasks.register("buildAll") {
         ":1.21.1:runtime:build",
         ":1.21.1:fabric:build",
         ":1.21.1:neoforge:build",
+
+        // 1.21.4
+        ":1.21.4:runtime:build",
+        ":1.21.4:fabric:build",
+        ":1.21.4:neoforge:build",
 
         // 1.12.2
         build1122
